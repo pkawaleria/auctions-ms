@@ -2,8 +2,12 @@ package pl.kawaleria.auctsys.controllers
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import pl.kawaleria.auctsys.dtos.*
 import pl.kawaleria.auctsys.models.Auction
+import pl.kawaleria.auctsys.requests.CreateAuctionDto
+import pl.kawaleria.auctsys.requests.UpdateAuctionDto
+import pl.kawaleria.auctsys.responses.ApiException
+import pl.kawaleria.auctsys.responses.AuctionDto
+import pl.kawaleria.auctsys.responses.toDto
 import pl.kawaleria.auctsys.services.AuctionService
 
 @RestController
@@ -14,7 +18,7 @@ class AuctionController(private val auctionService: AuctionService) {
     fun getAuction(
         @PathVariable userId: String,
         @PathVariable auctionId: String): AuctionDto {
-        return auctionService.findAuctionByIdAndAuctioneerId(userId, auctionId)?.toDto() ?: throw ApiException(404, "Szukana aukcja nie istnieje")
+        return auctionService.findAuctionByIdAndAuctioneerId(userId, auctionId)?.toDto() ?: throw ApiException(404, "Auction not found")
     }
 
     @GetMapping("/{userId}/auctions")
@@ -25,7 +29,8 @@ class AuctionController(private val auctionService: AuctionService) {
     @PostMapping("/{userId}/auctions")
     fun addAuction(
         @PathVariable userId: String,
-        @RequestBody payload: CreateAuctionDto): AuctionDto {
+        @RequestBody payload: CreateAuctionDto
+    ): AuctionDto {
         val auction = Auction(
             name = payload.name,
             category = payload.category,
@@ -42,8 +47,9 @@ class AuctionController(private val auctionService: AuctionService) {
     fun updateAuction(
         @PathVariable userId: String,
         @PathVariable auctionId: String,
-        @RequestBody payload: UpdateAuctionDto): AuctionDto {
-        val auction = auctionService.findAuctionByIdAndAuctioneerId(auctionId, userId) ?: throw ApiException(404, "Szukana aukcja nie istnieje")
+        @RequestBody payload: UpdateAuctionDto
+    ): AuctionDto {
+        val auction = auctionService.findAuctionByIdAndAuctioneerId(auctionId, userId) ?: throw ApiException(404, "Auction not found")
 
         auction.name = payload.name
         auction.price = payload.price
@@ -58,11 +64,10 @@ class AuctionController(private val auctionService: AuctionService) {
     fun deleteAuction(
         @PathVariable userId: String,
         @PathVariable auctionId: String): ResponseEntity<String> {
-        val auction = auctionService.findAuctionByIdAndAuctioneerId(userId, auctionId) ?: throw ApiException(404, "Szukana aukcja nie istnieje")
+        val auction = auctionService.findAuctionByIdAndAuctioneerId(userId, auctionId) ?: throw ApiException(404, "Auction not found")
 
         auctionService.delete(auction)
 
-        return ResponseEntity.ok("Pomyślnie usunięto aukcję")
+        return ResponseEntity.noContent().build()
     }
-
 }

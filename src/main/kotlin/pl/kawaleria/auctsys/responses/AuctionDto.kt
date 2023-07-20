@@ -1,9 +1,8 @@
-package pl.kawaleria.auctsys.dtos
+package pl.kawaleria.auctsys.responses
 
+import pl.kawaleria.auctsys.models.Auction
 import pl.kawaleria.auctsys.models.Category
-import org.springframework.web.server.ResponseStatusException
 
-class ApiException(code: Int, message: String): ResponseStatusException(code, message, null)
 data class AuctionDto(
     val id: String?,
     val name: String?,
@@ -12,3 +11,5 @@ data class AuctionDto(
     val price: Double?,
     val auctioneerId: String?
 )
+
+fun Auction.toDto(): AuctionDto = AuctionDto(id, name, category, description, price, auctioneerId)

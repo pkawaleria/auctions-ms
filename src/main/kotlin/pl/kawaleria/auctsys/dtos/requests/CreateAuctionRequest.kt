@@ -1,8 +1,8 @@
-package pl.kawaleria.auctsys.requests
+package pl.kawaleria.auctsys.dtos.requests
 
 import pl.kawaleria.auctsys.models.Category
 
-data class UpdateAuctionDto(
+data class CreateAuctionRequest(
     val name: String,
     val category: Category,
     val description: String,

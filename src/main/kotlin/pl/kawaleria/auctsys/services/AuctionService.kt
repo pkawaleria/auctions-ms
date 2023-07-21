@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service
 import pl.kawaleria.auctsys.models.Auction
 import pl.kawaleria.auctsys.models.Category
 import pl.kawaleria.auctsys.repositories.AuctionRepository
-import pl.kawaleria.auctsys.requests.AuctionsSearchRequest
-import pl.kawaleria.auctsys.responses.PagedAuctions
-import pl.kawaleria.auctsys.responses.toPagedAuctions
+import pl.kawaleria.auctsys.dtos.requests.AuctionsSearchRequest
+import pl.kawaleria.auctsys.dtos.responses.PagedAuctions
+import pl.kawaleria.auctsys.dtos.responses.toPagedAuctions
 
 @Service
 class AuctionService(private val auctionRepository: AuctionRepository) {

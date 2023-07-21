@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.requests
+package pl.kawaleria.auctsys.dtos.requests
 
 data class AuctionsSearchRequest(
         val searchPhrase: String?,

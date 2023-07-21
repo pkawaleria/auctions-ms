@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.responses
+package pl.kawaleria.auctsys.dtos.responses
 
 import pl.kawaleria.auctsys.models.Auction
 import pl.kawaleria.auctsys.models.Category

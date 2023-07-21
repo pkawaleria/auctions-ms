@@ -18,6 +18,10 @@ repositories {
 	mavenCentral()
 }
 
+val testcontainersVersion = "1.18.3"
+val assertJVersion = "3.24.2"
+
+
 dependencies {
 //	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -27,6 +31,16 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
+	testImplementation("org.testcontainers:mongodb:$testcontainersVersion")
+	testImplementation("org.assertj:assertj-core:$assertJVersion")
+
+}
+
+dependencyManagement {
+	imports {
+		mavenBom("org.testcontainers:testcontainers-bom:$testcontainersVersion")
+	}
 }
 
 tasks.withType<KotlinCompile> {

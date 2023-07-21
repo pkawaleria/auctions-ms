@@ -3,7 +3,7 @@ package pl.kawaleria.auctsys.responses
 import pl.kawaleria.auctsys.models.Auction
 import pl.kawaleria.auctsys.models.Category
 
-data class AuctionDto(
+data class AuctionDetailedResponse(
     val id: String?,
     val name: String?,
     val category: Category?,
@@ -12,4 +12,4 @@ data class AuctionDto(
     val auctioneerId: String?
 )
 
-fun Auction.toDto(): AuctionDto = AuctionDto(id, name, category, description, price, auctioneerId)
+fun Auction.toDto(): AuctionDetailedResponse = AuctionDetailedResponse(id, name, category, description, price, auctioneerId)

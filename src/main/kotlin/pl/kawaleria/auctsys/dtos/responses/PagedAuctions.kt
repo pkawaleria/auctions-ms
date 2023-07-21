@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.responses
+package pl.kawaleria.auctsys.dtos.responses
 
 import org.springframework.data.domain.Page
 import pl.kawaleria.auctsys.models.Auction

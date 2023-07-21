@@ -1,17 +1,16 @@
 package pl.kawaleria.auctsys.controllers
 
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.models.Auction
-import pl.kawaleria.auctsys.requests.AuctionsSearchRequest
-import pl.kawaleria.auctsys.requests.CreateAuctionDto
-import pl.kawaleria.auctsys.requests.UpdateAuctionDto
-import pl.kawaleria.auctsys.responses.ApiException
-import pl.kawaleria.auctsys.responses.AuctionDetailedResponse
-import pl.kawaleria.auctsys.responses.PagedAuctions
-import pl.kawaleria.auctsys.responses.toDto
+import pl.kawaleria.auctsys.dtos.requests.AuctionsSearchRequest
+import pl.kawaleria.auctsys.dtos.requests.CreateAuctionRequest
+import pl.kawaleria.auctsys.dtos.requests.UpdateAuctionRequest
+import pl.kawaleria.auctsys.dtos.responses.ApiException
+import pl.kawaleria.auctsys.dtos.responses.AuctionDetailedResponse
+import pl.kawaleria.auctsys.dtos.responses.PagedAuctions
+import pl.kawaleria.auctsys.dtos.responses.toDto
 import pl.kawaleria.auctsys.services.AuctionService
 
 @RestController
@@ -46,7 +45,7 @@ class AuctionController(private val auctionService: AuctionService) {
     @PostMapping("/users/{userId}/auctions")
     fun addAuction(
         @PathVariable userId: String,
-        @RequestBody payload: CreateAuctionDto
+        @RequestBody payload: CreateAuctionRequest
     ): AuctionDetailedResponse {
         val auction = Auction(
             name = payload.name,
@@ -64,7 +63,7 @@ class AuctionController(private val auctionService: AuctionService) {
     fun updateAuction(
         @PathVariable userId: String,
         @PathVariable auctionId: String,
-        @RequestBody payload: UpdateAuctionDto
+        @RequestBody payload: UpdateAuctionRequest
     ): AuctionDetailedResponse {
         val auction = auctionService.findAuctionByIdAndAuctioneerId(auctionId, userId) ?: throw ApiException(404, "Auction not found")
 

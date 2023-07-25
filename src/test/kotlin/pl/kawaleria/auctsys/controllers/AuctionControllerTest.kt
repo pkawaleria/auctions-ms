@@ -18,10 +18,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
-import pl.kawaleria.auctsys.dtos.responses.PagedAuctions
-import pl.kawaleria.auctsys.models.Auction
-import pl.kawaleria.auctsys.models.Category
-import pl.kawaleria.auctsys.repositories.AuctionRepository
+import pl.kawaleria.auctsys.auctions.domain.Auction
+import pl.kawaleria.auctsys.auctions.domain.AuctionRepository
+import pl.kawaleria.auctsys.auctions.domain.Category
+import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 
 
 /*To run this test you need running Docker environment*/

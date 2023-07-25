@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.dtos.responses
+package pl.kawaleria.auctsys.auctions.dto.responses
 
 import org.springframework.web.server.ResponseStatusException
 

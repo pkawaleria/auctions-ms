@@ -1,17 +1,17 @@
-package pl.kawaleria.auctsys.controllers
+package pl.kawaleria.auctsys.auctions
 
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import pl.kawaleria.auctsys.models.Auction
-import pl.kawaleria.auctsys.dtos.requests.AuctionsSearchRequest
-import pl.kawaleria.auctsys.dtos.requests.CreateAuctionRequest
-import pl.kawaleria.auctsys.dtos.requests.UpdateAuctionRequest
-import pl.kawaleria.auctsys.dtos.responses.ApiException
-import pl.kawaleria.auctsys.dtos.responses.AuctionDetailedResponse
-import pl.kawaleria.auctsys.dtos.responses.PagedAuctions
-import pl.kawaleria.auctsys.dtos.responses.toDto
-import pl.kawaleria.auctsys.services.AuctionService
+import pl.kawaleria.auctsys.auctions.domain.Auction
+import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
+import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
+import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
+import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
+import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
+import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.toDto
+import pl.kawaleria.auctsys.auctions.domain.AuctionService
 
 @RestController
 @RequestMapping("/auction-service")

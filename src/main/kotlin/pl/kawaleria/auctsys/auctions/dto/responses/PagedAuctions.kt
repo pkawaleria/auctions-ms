@@ -1,7 +1,7 @@
-package pl.kawaleria.auctsys.dtos.responses
+package pl.kawaleria.auctsys.auctions.dto.responses
 
 import org.springframework.data.domain.Page
-import pl.kawaleria.auctsys.models.Auction
+import pl.kawaleria.auctsys.auctions.domain.Auction
 
 data class PagedAuctions(
         val auctions: List<AuctionSimplifiedResponse>,

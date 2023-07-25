@@ -1,15 +1,10 @@
-package pl.kawaleria.auctsys.services
+package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.domain.PageRequest
-import org.springframework.stereotype.Service
-import pl.kawaleria.auctsys.models.Auction
-import pl.kawaleria.auctsys.models.Category
-import pl.kawaleria.auctsys.repositories.AuctionRepository
-import pl.kawaleria.auctsys.dtos.requests.AuctionsSearchRequest
-import pl.kawaleria.auctsys.dtos.responses.PagedAuctions
-import pl.kawaleria.auctsys.dtos.responses.toPagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
+import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
 
-@Service
 class AuctionService(private val auctionRepository: AuctionRepository) {
     fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
     fun findAuctionByIdAndAuctioneerId(id: String, auctioneerId: String): Auction? = auctionRepository.findAuctionByIdAndAuctioneerId(id, auctioneerId)

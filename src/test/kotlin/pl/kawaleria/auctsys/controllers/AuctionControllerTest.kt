@@ -22,7 +22,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.auctions.domain.Auction
 import pl.kawaleria.auctsys.auctions.domain.AuctionRepository
 import pl.kawaleria.auctsys.auctions.domain.Category
-import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
 import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 
@@ -40,7 +39,7 @@ class AuctionControllerTest {
     }
 
     init {
-        System.setProperty("spring.data.mongodb.uri", mongo.getReplicaSetUrl());
+        System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
     }
 
     companion object {
@@ -426,6 +425,6 @@ class AuctionControllerTest {
         )
 
         auctionRepository.saveAll(auctions)
-        return auctions.size;
+        return auctions.size
     }
 }

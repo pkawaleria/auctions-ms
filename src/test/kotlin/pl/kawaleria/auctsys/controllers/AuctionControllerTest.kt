@@ -15,12 +15,15 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.auctions.domain.Auction
 import pl.kawaleria.auctsys.auctions.domain.AuctionRepository
 import pl.kawaleria.auctsys.auctions.domain.Category
+import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
+import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 
 
@@ -63,7 +66,190 @@ class AuctionControllerTest {
 
     @Nested
     inner class AuctionsCreationTests {
-        // TODO: write this tests
+        @Test
+        fun `should create auction`() {
+            // given
+            val auctionRequestData = Auction(
+                name = "Wireless Samsung headphones",
+                category = Category.MODA,
+                description = "Best headphones you can have",
+                price = 1.23,
+                auctioneerId = "user-id"
+            )
+
+            // when
+            val result = mockMvc.perform(
+                post("/auction-service/users/user-id/auctions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isOk())
+                .andReturn()
+
+            // then
+            val responseJson = result.response.contentAsString
+            val createdAuction = objectMapper.readValue(responseJson, AuctionSimplifiedResponse::class.java)
+            logger.info("Received response from rest controller: {}", responseJson)
+
+            Assertions.assertThat(createdAuction.name).isEqualTo("Wireless Samsung headphones")
+            Assertions.assertThat(createdAuction.category).isEqualTo(Category.MODA)
+            Assertions.assertThat(createdAuction.price).isEqualTo(1.23)
+        }
+
+        @Test
+        fun `should not create auction with blank name`() {
+            // given
+            val auctionRequestData = Auction(
+                name = "",
+                category = Category.MODA,
+                description = "Headphones",
+                price = 1.23,
+                auctioneerId = "user-id"
+            )
+
+            val expectedStatus = 400
+            val expectedMessage = "CreateAuctionRequest is not valid"
+
+            // when
+            val result = mockMvc.perform(
+                post("/auction-service/users/user-id/auctions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseStatus = result.response.status
+            val responseErrorMessage = result.response.errorMessage
+
+            Assertions.assertThat(responseStatus).isEqualTo(expectedStatus)
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedMessage)
+        }
+
+        @Test
+        fun `should not create auction with description containing less than 20 characters`() {
+            // given
+            val auctionRequestData = Auction(
+                name = "Wireless Samsung headphones",
+                category = Category.MODA,
+                description = "Headphones",
+                price = 1.23,
+                auctioneerId = "user-id"
+            )
+
+            val expectedStatus = 400
+            val expectedMessage = "CreateAuctionRequest is not valid"
+
+            // when
+            val result = mockMvc.perform(
+                post("/auction-service/users/user-id/auctions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseStatus = result.response.status
+            val responseErrorMessage = result.response.errorMessage
+
+            Assertions.assertThat(responseStatus).isEqualTo(expectedStatus)
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedMessage)
+        }
+
+        @Test
+        fun `should not create auction with name containing more than 100 characters`() {
+            // given
+            val auctionRequestData = Auction(
+                name = "Wireless Extra Ultra Mega Best Giga Fastest Smoothest Cleanest Cheapest Samsung headphones with Bluetooth",
+                category = Category.MODA,
+                description = "Headphones",
+                price = 1.23,
+                auctioneerId = "user-id"
+            )
+
+            val expectedStatus = 400
+            val expectedMessage = "CreateAuctionRequest is not valid"
+
+            // when
+            val result = mockMvc.perform(
+                post("/auction-service/users/user-id/auctions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseStatus = result.response.status
+            val responseErrorMessage = result.response.errorMessage
+
+            Assertions.assertThat(responseStatus).isEqualTo(expectedStatus)
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedMessage)
+        }
+
+        @Test
+        fun `should not create auction with negative price`() {
+            // given
+            val auctionRequestData = Auction(
+                name = "Wireless Samsung headphones",
+                category = Category.MODA,
+                description = "Best headphones you can have",
+                price = -13.0,
+                auctioneerId = "user-id"
+            )
+
+            val expectedStatus = 400
+            val expectedMessage = "CreateAuctionRequest is not valid"
+
+            // when
+            val result = mockMvc.perform(
+                post("/auction-service/users/user-id/auctions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseStatus = result.response.status
+            val responseErrorMessage = result.response.errorMessage
+
+            Assertions.assertThat(responseStatus).isEqualTo(expectedStatus)
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedMessage)
+        }
+
+        @Test
+        fun `should not create auction with invalid description syntax`() {
+            // given
+            val auctionRequestData = Auction(
+                name = "Wireless Samsung headphones",
+                category = Category.MODA,
+                description = "Best headphones you can have;[,.[;.;~??",
+                price = 13.0,
+                auctioneerId = "user-id"
+            )
+
+            val expectedStatus = 400
+            val expectedMessage = "CreateAuctionRequest is not valid"
+
+            // when
+            val result = mockMvc.perform(
+                post("/auction-service/users/user-id/auctions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseStatus = result.response.status
+            val responseErrorMessage = result.response.errorMessage
+
+            Assertions.assertThat(responseStatus).isEqualTo(expectedStatus)
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedMessage)
+        }
     }
 
     @Nested
@@ -86,7 +272,6 @@ class AuctionControllerTest {
                     .andExpect { status().isOk() }
                     .andReturn()
 
-
             // then
             val responseJson = result.response.contentAsString
             val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
@@ -108,7 +293,6 @@ class AuctionControllerTest {
             val selectedSearchPhrase = "JBL"
             val expectedFilteredAuctionsCount = 2
 
-
             // when
             val result = mockMvc.perform(
                     get("/auction-service/auctions")
@@ -118,7 +302,6 @@ class AuctionControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
-
 
             // then
             val responseJson = result.response.contentAsString
@@ -156,7 +339,6 @@ class AuctionControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
-
 
             // then
             val responseJson = result.response.contentAsString
@@ -196,7 +378,6 @@ class AuctionControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
-
 
             // then
             val responseJson = result.response.contentAsString

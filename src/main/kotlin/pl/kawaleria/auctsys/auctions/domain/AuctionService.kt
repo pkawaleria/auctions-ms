@@ -9,10 +9,9 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
 
 class AuctionService(private val auctionRepository: AuctionRepository) {
-
     fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
-    fun findAuctionByIdAndAuctioneerId(id: String, auctioneerId: String): Auction = auctionRepository.findAuctionByIdAndAuctioneerId(id, auctioneerId)
+    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(400, "Auction does not exists") }
 
     fun addNewAuction(payload: CreateAuctionRequest, auctioneerId: String): Auction {
         if (validateCreateAuctionRequest(payload)) {
@@ -28,9 +27,9 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
         } else throw ApiException(400, "CreateAuctionRequest is not valid")
     }
 
-    fun updateAndSaveAuction(id: String, auctioneerId: String, payload: UpdateAuctionRequest): Auction {
+    fun updateAndSaveAuction(id: String, payload: UpdateAuctionRequest): Auction {
         if (validateUpdateAuctionRequest(payload)) {
-            val auction = findAuctionByIdAndAuctioneerId(id, auctioneerId)
+            val auction = findAuctionById(id)
 
             auction.name = payload.name
             auction.price = payload.price
@@ -40,6 +39,8 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
             return auctionRepository.save(auction)
         } else throw ApiException(400, "UpdateAuctionRequest is not valid")
     }
+
+    fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
         val validatedName = validateName(payload.name)
@@ -70,12 +71,6 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
     }
 
     private fun validatePrice(price: Double): Boolean = price > 0
-
-    fun delete(userId: String, auctionId: String) {
-        val auction = findAuctionByIdAndAuctioneerId(userId, auctionId)
-
-        auctionRepository.delete(auction)
-    }
 
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
         val mappedCategory: Category? = searchRequest.category?.let { mapToCategory(it) }

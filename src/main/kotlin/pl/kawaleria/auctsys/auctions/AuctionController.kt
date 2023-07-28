@@ -31,7 +31,7 @@ class AuctionController(private val auctionService: AuctionService) {
         @PathVariable userId: String,
         @PathVariable auctionId: String
     ): AuctionSimplifiedResponse {
-        return auctionService.findAuctionByIdAndAuctioneerId(userId, auctionId).toSimplifiedResponse()
+        return auctionService.findAuctionById(auctionId).toSimplifiedResponse()
     }
 
     @GetMapping("/users/{userId}/auctions")
@@ -53,15 +53,15 @@ class AuctionController(private val auctionService: AuctionService) {
         @PathVariable auctionId: String,
         @RequestBody payload: UpdateAuctionRequest
     ): AuctionDetailedResponse {
-        return auctionService.updateAndSaveAuction(auctionId, userId, payload).toDto()
+        return auctionService.updateAndSaveAuction(auctionId, payload).toDto()
     }
 
     @DeleteMapping("/users/{userId}/auctions/{auctionId}")
     fun deleteAuction(
         @PathVariable userId: String,
         @PathVariable auctionId: String)
-    : ResponseEntity<String> {
-        auctionService.delete(userId, auctionId)
+    : ResponseEntity<Unit> {
+        auctionService.delete(auctionId)
 
         return ResponseEntity.noContent().build()
     }

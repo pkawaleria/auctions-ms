@@ -12,4 +12,4 @@ data class AuctionDetailedResponse(
         val auctioneerId: String?
 )
 
-fun Auction.toDto(): AuctionDetailedResponse = AuctionDetailedResponse(id, name, category, description, price, auctioneerId)
+fun Auction.toDetailedResponse(): AuctionDetailedResponse = AuctionDetailedResponse(id, name, category, description, price, auctioneerId)

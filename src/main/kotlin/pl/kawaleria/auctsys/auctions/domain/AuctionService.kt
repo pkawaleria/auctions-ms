@@ -11,7 +11,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
 class AuctionService(private val auctionRepository: AuctionRepository) {
     fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
-    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(400, "Auction does not exists") }
+    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(404, "Auction does not exists") }
 
     fun addNewAuction(payload: CreateAuctionRequest, auctioneerId: String): Auction {
         if (validateCreateAuctionRequest(payload)) {

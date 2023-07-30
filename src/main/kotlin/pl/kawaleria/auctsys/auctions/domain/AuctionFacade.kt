@@ -1,33 +1,40 @@
 package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.domain.PageRequest
+import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 
-class AuctionService(private val auctionRepository: AuctionRepository) {
-    fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
+class AuctionFacade(private val auctionRepository: AuctionRepository,
+                    private val auctionRules: AuctionRules,
+                    private val clock: Clock) {
+    fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(404, "Auction does not exists") }
 
     fun addNewAuction(payload: CreateAuctionRequest, auctioneerId: String): Auction {
         if (validateCreateAuctionRequest(payload)) {
             val auction = Auction(
-                name = payload.name,
-                category = payload.category,
-                description = payload.description,
-                price = payload.price,
-                auctioneerId = auctioneerId
+                    name = payload.name,
+                    category = payload.category,
+                    description = payload.description,
+                    price = payload.price,
+                    auctioneerId = auctioneerId,
+                    expiresAt = newExpirationInstant()
             )
 
             return auctionRepository.save(auction)
         } else throw ApiException(400, "CreateAuctionRequest is not valid")
     }
 
-    fun updateAndSaveAuction(id: String, payload: UpdateAuctionRequest): Auction {
+    fun update(id: String, payload: UpdateAuctionRequest): Auction {
         if (validateUpdateAuctionRequest(payload)) {
             val auction = findAuctionById(id)
 
@@ -40,7 +47,7 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
         } else throw ApiException(400, "UpdateAuctionRequest is not valid")
     }
 
-    fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
+    fun delete(auctionId: String): Unit = auctionRepository.deleteById(auctionId)
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
         val validatedName = validateName(payload.name)
@@ -67,7 +74,7 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
     private fun validateDescription(description: String): Boolean {
         val regex = "^[a-zA-Z0-9 .]*$".toRegex()
 
-        return description.isNotEmpty() && description.length in 20 .. 500 && regex.matches(description)
+        return description.isNotEmpty() && description.length in 20..500 && regex.matches(description)
     }
 
     private fun validatePrice(price: Double): Boolean = price > 0
@@ -96,5 +103,33 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
             return Category.valueOf(categoryString)
         }
         return null
+    }
+
+    fun find(auctionId: String): Auction {
+        return auctionRepository.findById(auctionId)
+                .orElseThrow { AuctionNotFoundException() }
+    }
+
+    fun accept(auctionId: String) {
+        val auction: Auction = find(auctionId)
+        auction.accept()
+        auctionRepository.save(auction)
+    }
+
+    fun archive(auctionId: String) {
+        val auction: Auction = find(auctionId)
+        auction.archive()
+        auctionRepository.save(auction)
+    }
+
+    fun reject(auctionId: String) {
+        val auction: Auction = find(auctionId)
+        auction.reject()
+        auctionRepository.save(auction)
+    }
+
+    private fun newExpirationInstant(): Instant {
+        val daysToExpire = auctionRules.days.toLong()
+        return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
     }
 }

@@ -6,8 +6,6 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class AuctionConfiguration {
     @Bean
-    fun auctionService(repository: AuctionRepository) : AuctionService {
-        return AuctionService(repository)
-    }
+    fun auctionService(repository: AuctionRepository): AuctionFacade = AuctionFacade(repository)
 
 }

@@ -11,5 +11,6 @@ data class Auction(
         var category: Category? = null,
         var description: String? = null,
         var price: Double? = null,
-        var auctioneerId: String? = null
+        var auctioneerId: String? = null,
+        var thumbnail: ByteArray? = null
 )

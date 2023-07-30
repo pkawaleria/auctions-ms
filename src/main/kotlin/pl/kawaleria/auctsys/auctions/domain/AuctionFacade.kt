@@ -8,7 +8,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
 
-class AuctionService(private val auctionRepository: AuctionRepository) {
+class AuctionFacade(private val auctionRepository: AuctionRepository) {
     fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(404, "Auction does not exists") }
@@ -20,7 +20,8 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
                 category = payload.category,
                 description = payload.description,
                 price = payload.price,
-                auctioneerId = auctioneerId
+                auctioneerId = auctioneerId,
+                thumbnail = byteArrayOf()
             )
 
             return auctionRepository.save(auction)
@@ -41,6 +42,12 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
     }
 
     fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
+
+    fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
+        val auction = findAuctionById(auctionId)
+        auction.thumbnail = byteArray
+        auctionRepository.save(auction)
+    }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
         val validatedName = validateName(payload.name)

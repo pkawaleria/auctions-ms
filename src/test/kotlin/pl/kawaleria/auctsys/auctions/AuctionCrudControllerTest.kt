@@ -716,21 +716,15 @@ class AuctionControllerTest {
         }
 
         @Test
-        fun `should not delete non-existing auction`() {
+        fun `should ignore delete of non-existing auction`() {
             // given
             val expectedErrorMessage = "Auction does not exists"
 
             // when
-            val result = mockMvc.perform(
+            mockMvc.perform(
                     delete("$baseUrl/nonExistingAuctionId")
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNotFound())
-                    .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                    .andExpect(status().isNoContent)
         }
     }
 

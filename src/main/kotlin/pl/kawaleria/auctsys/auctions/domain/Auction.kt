@@ -31,9 +31,7 @@ data class Auction(
     }
     fun archive() = updateStatus(status.archive(auction = this))
 
-    private fun isExpired() : Boolean {
-        return expiresAt.isBefore(Instant.now())
-    }
+    private fun isExpired() : Boolean = expiresAt.isBefore(Instant.now())
 
     private fun updateStatus(status: AuctionStatus) {
         this.status = status

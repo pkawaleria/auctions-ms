@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.auctions.domain.Auction
-import pl.kawaleria.auctsys.auctions.domain.AuctionRepository
 import pl.kawaleria.auctsys.auctions.domain.Category
 import pl.kawaleria.auctsys.auctions.domain.MongoAuctionRepository
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -281,7 +280,7 @@ class AuctionControllerTest {
         @Test
         fun `should not return a non-existing auction`() {
             // given
-            val expectedErrorMessage = "Auction does not exists"
+            val expectedErrorMessage = "Accessed auction does not exist"
 
             // when
             val result = mockMvc.perform(
@@ -677,7 +676,7 @@ class AuctionControllerTest {
                     price = 1.23
             )
 
-            val expectedErrorMessage = "Auction does not exists"
+            val expectedErrorMessage = "Accessed auction does not exist"
 
             // when
             val result = mockMvc.perform(
@@ -716,15 +715,20 @@ class AuctionControllerTest {
         }
 
         @Test
-        fun `should ignore delete of non-existing auction`() {
+        fun `should return not found trying to delete non-existing auction`() {
             // given
-            val expectedErrorMessage = "Auction does not exists"
+            val expectedErrorMessage = "Accessed auction does not exist"
 
             // when
-            mockMvc.perform(
+            val result = mockMvc.perform(
                     delete("$baseUrl/nonExistingAuctionId")
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNoContent)
+                    .andExpect(status().isNotFound)
+                    .andReturn()
+
+            // then
+            val responseErrorMessage: String? = result.response.errorMessage
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
         }
     }
 

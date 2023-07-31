@@ -14,4 +14,5 @@ interface AuctionRepository {
     fun findAll(pageRequest: Pageable): Page<Auction>
     fun deleteById(auctionId: String)
     fun existsById(auctionId: String): Boolean
+    fun delete(auction: Auction)
 }

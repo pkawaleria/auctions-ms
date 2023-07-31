@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.UnsupportedOperationOnAuctionException
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import java.util.*
@@ -150,6 +151,20 @@ class AuctionFacadeTest {
                 .hasMessageContaining("Cannot perform archiving on archived auction")
     }
 
+    @Test
+    fun `should throw trying to perform any operation on nonexistent auction`() {
+        // given
+        val auctionId = "nonexistent"
+
+        // when then
+        Assertions.assertThatThrownBy {
+            auctionFacade.archive(auctionId)
+            auctionFacade.reject(auctionId)
+            auctionFacade.archive(auctionId)
+        }
+                .isInstanceOf(AuctionNotFoundException::class.java)
+                .hasMessageContaining("Accessed auction does not exist")
+    }
 
     private fun thereIsRejectedAuction(): String {
         return thereIsAuctionAfterOperationOf { auctionId -> auctionFacade.reject(auctionId) }

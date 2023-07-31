@@ -63,4 +63,8 @@ class InMemoryAuctionRepository : AuctionRepository {
     override fun existsById(auctionId: String): Boolean {
         return map.containsKey(auctionId)
     }
+
+    override fun delete(auction: Auction) {
+        map.remove(auction.id)
+    }
 }

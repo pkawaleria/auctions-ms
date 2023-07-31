@@ -17,7 +17,7 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                     private val clock: Clock) {
     fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
-    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(404, "Auction does not exists") }
+    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
     fun addNewAuction(payload: CreateAuctionRequest, auctioneerId: String): Auction {
         if (validateCreateAuctionRequest(payload)) {
@@ -47,7 +47,56 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         } else throw ApiException(400, "UpdateAuctionRequest is not valid")
     }
 
-    fun delete(auctionId: String): Unit = auctionRepository.deleteById(auctionId)
+    fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
+
+    fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
+        val mappedCategory: Category? = searchRequest.category?.let { mapToCategory(it) }
+        val searchPhrase: String? = searchRequest.searchPhrase?.takeIf { it.isNotBlank() }
+
+        return when {
+            searchPhrase != null && mappedCategory != null ->
+                auctionRepository.findByNameContainingIgnoreCaseAndCategoryEquals(searchPhrase, mappedCategory, pageRequest)
+
+            searchPhrase == null && mappedCategory != null ->
+                auctionRepository.findByCategoryEquals(mappedCategory, pageRequest)
+
+            searchPhrase != null && mappedCategory == null ->
+                auctionRepository.findByNameContainingIgnoreCase(searchPhrase, pageRequest)
+
+            else -> auctionRepository.findAll(pageRequest)
+        }.toPagedAuctions()
+    }
+
+    fun accept(auctionId: String) {
+        val auction: Auction = findAuctionById(auctionId)
+        auction.accept()
+        auctionRepository.save(auction)
+    }
+
+    fun archive(auctionId: String) {
+        val auction: Auction = findAuctionById(auctionId)
+        auction.archive()
+        auctionRepository.save(auction)
+    }
+
+    fun reject(auctionId: String) {
+        val auction: Auction = findAuctionById(auctionId)
+        auction.reject()
+        auctionRepository.save(auction)
+    }
+
+    private fun newExpirationInstant(): Instant {
+        val daysToExpire = auctionRules.days.toLong()
+        return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
+    }
+
+    private fun mapToCategory(categoryString: String): Category? {
+        val validCategories = enumValues<Category>().map { it.name }
+        if (categoryString in validCategories) {
+            return Category.valueOf(categoryString)
+        }
+        return null
+    }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
         val validatedName = validateName(payload.name)
@@ -79,57 +128,4 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
 
     private fun validatePrice(price: Double): Boolean = price > 0
 
-    fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
-        val mappedCategory: Category? = searchRequest.category?.let { mapToCategory(it) }
-        val searchPhrase: String? = searchRequest.searchPhrase?.takeIf { it.isNotBlank() }
-
-        return when {
-            searchPhrase != null && mappedCategory != null ->
-                auctionRepository.findByNameContainingIgnoreCaseAndCategoryEquals(searchPhrase, mappedCategory, pageRequest)
-
-            searchPhrase == null && mappedCategory != null ->
-                auctionRepository.findByCategoryEquals(mappedCategory, pageRequest)
-
-            searchPhrase != null && mappedCategory == null ->
-                auctionRepository.findByNameContainingIgnoreCase(searchPhrase, pageRequest)
-
-            else -> auctionRepository.findAll(pageRequest)
-        }.toPagedAuctions()
-    }
-
-    private fun mapToCategory(categoryString: String): Category? {
-        val validCategories = enumValues<Category>().map { it.name }
-        if (categoryString in validCategories) {
-            return Category.valueOf(categoryString)
-        }
-        return null
-    }
-
-    fun find(auctionId: String): Auction {
-        return auctionRepository.findById(auctionId)
-                .orElseThrow { AuctionNotFoundException() }
-    }
-
-    fun accept(auctionId: String) {
-        val auction: Auction = find(auctionId)
-        auction.accept()
-        auctionRepository.save(auction)
-    }
-
-    fun archive(auctionId: String) {
-        val auction: Auction = find(auctionId)
-        auction.archive()
-        auctionRepository.save(auction)
-    }
-
-    fun reject(auctionId: String) {
-        val auction: Auction = find(auctionId)
-        auction.reject()
-        auctionRepository.save(auction)
-    }
-
-    private fun newExpirationInstant(): Instant {
-        val daysToExpire = auctionRules.days.toLong()
-        return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
-    }
 }

@@ -2,17 +2,21 @@ package pl.kawaleria.auctsys.images.domain
 
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
-import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
+import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileContentTypeException
+import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileExtensionException
+import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileSizeException
+import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileTypeException
 
 @Component
 class ImageValidator(
     private val JPG: String = "jpg",
     private val PNG: String = "png",
     private val CONTENT_TYPE_JPG: String = "image/jpg",
+    private val CONTENT_TYPE_JPEG: String = "image/jpeg",
     private val CONTENT_TYPE_PNG: String = "image/png",
     private val MAX_FILE_SIZE: Long = 1024 * 1024 * 10) {
 
-    fun validateMultipartFileList(files: List<MultipartFile>) {
+    fun validateMultipartFiles(files: List<MultipartFile>) {
         for (file: MultipartFile in files) {
             validateMultipartFile(file)
         }
@@ -26,7 +30,7 @@ class ImageValidator(
 
     private fun validateFileType(file: MultipartFile) {
         val fileType: String = getFileType(file.bytes)
-        if (fileType != PNG && fileType != JPG) throw ApiException(400, "Invalid file type")
+        if (fileType != PNG && fileType != JPG) throw InvalidFileTypeException()
     }
 
     private fun getFileType(fileData: ByteArray): String {
@@ -38,12 +42,14 @@ class ImageValidator(
     }
 
     private fun validateContentType(file: MultipartFile) {
-        if (file.contentType != CONTENT_TYPE_JPG && file.contentType != CONTENT_TYPE_PNG) throw ApiException(400, "Invalid file content type")
+        if (file.contentType != CONTENT_TYPE_JPG
+            && file.contentType != CONTENT_TYPE_PNG
+            && file.contentType != CONTENT_TYPE_JPEG) throw InvalidFileContentTypeException()
     }
 
     private fun validateFileExtension(file: MultipartFile) {
         val fileExtension: String = getFileExtension(file)
-        if (fileExtension != JPG && fileExtension != PNG) throw ApiException(400, "Invalid file extension")
+        if (fileExtension != JPG && fileExtension != PNG) throw InvalidFileExtensionException()
     }
 
     private fun getFileExtension(file: MultipartFile): String {
@@ -57,6 +63,6 @@ class ImageValidator(
     }
 
     private fun validateFileSize(file: MultipartFile) {
-        if (file.size > MAX_FILE_SIZE) throw ApiException(400, "File size is too big")
+        if (file.size > MAX_FILE_SIZE) throw InvalidFileSizeException()
     }
 }

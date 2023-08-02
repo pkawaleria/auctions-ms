@@ -33,7 +33,7 @@ class ImageController(private val imageFacade: ImageFacade) {
         val image: Image = imageFacade.findImageById(imageId)
 
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(image.type!!))
+            .contentType(MediaType.parseMediaType(image.type))
             .body(image.binaryData)
     }
 

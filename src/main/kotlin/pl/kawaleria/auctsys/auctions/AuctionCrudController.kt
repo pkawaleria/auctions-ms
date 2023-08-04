@@ -11,7 +11,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.*
 
 @RestController
 @RequestMapping("/auction-service")
-class AuctionController(private val auctionFacade: AuctionFacade) {
+class AuctionCrudController(private val auctionFacade: AuctionFacade) {
 
     @GetMapping("/auctions")
     fun searchAuctions(
@@ -36,7 +36,7 @@ class AuctionController(private val auctionFacade: AuctionFacade) {
 
     @GetMapping("/users/{userId}/auctions")
     fun getAuctions(@PathVariable userId: String): List<AuctionSimplifiedResponse> {
-        return auctionFacade.findAuctionsByAuctioneerId(userId).map { auction -> auction.toSimplifiedResponse() }
+        return auctionFacade.findAuctionsByAuctioneer(userId).map { auction -> auction.toSimplifiedResponse() }
     }
 
     @PostMapping("/users/{userId}/auctions")
@@ -53,7 +53,7 @@ class AuctionController(private val auctionFacade: AuctionFacade) {
         @PathVariable auctionId: String,
         @RequestBody payload: UpdateAuctionRequest
     ): AuctionDetailedResponse {
-        return auctionFacade.updateAndSaveAuction(auctionId, payload).toDetailedResponse()
+        return auctionFacade.update(auctionId, payload).toDetailedResponse()
     }
 
     @DeleteMapping("/users/{userId}/auctions/{auctionId}")
@@ -62,7 +62,6 @@ class AuctionController(private val auctionFacade: AuctionFacade) {
         @PathVariable auctionId: String)
     : ResponseEntity<Unit> {
         auctionFacade.delete(auctionId)
-
         return ResponseEntity.noContent().build()
     }
 }

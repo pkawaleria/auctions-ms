@@ -16,12 +16,12 @@ class AuctionConfiguration {
 
 
     @Bean
-    fun auctionFacade(repository: MongoAuctionRepository, auctionRules: AuctionRules, clock: Clock): AuctionFacade {
-        return AuctionFacade(auctionRepository = repository, auctionRules = auctionRules, clock = clock)
-    }
+    fun auctionFacade(repository: MongoAuctionRepository, auctionRules: AuctionRules, clock: Clock): AuctionFacade =
+            AuctionFacade(auctionRepository = repository, auctionRules = auctionRules, clock = clock)
 
-    fun auctionFacadeWithInMemoryRepo(): AuctionFacade {
-        return AuctionFacade(InMemoryAuctionRepository(), AuctionRules(10), Clock.systemUTC())
-    }
+
+    fun auctionFacadeWithInMemoryRepo(): AuctionFacade =
+            AuctionFacade(InMemoryAuctionRepository(), AuctionRules(10), Clock.systemUTC())
+
 
 }

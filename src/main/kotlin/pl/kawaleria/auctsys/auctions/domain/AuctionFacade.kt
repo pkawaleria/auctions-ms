@@ -12,9 +12,7 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-class AuctionFacade(private val auctionRepository: AuctionRepository,
-                    private val auctionRules: AuctionRules,
-                    private val clock: Clock) {
+class AuctionFacade(private val auctionRepository: AuctionRepository, private val auctionRules: AuctionRules, private val clock: Clock) {
     fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
@@ -27,6 +25,7 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                     description = payload.description,
                     price = payload.price,
                     auctioneerId = auctioneerId,
+                    thumbnail = byteArrayOf(),
                     expiresAt = newExpirationInstant()
             )
 
@@ -48,6 +47,12 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
     }
 
     fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
+
+    fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
+        val auction = findAuctionById(auctionId)
+        auction.thumbnail = byteArray
+        auctionRepository.save(auction)
+    }
 
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
         val mappedCategory: Category? = searchRequest.category?.let { mapToCategory(it) }

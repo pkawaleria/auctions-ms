@@ -9,7 +9,8 @@ data class AuctionDetailedResponse(
         val category: Category?,
         val description: String?,
         val price: Double?,
-        val auctioneerId: String?
+        val auctioneerId: String?,
+        val thumbnail: ByteArray?
 )
 
-fun Auction.toDetailedResponse(): AuctionDetailedResponse = AuctionDetailedResponse(id, name, category, description, price, auctioneerId)
+fun Auction.toDetailedResponse(): AuctionDetailedResponse = AuctionDetailedResponse(id, name, category, description, price, auctioneerId, thumbnail)

@@ -756,8 +756,6 @@ class AuctionControllerTest {
                         price = 1.23,
                         auctioneerId = "user-id",
                         expiresAt = defaultExpiration()
-
-
                 ),
                 Auction(
                         name = "Wireless JBL headphones",

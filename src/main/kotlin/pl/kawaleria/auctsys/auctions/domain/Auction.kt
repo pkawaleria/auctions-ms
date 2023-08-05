@@ -13,7 +13,8 @@ data class Auction(
         var category: Category? = null,
         var description: String? = null,
         var price: Double? = null,
-        var auctioneerId: String,
+        var auctioneerId: String? = null,
+        var thumbnail: ByteArray? = null,
         var status: AuctionStatus = AuctionStatus.NEW,
         var expiresAt: Instant
 ) {
@@ -23,15 +24,17 @@ data class Auction(
         }
         updateStatus(status.accept(auction = this))
     }
+
     fun reject() {
         if (isExpired()) {
             throw ExpiredAuctionException()
         }
         updateStatus(status.reject(auction = this))
     }
+
     fun archive() = updateStatus(status.archive(auction = this))
 
-    private fun isExpired() : Boolean = expiresAt.isBefore(Instant.now())
+    private fun isExpired(): Boolean = expiresAt.isBefore(Instant.now())
 
     private fun updateStatus(status: AuctionStatus) {
         this.status = status

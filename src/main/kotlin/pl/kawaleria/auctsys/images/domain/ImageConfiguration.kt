@@ -13,8 +13,7 @@ class ImageConfiguration {
     fun imageService(
         repository: ImageRepository,
         thumbnailRules: ThumbnailRules,
-        auctionFacade: AuctionFacade,
-        imageValidator: ImageValidator) : ImageFacade {
-        return ImageFacade(repository, thumbnailRules, auctionFacade, imageValidator)
+        auctionFacade: AuctionFacade) : ImageFacade {
+        return ImageFacade(repository, thumbnailRules, auctionFacade, ImageValidator())
     }
 }

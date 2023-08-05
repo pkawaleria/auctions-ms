@@ -13,28 +13,24 @@ import javax.imageio.ImageIO
 
 @EnableConfigurationProperties(ThumbnailRules::class)
 class ImageFacade(
-    private val imageRepository: ImageRepository,
-    private val thumbnailRules: ThumbnailRules,
-    private val auctionFacade: AuctionFacade,
-    private val imageValidator: ImageValidator) {
+        private val imageRepository: ImageRepository,
+        private val thumbnailRules: ThumbnailRules,
+        private val auctionFacade: AuctionFacade,
+        private val imageValidator: ImageValidator) {
     fun findImageById(id: String): Image = imageRepository.findById(id).orElseThrow { ImageDoesNotExistsException() }
 
     fun findImagesByAuctionId(auctionId: String): AuctionImagesResponse {
         val images: List<Image> = imageRepository.findImagesByAuctionId(auctionId)
-        val imageIDs: MutableList<String> = mutableListOf()
-
-        for (image: Image in images) imageIDs.add(image.id!!)
-
+        val imageIDs = images.mapNotNull { it.id }
         return AuctionImagesResponse(
-            imagesCount = images.size,
-            imageIDs = imageIDs
+                imagesCount = images.size,
+                imageIDs = imageIDs
         )
     }
 
-    fun addImagesToAuction(auctionId: String, files: List<MultipartFile>): MutableList<Image> {
+    fun addImagesToAuction(auctionId: String, files: List<MultipartFile>): List<Image> {
         imageValidator.validateMultipartFiles(files)
         addThumbnailToAuction(auctionId, files[0])
-
         return saveImages(auctionId, files)
     }
 
@@ -55,24 +51,21 @@ class ImageFacade(
         return outputStream.toByteArray()
     }
 
-    private fun saveImages(auctionId: String, images: List<MultipartFile>): MutableList<Image> {
-        val imageList: MutableList<Image> = mutableListOf()
-
-        for (image: MultipartFile in images) {
-            val newImage = Image(
-                type = image.contentType.toString(),
-                size = image.size,
-                binaryData = image.bytes,
-                auctionId = auctionId
-            )
-
-            imageList.add(newImage)
-            imageRepository.save(newImage)
+    private fun saveImages(auctionId: String, images: List<MultipartFile>): List<Image> {
+        return images.map { file -> file.toImage(auctionId)
+                    .also { imageRepository.save(it) }
         }
-
-        return imageList
     }
 
     fun delete(imageId: String): Unit = imageRepository.delete(findImageById(imageId))
+
+    private fun MultipartFile.toImage(auctionId: String): Image {
+        return Image(
+                type = this.contentType.toString(),
+                size = this.size,
+                binaryData = this.bytes,
+                auctionId = auctionId
+        )
+    }
 
 }

@@ -2,6 +2,8 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
+import pl.kawaleria.auctsys.auctions.dto.exceptions.ExpiredAuctionException
+import java.time.Instant
 
 @Document(collection = "auctions")
 data class Auction(

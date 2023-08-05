@@ -1,20 +1,19 @@
 package pl.kawaleria.auctsys.images.domain
 
-import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileContentTypeException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileExtensionException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileSizeException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileTypeException
 
-@Component
-class ImageValidator(
-    private val JPG: String = "jpg",
-    private val PNG: String = "png",
-    private val CONTENT_TYPE_JPG: String = "image/jpg",
-    private val CONTENT_TYPE_JPEG: String = "image/jpeg",
-    private val CONTENT_TYPE_PNG: String = "image/png",
-    private val MAX_FILE_SIZE: Long = 1024 * 1024 * 10) {
+
+ class ImageValidator(
+        private val JPG: String = "jpg",
+        private val PNG: String = "png",
+        private val CONTENT_TYPE_JPG: String = "image/jpg",
+        private val CONTENT_TYPE_JPEG: String = "image/jpeg",
+        private val CONTENT_TYPE_PNG: String = "image/png",
+        private val MAX_FILE_SIZE: Long = 1024 * 1024 * 10) {
 
     fun validateMultipartFiles(files: List<MultipartFile>) {
         for (file: MultipartFile in files) {

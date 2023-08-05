@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.domain.PageRequest
+import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -11,10 +12,10 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-class AuctionService(private val auctionRepository: AuctionRepository) {
-    fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
+class AuctionFacade(private val auctionRepository: AuctionRepository, private val auctionRules: AuctionRules, private val clock: Clock) {
+    fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
-    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { ApiException(404, "Auction does not exists") }
+    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
     fun addNewAuction(payload: CreateAuctionRequest, auctioneerId: String): Auction {
         if (validateCreateAuctionRequest(payload)) {
@@ -26,7 +27,6 @@ class AuctionService(private val auctionRepository: AuctionRepository) {
                     auctioneerId = auctioneerId,
                     thumbnail = byteArrayOf(),
                     expiresAt = newExpirationInstant()
-
             )
 
             return auctionRepository.save(auction)

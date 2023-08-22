@@ -14,18 +14,16 @@ class InMemoryAuctionRepository : AuctionRepository {
         return map.values.filter { it.auctioneerId == auctioneerId }.toMutableList()
     }
 
-
-    override fun findByNameContainingIgnoreCaseAndCategoryEquals(name: String, category: Category, pageable: Pageable): Page<Auction> {
+    override fun findByNameContainingIgnoreCaseAndCategoryPathContaining(name: String, categoryName: String, pageable: Pageable): Page<Auction> {
         val filteredAuctions = map.values
-                .filter { it.name?.contains(name, ignoreCase = true) ?: false && it.category == category }
+                .filter { auction -> auction.categoryPath.containsCategoryOfName(categoryName) }
+                .filter { it.name?.contains(name, ignoreCase = true) ?: false }
                 .toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 
-    override fun findByCategoryEquals(category: Category, pageable: Pageable): Page<Auction> {
-        val filteredAuctions = map.values
-                .filter { it.category == category }
-                .toMutableList()
+    override fun findAuctionsWithCategoryInPath(categoryName: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions = map.values.filter { e -> e.categoryPath.containsCategoryOfName(categoryName) }.toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 

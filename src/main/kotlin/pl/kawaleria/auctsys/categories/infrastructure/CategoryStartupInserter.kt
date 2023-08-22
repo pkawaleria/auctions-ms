@@ -3,13 +3,16 @@ package pl.kawaleria.auctsys.categories.infrastructure
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
+import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.categories.domain.Category
 import pl.kawaleria.auctsys.categories.domain.CategoryRepository
 
 // TODO: This class serves only for development (inserts predefined test data). It will be better to extract that into
 //  files (dev-inserts.json or whatever) and load this files at startup
 @Component
-class CategoryStartupInserter(private val categoryRepository: CategoryRepository) {
+class CategoryStartupInserter(private val categoryRepository: CategoryRepository,
+                              private val auctionFacade: AuctionFacade) {
 
     @EventListener(ApplicationReadyEvent::class)
     fun onApplicationReadyEvent() {
@@ -32,7 +35,7 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                 isTopLevel = true,
                 isFinalNode = false
         )
-        categoryRepository.saveAll(listOf(electronics, clothing))
+        categoryRepository.saveAll(mutableListOf(electronics, clothing))
 
         val smartphones = Category(
                 name = "Smartphones",
@@ -63,7 +66,7 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                 isFinalNode = false,
                 parentCategoryId = clothing.id
         )
-        categoryRepository.saveAll(listOf(smartphones, laptops, tShirts, jeans))
+        categoryRepository.saveAll(mutableListOf(smartphones, laptops, tShirts, jeans))
 
         val gamingLaptops = Category(
                 name = "gaming laptops",
@@ -79,6 +82,14 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                 isFinalNode = true,
                 parentCategoryId = laptops.id
         )
-        categoryRepository.saveAll(listOf(gamingLaptops, businessLaptops))
+        categoryRepository.saveAll(mutableListOf(gamingLaptops, businessLaptops))
+
+        auctionFacade.addNewAuction(
+                createRequest = CreateAuctionRequest(
+                        name = "Modern Dell laptop",
+                        description = "Modern dell laptop with radeon graphics",
+                        price = 12.4,
+                        categoryId = gamingLaptops.id
+                ), auctioneerId = "auctioneer-id")
     }
 }

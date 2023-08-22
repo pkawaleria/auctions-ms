@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.categories.dto.response
 
 data class CategoryPathResponse(
+        val requestedCategory: SimpleCategoryResponse,
         val path: List<CategoryNameResponse>
 )
 

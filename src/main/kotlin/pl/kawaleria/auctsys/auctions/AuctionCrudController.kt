@@ -26,12 +26,21 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
         return auctionFacade.searchAuctions(searchRequest, pageRequest)
     }
 
-    @GetMapping("/users/{userId}/auctions/{auctionId}")
+    @GetMapping("/auctions/{auctionId}")
     fun getAuction(
-        @PathVariable userId: String,
         @PathVariable auctionId: String
     ): AuctionDetailedResponse {
         return auctionFacade.findAuctionById(auctionId).toDetailedResponse()
+    }
+
+    @PutMapping("/auctions/{auctionId}/categories/{categoryId}")
+    fun changeCategory(
+            @PathVariable userId: String,
+            @PathVariable auctionId: String,
+            @PathVariable categoryId: String)
+            : ResponseEntity<Unit> {
+        auctionFacade.changeCategory(auctionId, categoryId)
+        return ResponseEntity.noContent().build()
     }
 
     @GetMapping("/users/{userId}/auctions")

@@ -5,11 +5,19 @@ import org.junit.jupiter.api.Test
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.UnsupportedOperationOnAuctionException
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
+import pl.kawaleria.auctsys.categories.domain.CategoryConfiguration
+import pl.kawaleria.auctsys.categories.domain.CategoryFacade
+import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
+import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
 import java.util.*
 
 class AuctionFacadeTest {
 
-    private val auctionFacade: AuctionFacade = AuctionConfiguration().auctionFacadeWithInMemoryRepo()
+    private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
+
+    private val auctionFacade: AuctionFacade = AuctionConfiguration().auctionFacadeWithInMemoryRepo(
+            categoryFacade
+    )
 
     @Test
     fun `should accept newly created auction`() {
@@ -183,14 +191,44 @@ class AuctionFacadeTest {
     }
 
     private fun thereIsAuctionAfterOperationOf(action: (String) -> Unit = {}): String {
+        val finalCategory = thereIsSampleCategoryTree()
+
         val auction = CreateAuctionRequest(
                 name = "Adidas shoes",
-                category = Category.MODA,
+                categoryId = finalCategory.id,
                 description = "Breathable sports shoes",
                 price = 145.2
         )
-        val auctionId: String = auctionFacade.addNewAuction(payload = auction, auctioneerId = "auctioneer-${UUID.randomUUID()}").id!!
+        val auctionId: String = auctionFacade.addNewAuction(createRequest = auction, auctioneerId = "auctioneer-${UUID.randomUUID()}").id!!
         action(auctionId)
         return auctionId
+    }
+
+    private fun thereIsSampleCategoryTree(): CategoryResponse {
+        val topLevelCategory = categoryFacade.create(request = CategoryCreateRequest(
+                name = "Clothing",
+                description = "Just clothing",
+                parentCategoryId = null,
+                isTopLevel = true,
+                isFinalNode = false
+        ))
+
+        val sneakersCategory = categoryFacade.create(request = CategoryCreateRequest(
+                name = "Sneakers",
+                description = "Nice sneakers",
+                parentCategoryId = topLevelCategory.id,
+                isTopLevel = false,
+                isFinalNode = false
+        ))
+
+        val adidasSneakersCategory = categoryFacade.create(request = CategoryCreateRequest(
+                name = "Adidas sneakers",
+                description = "Nice adidas sneakers",
+                parentCategoryId = sneakersCategory.id,
+                isTopLevel = false,
+                isFinalNode = true
+        ))
+
+        return adidasSneakersCategory
     }
 }

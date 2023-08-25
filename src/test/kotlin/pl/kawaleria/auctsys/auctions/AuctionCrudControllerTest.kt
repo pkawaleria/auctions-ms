@@ -20,14 +20,19 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.auctions.domain.Auction
 import pl.kawaleria.auctsys.auctions.domain.Category
+import pl.kawaleria.auctsys.auctions.domain.CategoryPath
 import pl.kawaleria.auctsys.auctions.domain.MongoAuctionRepository
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
+import pl.kawaleria.auctsys.categories.domain.CategoryFacade
+import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
+import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
 import java.time.Duration
 import java.time.Instant
+import java.util.*
 
 /*To run this test you need running Docker environment*/
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -53,6 +58,9 @@ class AuctionControllerTest {
 
     @Autowired
     private lateinit var auctionRepository: MongoAuctionRepository
+
+    @Autowired
+    private lateinit var categoryFacade: CategoryFacade
 
     @Autowired
     private lateinit var mongoTemplate: MongoTemplate
@@ -141,8 +149,8 @@ class AuctionControllerTest {
             val selectedPageSize = 10
             val expectedPageCount = 1
             val selectedSearchPhrase = "JBL"
-            val selectedCategory = "MODA"
-            val expectedFilteredAuctionsCount = 1
+            val selectedCategory = "Electronics"
+            val expectedFilteredAuctionsCount = 2
 
             // when
             val result = mockMvc.perform(
@@ -165,7 +173,7 @@ class AuctionControllerTest {
                 auction.name?.contains(selectedSearchPhrase, ignoreCase = true) ?: false
             }
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
-                auction.category?.equals(Category.valueOf(selectedCategory)) ?: false
+                auction.categoryPath.pathElements.map{ it.name }.any { it.equals(selectedCategory) }
             }
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
@@ -180,7 +188,7 @@ class AuctionControllerTest {
             val selectedPageSize = 10
             val expectedPageCount = 1
             val selectedSearchPhrase = " "
-            val selectedCategory = "SPORT"
+            val selectedCategory = "Headphones"
             val expectedFilteredAuctionsCount = 2
 
             // when
@@ -201,7 +209,7 @@ class AuctionControllerTest {
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
-                auction.category?.equals(Category.valueOf(selectedCategory)) ?: false
+                auction.categoryPath.pathElements.map{ it.name }.any { it.equals(selectedCategory) }
             }
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
@@ -210,7 +218,8 @@ class AuctionControllerTest {
 
     @Nested
     inner class AuctionsGettersTests {
-        private val baseUrl: String = "/auction-service/users/user-id/auctions"
+        private val singleAuctionBaseUrl: String = "/auction-service/auctions"
+        private val userAuctionsBaseUrl: String = "/auction-service/users/user-id/auctions"
 
         @Test
         fun `should return specific auction`() {
@@ -220,7 +229,7 @@ class AuctionControllerTest {
 
             // when
             val result = mockMvc.perform(
-                    get("$baseUrl/$auctionId")
+                    get("$singleAuctionBaseUrl/$auctionId")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -237,14 +246,14 @@ class AuctionControllerTest {
             Assertions.assertThat(foundAuction.price).isEqualTo(auction.price)
         }
 
+
         @Test
         fun `should return list of auctions belonging to the user`() {
             // given
             val expectedNumberOfAuctions: Int = thereAreAuctions()
-
             // when
             val result = mockMvc.perform(
-                    get(baseUrl)
+                    get(userAuctionsBaseUrl)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -284,7 +293,7 @@ class AuctionControllerTest {
 
             // when
             val result = mockMvc.perform(
-                    get("$baseUrl/nonExistingAuctionId")
+                    get("$singleAuctionBaseUrl/nonExistingAuctionId")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andReturn()
@@ -303,9 +312,11 @@ class AuctionControllerTest {
         @Test
         fun `should create auction`() {
             // given
+            val category = thereIsSampleCategoryTree()
+
             val auctionRequestData = CreateAuctionRequest(
                     name = "Wireless Samsung headphones",
-                    category = Category.MODA,
+                    categoryId = category.id,
                     description = "Best headphones you can have",
                     price = 1.23
             )
@@ -323,7 +334,6 @@ class AuctionControllerTest {
             val createdAuction: AuctionDetailedResponse = objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
             Assertions.assertThat(createdAuction.name).isEqualTo(auctionRequestData.name)
-            Assertions.assertThat(createdAuction.category).isEqualTo(auctionRequestData.category)
             Assertions.assertThat(createdAuction.price).isEqualTo(auctionRequestData.price)
             Assertions.assertThat(createdAuction.description).isEqualTo(auctionRequestData.description)
             Assertions.assertThat(createdAuction.auctioneerId).isEqualTo("user-id")
@@ -332,9 +342,11 @@ class AuctionControllerTest {
         @Test
         fun `should not create auction with blank name`() {
             // given
+            val category = thereIsSampleCategoryTree()
+
             val auctionRequestData = CreateAuctionRequest(
                     name = "",
-                    category = Category.MODA,
+                    categoryId = category.id,
                     description = "Headphones",
                     price = 1.23
             )
@@ -358,9 +370,11 @@ class AuctionControllerTest {
         @Test
         fun `should not create auction with description containing less than 20 characters`() {
             // given
+            val category = thereIsSampleCategoryTree()
+
             val auctionRequestData = CreateAuctionRequest(
                     name = "Wireless Samsung headphones",
-                    category = Category.MODA,
+                    categoryId = category.id,
                     description = "Headphones",
                     price = 1.23
             )
@@ -384,9 +398,11 @@ class AuctionControllerTest {
         @Test
         fun `should not create auction with name containing more than 100 characters`() {
             // given
+            val category = thereIsSampleCategoryTree()
+
             val auctionRequestData = CreateAuctionRequest(
                     name = "Wireless Extra Ultra Mega Best Giga Fastest Smoothest Cleanest Cheapest Samsung headphones with Bluetooth",
-                    category = Category.MODA,
+                    categoryId = category.id,
                     description = "Headphones",
                     price = 1.23
             )
@@ -410,9 +426,11 @@ class AuctionControllerTest {
         @Test
         fun `should not create auction with negative price`() {
             // given
+            val category = thereIsSampleCategoryTree()
+
             val auctionRequestData = CreateAuctionRequest(
                     name = "Wireless Samsung headphones",
-                    category = Category.MODA,
+                    categoryId = category.id,
                     description = "Best headphones you can have",
                     price = -13.0
             )
@@ -436,10 +454,12 @@ class AuctionControllerTest {
         @Test
         fun `should not create auction with invalid description syntax`() {
             // given
+            val category = thereIsSampleCategoryTree()
+
             val auctionRequestData = CreateAuctionRequest(
                     name = "Wireless Samsung headphones",
-                    category = Category.MODA,
                     description = "Best headphones you can have;[,.[;.;~??",
+                    categoryId = category.id,
                     price = 13.0
             )
 
@@ -474,7 +494,6 @@ class AuctionControllerTest {
 
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = expectedAuctionName,
-                    category = oldAuction.category!!,
                     description = oldAuction.description!!,
                     price = oldAuction.price!!
             )
@@ -492,7 +511,6 @@ class AuctionControllerTest {
             val responseUpdatedAuction: AuctionDetailedResponse = objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
             Assertions.assertThat(responseUpdatedAuction.name).isEqualTo(expectedAuctionName)
-            Assertions.assertThat(responseUpdatedAuction.category).isEqualTo(updateAuctionRequest.category)
             Assertions.assertThat(responseUpdatedAuction.price).isEqualTo(updateAuctionRequest.price)
             Assertions.assertThat(responseUpdatedAuction.description).isEqualTo(updateAuctionRequest.description)
             Assertions.assertThat(responseUpdatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
@@ -510,7 +528,6 @@ class AuctionControllerTest {
 
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = oldAuction.name!!,
-                    category = oldAuction.category!!,
                     description = expectedAuctionDescription,
                     price = expectedAuctionPrice
             )
@@ -530,7 +547,6 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.description).isEqualTo(expectedAuctionDescription)
             Assertions.assertThat(updatedAuction.price).isEqualTo(expectedAuctionPrice)
             Assertions.assertThat(updatedAuction.name).isEqualTo(updateAuctionRequest.name)
-            Assertions.assertThat(updatedAuction.category).isEqualTo(updateAuctionRequest.category)
             Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuctionId)
             Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
         }
@@ -545,7 +561,6 @@ class AuctionControllerTest {
 
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = oldAuction.name!!,
-                    category = oldAuction.category!!,
                     description = oldAuction.description!!,
                     price = newPrice
             )
@@ -576,7 +591,6 @@ class AuctionControllerTest {
 
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = newName,
-                    category = oldAuction.category!!,
                     description = oldAuction.description!!,
                     price = oldAuction.price!!
             )
@@ -614,7 +628,6 @@ class AuctionControllerTest {
 
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = oldAuction.name!!,
-                    category = oldAuction.category!!,
                     description = newDescription,
                     price = oldAuction.price!!
             )
@@ -645,7 +658,6 @@ class AuctionControllerTest {
 
             val newAuction = UpdateAuctionRequest(
                     name = newName,
-                    category = oldAuction.category!!,
                     description = oldAuction.description!!,
                     price = oldAuction.price!!
             )
@@ -671,7 +683,6 @@ class AuctionControllerTest {
             // given
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = "Wireless Samsung headphones",
-                    category = Category.MODA,
                     description = "Best headphones you can have",
                     price = 1.23
             )
@@ -733,13 +744,21 @@ class AuctionControllerTest {
     }
 
     private fun thereIsAuction(): Auction {
+        val electronics = Category(UUID.randomUUID().toString(), "Electronics")
+        val headphones = Category(UUID.randomUUID().toString(), "Headphones")
+        val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
+        val categoryPath = CategoryPath(
+                pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
+        )
+
         val auction = Auction(
                 name = "Wireless Samsung headphones",
-                category = Category.MODA,
+                category = wirelessHeadphones,
+                categoryPath = categoryPath,
                 description = "Best headphones you can have",
                 price = 1.23,
                 auctioneerId = "user-id",
-                expiresAt = defaultExpiration()
+                expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
         )
 
         return auctionRepository.save(auction)
@@ -748,18 +767,39 @@ class AuctionControllerTest {
     private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
 
     private fun thereAreAuctions(): Int {
+        val electronics = Category(UUID.randomUUID().toString(), "Electronics")
+        val headphones = Category(UUID.randomUUID().toString(), "Headphones")
+        val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
+        val wirelessHeadphonesCategoryPath = CategoryPath(
+                pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
+        )
+
+        val speakers = Category(UUID.randomUUID().toString(), "Speakers")
+        val speakersCategoryPath = CategoryPath(
+                pathElements = mutableListOf(electronics, speakers)
+        )
+
+        val clothing = Category(UUID.randomUUID().toString(), "Clothing")
+        val unisexClothing = Category(UUID.randomUUID().toString(), "Unisex")
+        val tshirts = Category(UUID.randomUUID().toString(), "Tshirts")
+        val tshirtsCategoryPath = CategoryPath(
+                pathElements = mutableListOf(clothing, unisexClothing, tshirts)
+        )
+
         val auctions = listOf(
                 Auction(
                         name = "Wireless Samsung headphones",
-                        category = Category.MODA,
-                        description = "Headphones",
+                        category = wirelessHeadphones,
+                        categoryPath = wirelessHeadphonesCategoryPath,
+                        description = "Best headphones you can have",
                         price = 1.23,
                         auctioneerId = "user-id",
-                        expiresAt = defaultExpiration()
+                        expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 ),
                 Auction(
                         name = "Wireless JBL headphones",
-                        category = Category.MODA,
+                        category = wirelessHeadphones,
+                        categoryPath = wirelessHeadphonesCategoryPath,
                         description = "Headphones",
                         price = 1.13,
                         auctioneerId = "user-id",
@@ -768,7 +808,8 @@ class AuctionControllerTest {
                 ),
                 Auction(
                         name = "jbl Speaker",
-                        category = Category.SPORT,
+                        category = speakers,
+                        categoryPath = speakersCategoryPath,
                         description = "Speaker",
                         price = 5.99,
                         auctioneerId = "user-id",
@@ -777,7 +818,8 @@ class AuctionControllerTest {
                 ),
                 Auction(
                         name = "Adidas T-Shirt",
-                        category = Category.SPORT,
+                        category = tshirts,
+                        categoryPath = tshirtsCategoryPath,
                         description = "T-Shirt",
                         price = 9.11,
                         auctioneerId = "user-id",
@@ -789,4 +831,33 @@ class AuctionControllerTest {
         auctionRepository.saveAll(auctions)
         return auctions.size
     }
+
+    private fun thereIsSampleCategoryTree(): CategoryResponse {
+        val topLevelCategory = categoryFacade.create(request = CategoryCreateRequest(
+                name = "Top level category",
+                description = "Just top level category",
+                parentCategoryId = null,
+                isTopLevel = true,
+                isFinalNode = false
+        ))
+
+        val secondLevelCategory = categoryFacade.create(request = CategoryCreateRequest(
+                name = "Second level category",
+                description = "Just second level category",
+                parentCategoryId = topLevelCategory.id,
+                isTopLevel = false,
+                isFinalNode = false
+        ))
+
+        val finalLevelCategory = categoryFacade.create(request = CategoryCreateRequest(
+                name = "Final level category",
+                description = "Nice final level category",
+                parentCategoryId = secondLevelCategory.id,
+                isTopLevel = false,
+                isFinalNode = true
+        ))
+
+        return finalLevelCategory
+    }
+
 }

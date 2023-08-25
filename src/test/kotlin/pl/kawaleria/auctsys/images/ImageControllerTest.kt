@@ -24,12 +24,14 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.auctions.domain.Auction
 import pl.kawaleria.auctsys.auctions.domain.AuctionRepository
 import pl.kawaleria.auctsys.auctions.domain.Category
+import pl.kawaleria.auctsys.auctions.domain.CategoryPath
 import pl.kawaleria.auctsys.images.domain.Image
 import pl.kawaleria.auctsys.images.domain.ImageRepository
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
 import pl.kawaleria.auctsys.images.dto.responses.ImageDetailedResponse
 import java.time.Duration
 import java.time.Instant
+import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -289,9 +291,17 @@ class ImageControllerTest {
     }
 
     private fun thereIsAuction(): String {
+        val electronics = Category(UUID.randomUUID().toString(), "Electronics")
+        val headphones = Category(UUID.randomUUID().toString(), "Headphones")
+        val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
+        val categoryPath = CategoryPath(
+                pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
+        )
+
         val auction = Auction(
                 name = "Wireless Samsung headphones",
-                category = Category.MODA,
+                category = wirelessHeadphones,
+                categoryPath = categoryPath,
                 description = "Best headphones you can have",
                 price = 1.23,
                 auctioneerId = "user-id",
@@ -327,6 +337,7 @@ class ImageControllerTest {
         val content = resource.inputStream.readAllBytes()
         return MockMultipartFile("files", originalFileName, contentType, content)
     }
+
     private fun createMockMultipartFileWithInvalidContentType(fileName: String): MockMultipartFile {
         val resource = ClassPathResource("test_images/$fileName")
         val originalFileName = fileName

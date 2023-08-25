@@ -4,11 +4,14 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pl.kawaleria.auctsys.auctions.dto.exceptions.CategoryNotFound
 import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidCategoryActionException
+import pl.kawaleria.auctsys.categories.dto.events.CategoryDeletedEvent
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.*
+import java.time.Instant
 
 @Service
-class CategoryFacade(private val categoryRepository: CategoryRepository) {
+class CategoryFacade(private val categoryRepository: CategoryRepository,
+                     private val categoryEventPublisher: CategoryEventPublisher) {
 
     @Transactional
     fun delete(categoryId: String) {
@@ -24,9 +27,9 @@ class CategoryFacade(private val categoryRepository: CategoryRepository) {
         val subcategories = categoryRepository.findSubcategories(categoryId)
         val newParentId = category.parentCategoryId
         subcategories.forEach { it.changeParent(newParentId) }
-        categoryRepository.saveAll(subcategories)
+        categoryRepository.saveAll(subcategories.toMutableList())
         categoryRepository.delete(category)
-
+        categoryEventPublisher.publish(category.toDeletedEvent())
     }
 
     private fun transferFinalNodeResponsibility(category: Category) {
@@ -47,7 +50,7 @@ class CategoryFacade(private val categoryRepository: CategoryRepository) {
     }
 
     fun create(request: CategoryCreateRequest): CategoryResponse {
-        if (!request.isTopLevel && categoryRepository.existsById(request.parentCategoryId)) {
+        if (!request.isTopLevel && request.parentCategoryId?.let { categoryRepository.existsById(it) } == false) {
             throw InvalidCategoryActionException("Cannot find parent category of id ${request.parentCategoryId}")
         }
         val category: Category = request.toCategory()
@@ -65,7 +68,9 @@ class CategoryFacade(private val categoryRepository: CategoryRepository) {
             categoryPath.add(parentCategory.toCategoryNameResponse())
         }
 
-        return CategoryPathResponse(categoryPath.reversed())
+        return CategoryPathResponse(
+                requestedCategory = category.toSimpleCategoryResponse(),
+                path = categoryPath.reversed())
     }
 
     fun getFinalCategories(): List<CategoryResponse> {
@@ -132,6 +137,14 @@ private fun Category.toCategoryNameResponse(): CategoryNameResponse {
     return CategoryNameResponse(
             id = this.id,
             name = this.name
+    )
+}
+private fun Category.toDeletedEvent(): CategoryDeletedEvent {
+    return CategoryDeletedEvent(
+            categoryId = this.id,
+            categoryName = this.name,
+            isFinalNode = this.isFinalNode,
+            timestamp = Instant.now()
     )
 }
 

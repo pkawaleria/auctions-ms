@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.auctions.domain.*
 import java.time.Duration
 import java.time.Instant
+import java.util.*
 
 private const val baseUrl = "/auction-service/auctions"
 
@@ -98,14 +99,23 @@ class AuctionOperationsControllerTest {
 
 
     private fun thereIsAuction(): Auction {
+        val electronics = Category(UUID.randomUUID().toString(), "Electronics")
+        val headphones = Category(UUID.randomUUID().toString(), "Headphones")
+        val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
+        val categoryPath = CategoryPath(
+                pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
+        )
+
         val auction = Auction(
                 name = "Wireless Samsung headphones",
-                category = Category.MODA,
+                category = wirelessHeadphones,
+                categoryPath = categoryPath,
                 description = "Best headphones you can have",
                 price = 1.23,
                 auctioneerId = "user-id",
-                expiresAt = defaultExpiration()
+                expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
         )
+
         return auctionRepository.save(auction)
     }
 

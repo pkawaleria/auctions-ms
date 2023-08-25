@@ -3,6 +3,7 @@ package pl.kawaleria.auctsys.auctions.domain
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import pl.kawaleria.auctsys.auctions.dto.exceptions.ExpiredAuctionException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCategoryPathException
 import java.time.Instant
 
 @Document(collection = "auctions")
@@ -10,7 +11,8 @@ data class Auction(
         @Id
         var id: String? = null,
         var name: String? = null,
-        var category: Category? = null,
+        var category: Category,
+        var categoryPath: CategoryPath,
         var description: String? = null,
         var price: Double? = null,
         var auctioneerId: String? = null,
@@ -18,6 +20,15 @@ data class Auction(
         var status: AuctionStatus = AuctionStatus.NEW,
         var expiresAt: Instant
 ) {
+
+    fun assignPath(categoryPath: CategoryPath) {
+        if (categoryPath.pathElements.isEmpty()) {
+            throw InvalidAuctionCategoryPathException()
+        }
+        this.categoryPath = categoryPath
+        this.category = categoryPath.lastCategory()
+    }
+
     fun accept() {
         if (isExpired()) {
             throw ExpiredAuctionException()
@@ -39,6 +50,17 @@ data class Auction(
     private fun updateStatus(status: AuctionStatus) {
         this.status = status
     }
+
+    fun dropCategoryFromPath(categoryName: String) {
+        if (isCurrentCategory(categoryName)) {
+            categoryPath.removeLast()
+            category = categoryPath.lastCategory()
+        } else { // is just path element
+            categoryPath.remove(categoryName)
+        }
+    }
+
+    private fun isCurrentCategory(categoryId: String) = categoryId == category.id
 
     fun isAccepted(): Boolean = this.status == AuctionStatus.ACCEPTED
     fun isRejected(): Boolean = this.status == AuctionStatus.REJECTED

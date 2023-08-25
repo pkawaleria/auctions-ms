@@ -5,32 +5,48 @@ import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
-import pl.kawaleria.auctsys.auctions.dto.responses.ApiException
-import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
-import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.*
+import pl.kawaleria.auctsys.categories.domain.CategoryFacade
+import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
+import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-class AuctionFacade(private val auctionRepository: AuctionRepository, private val auctionRules: AuctionRules, private val clock: Clock) {
+class AuctionFacade(private val auctionRepository: AuctionRepository,
+                    private val categoryFacade: CategoryFacade,
+                    private val auctionRules: AuctionRules,
+                    private val auctionCategoryDeleter: AuctionCategoryDeleter,
+                    private val clock: Clock) {
     fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
-    fun addNewAuction(payload: CreateAuctionRequest, auctioneerId: String): Auction {
-        if (validateCreateAuctionRequest(payload)) {
-            val auction = Auction(
-                    name = payload.name,
-                    category = payload.category,
-                    description = payload.description,
-                    price = payload.price,
-                    auctioneerId = auctioneerId,
-                    thumbnail = byteArrayOf(),
-                    expiresAt = newExpirationInstant()
-            )
+    fun changeCategory(auctionId: String, categoryId: String) {
+        val auction = findAuctionById(auctionId)
+        val pathDto = categoryFacade.getFullCategoryPath(categoryId)
+        val path = pathDto.toAuctionCategoryPathModel()
+        auction.assignPath(path)
+        auctionRepository.save(auction)
+    }
 
-            return auctionRepository.save(auction)
-        } else throw ApiException(400, "CreateAuctionRequest is not valid")
+    fun addNewAuction(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
+        if (!validateCreateAuctionRequest(createRequest)) {
+            throw ApiException(400, "CreateAuctionRequest is not valid")
+        }
+        val categoryPath = categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
+
+        val auction = Auction(
+                name = createRequest.name,
+                description = createRequest.description,
+                price = createRequest.price,
+                auctioneerId = auctioneerId,
+                thumbnail = byteArrayOf(),
+                expiresAt = newExpirationInstant(),
+                category = categoryPath.lastCategory(),
+                categoryPath = categoryPath,
+        )
+        return auctionRepository.save(auction)
     }
 
     fun update(id: String, payload: UpdateAuctionRequest): Auction {
@@ -39,7 +55,6 @@ class AuctionFacade(private val auctionRepository: AuctionRepository, private va
 
             auction.name = payload.name
             auction.price = payload.price
-            auction.category = payload.category
             auction.description = payload.description
 
             return auctionRepository.save(auction)
@@ -48,6 +63,10 @@ class AuctionFacade(private val auctionRepository: AuctionRepository, private va
 
     fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
 
+    fun eraseCategoryFromAuctions(categoryName: String) {
+        auctionCategoryDeleter.eraseCategoryFromAuctions(categoryName)
+    }
+
     fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
         val auction = findAuctionById(auctionId)
         auction.thumbnail = byteArray
@@ -55,17 +74,17 @@ class AuctionFacade(private val auctionRepository: AuctionRepository, private va
     }
 
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
-        val mappedCategory: Category? = searchRequest.category?.let { mapToCategory(it) }
+        val categoryName: String? = searchRequest.categoryName
         val searchPhrase: String? = searchRequest.searchPhrase?.takeIf { it.isNotBlank() }
 
         return when {
-            searchPhrase != null && mappedCategory != null ->
-                auctionRepository.findByNameContainingIgnoreCaseAndCategoryEquals(searchPhrase, mappedCategory, pageRequest)
+            searchPhrase != null && categoryName != null ->
+                auctionRepository.findByNameContainingIgnoreCaseAndCategoryPathContaining(searchPhrase, categoryName, pageRequest)
 
-            searchPhrase == null && mappedCategory != null ->
-                auctionRepository.findByCategoryEquals(mappedCategory, pageRequest)
+            searchPhrase == null && categoryName != null ->
+                auctionRepository.findAuctionsWithCategoryInPath(categoryName, pageRequest)
 
-            searchPhrase != null && mappedCategory == null ->
+            searchPhrase != null && categoryName == null ->
                 auctionRepository.findByNameContainingIgnoreCase(searchPhrase, pageRequest)
 
             else -> auctionRepository.findAll(pageRequest)
@@ -93,14 +112,6 @@ class AuctionFacade(private val auctionRepository: AuctionRepository, private va
     private fun newExpirationInstant(): Instant {
         val daysToExpire = auctionRules.days.toLong()
         return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
-    }
-
-    private fun mapToCategory(categoryString: String): Category? {
-        val validCategories = enumValues<Category>().map { it.name }
-        if (categoryString in validCategories) {
-            return Category.valueOf(categoryString)
-        }
-        return null
     }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
@@ -133,4 +144,12 @@ class AuctionFacade(private val auctionRepository: AuctionRepository, private va
 
     private fun validatePrice(price: Double): Boolean = price > 0
 
+}
+
+private fun CategoryPathResponse.toAuctionCategoryPathModel(): CategoryPath {
+    return CategoryPath(this.path.map { it.toAuctionCategoryModel() }.toMutableList())
+}
+
+private fun CategoryNameResponse.toAuctionCategoryModel(): Category {
+    return Category(this.id, this.name)
 }

@@ -3,10 +3,10 @@ package pl.kawaleria.auctsys.auctions
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
-import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.auctions.dto.responses.*
 
 @RestController
@@ -28,19 +28,17 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
 
     @GetMapping("/auctions/{auctionId}")
     fun getAuction(
-        @PathVariable auctionId: String
+            @PathVariable auctionId: String
     ): AuctionDetailedResponse {
         return auctionFacade.findAuctionById(auctionId).toDetailedResponse()
     }
 
     @PutMapping("/auctions/{auctionId}/categories/{categoryId}")
     fun changeCategory(
-            @PathVariable userId: String,
             @PathVariable auctionId: String,
             @PathVariable categoryId: String)
-            : ResponseEntity<Unit> {
-        auctionFacade.changeCategory(auctionId, categoryId)
-        return ResponseEntity.noContent().build()
+            : AuctionDetailedResponse {
+        return auctionFacade.changeCategory(auctionId, categoryId)
     }
 
     @GetMapping("/users/{userId}/auctions")
@@ -50,26 +48,26 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
 
     @PostMapping("/users/{userId}/auctions")
     fun addAuction(
-        @PathVariable userId: String,
-        @RequestBody payload: CreateAuctionRequest
+            @PathVariable userId: String,
+            @RequestBody payload: CreateAuctionRequest
     ): AuctionDetailedResponse {
         return auctionFacade.addNewAuction(payload, userId).toDetailedResponse()
     }
 
     @PutMapping("/users/{userId}/auctions/{auctionId}")
     fun updateAuction(
-        @PathVariable userId: String,
-        @PathVariable auctionId: String,
-        @RequestBody payload: UpdateAuctionRequest
+            @PathVariable userId: String,
+            @PathVariable auctionId: String,
+            @RequestBody payload: UpdateAuctionRequest
     ): AuctionDetailedResponse {
         return auctionFacade.update(auctionId, payload).toDetailedResponse()
     }
 
     @DeleteMapping("/users/{userId}/auctions/{auctionId}")
     fun deleteAuction(
-        @PathVariable userId: String,
-        @PathVariable auctionId: String)
-    : ResponseEntity<Unit> {
+            @PathVariable userId: String,
+            @PathVariable auctionId: String)
+            : ResponseEntity<Unit> {
         auctionFacade.delete(auctionId)
         return ResponseEntity.noContent().build()
     }

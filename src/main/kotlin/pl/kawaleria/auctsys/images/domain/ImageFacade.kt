@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.configs.ThumbnailRules
 import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
+import pl.kawaleria.auctsys.images.dto.exceptions.InappropriateImageException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
 import pl.kawaleria.auctsys.images.infrastructure.ContentVerificationClient
 import java.awt.Graphics2D
@@ -49,26 +50,26 @@ open class ImageFacade(
         // lub request jest jakos manipulowany
 //        eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
         verifyImages(auctionId, files)
-        logger.info("Images added for auction $auctionId, verification is pending")
         return images
     }
 
     fun verifyImages(auctionId: String, files: List<MultipartFile>) {
+        var foundInappropriateImage = false
         try {
-            val foundInappropriateImage = files.any { contentVerificationClient.verifyImage(it.resource).isInappropriate }
-
-            if (foundInappropriateImage) {
-                logger.info("Found explicit image, deleting all images for auction of id $auctionId")
-                imageRepository.deleteAllByAuctionId(auctionId)
-                auctionFacade.reject(auctionId)
-            } else {
-                logger.info("All auction images verified positively for auction id $auctionId")
-                addThumbnailToAuction(auctionId, files[0])
-                auctionFacade.accept(auctionId)
-            }
+            foundInappropriateImage = files.any { contentVerificationClient.verifyImage(it.resource).isInappropriate }
         } catch (e: Exception) {
             logger.error("Error during image verification", e)
             // Here should be some re-check logic, or setting auction status to -manual-check-required-
+        }
+        if (foundInappropriateImage) {
+            logger.info("Found explicit image, deleting all images for auction of id $auctionId")
+            imageRepository.deleteAllByAuctionId(auctionId)
+            auctionFacade.reject(auctionId)
+            throw InappropriateImageException()
+        } else {
+            logger.info("All auction images verified positively for auction id $auctionId")
+            addThumbnailToAuction(auctionId, files[0])
+            auctionFacade.accept(auctionId)
         }
     }
 

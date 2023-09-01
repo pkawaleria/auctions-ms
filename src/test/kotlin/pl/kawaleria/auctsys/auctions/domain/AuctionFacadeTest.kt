@@ -45,14 +45,15 @@ class AuctionFacadeTest {
     }
 
     @Test
-    fun `should not allow to accept already accepted auction`() {
+    fun `should ignore accepting when auction is accepted`() {
         // given
         val auctionId = thereIsAcceptedAuction()
 
-        // when then
-        Assertions.assertThatThrownBy { auctionFacade.accept(auctionId) }
-                .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-                .hasMessageContaining("Cannot perform acceptance on accepted auction")
+        // when
+        auctionFacade.accept(auctionId)
+
+        // then
+        Assertions.assertThat(auctionFacade.findAuctionById(auctionId).status).isEqualTo(AuctionStatus.ACCEPTED)
     }
 
     @Test
@@ -102,14 +103,15 @@ class AuctionFacadeTest {
     }
 
     @Test
-    fun `should not allow to reject already rejected auction`() {
+    fun `should ignore rejecting already rejected auction`() {
         // given
         val auctionId = thereIsRejectedAuction()
 
-        // when then
-        Assertions.assertThatThrownBy { auctionFacade.reject(auctionId) }
-                .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-                .hasMessageContaining("Cannot perform rejection on rejected auction")
+        // when
+        auctionFacade.reject(auctionId)
+
+        // then
+        Assertions.assertThat(auctionFacade.findAuctionById(auctionId).status).isEqualTo(AuctionStatus.REJECTED)
     }
 
     @Test

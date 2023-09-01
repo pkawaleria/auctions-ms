@@ -7,8 +7,7 @@ class RejectedAso : AuctionStatusOperations {
             throw UnsupportedOperationOnAuctionException(AuctionStatus.ACCEPTED.operationName, AuctionStatus.REJECTED.statusName)
 
 
-    override fun reject(auction: Auction): AuctionStatus =
-            throw UnsupportedOperationOnAuctionException(AuctionStatus.REJECTED.operationName, AuctionStatus.REJECTED.statusName)
+    override fun reject(auction: Auction): AuctionStatus = AuctionStatus.REJECTED
 
 
     override fun archive(auction: Auction): AuctionStatus = AuctionStatus.ARCHIVED

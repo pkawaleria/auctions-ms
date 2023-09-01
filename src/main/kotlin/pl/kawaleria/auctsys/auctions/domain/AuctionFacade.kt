@@ -22,12 +22,12 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
-    fun changeCategory(auctionId: String, categoryId: String) {
+    fun changeCategory(auctionId: String, categoryId: String): AuctionDetailedResponse {
         val auction = findAuctionById(auctionId)
         val pathDto = categoryFacade.getFullCategoryPath(categoryId)
         val path = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
-        auctionRepository.save(auction)
+        return auctionRepository.save(auction).toDetailedResponse()
     }
 
     fun addNewAuction(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {

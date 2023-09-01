@@ -22,7 +22,7 @@ class ImageController(private val imageFacade: ImageFacade) {
         @PathVariable auctionId: String,
         @RequestPart files: List<MultipartFile>
     ): List<ImageDetailedResponse> {
-        return imageFacade.addImagesToAuction(auctionId, files).map { image -> image.toImageDetailedResponse() }
+        return imageFacade.createImages(auctionId, files).map { image -> image.toImageDetailedResponse() }
     }
 
     @GetMapping("/{auctionId}/images/{imageId}")

@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.images.domain
 
+import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileContentTypeException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileExtensionException
@@ -7,6 +8,7 @@ import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileSizeException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileTypeException
 
 
+@Component
  class ImageValidator(
         private val JPG: String = "jpg",
         private val PNG: String = "png",

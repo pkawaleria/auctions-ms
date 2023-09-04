@@ -1,22 +1,34 @@
 package pl.kawaleria.auctsys.images.domain
 
+import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.configs.ThumbnailRules
 import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
+import pl.kawaleria.auctsys.images.dto.exceptions.InappropriateImageException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
+import pl.kawaleria.auctsys.images.infrastructure.ContentVerificationClient
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.*
 import javax.imageio.ImageIO
 
 @EnableConfigurationProperties(ThumbnailRules::class)
-class ImageFacade(
+open class ImageFacade(
         private val imageRepository: ImageRepository,
         private val thumbnailRules: ThumbnailRules,
         private val auctionFacade: AuctionFacade,
-        private val imageValidator: ImageValidator) {
+        private val imageValidator: ImageValidator,
+        private val eventPublisher: ApplicationEventPublisher,
+        private val contentVerificationClient: ContentVerificationClient
+
+) {
+
+    private val logger = LoggerFactory.getLogger(this.javaClass)
+
     fun findImageById(id: String): Image = imageRepository.findById(id).orElseThrow { ImageDoesNotExistsException() }
 
     fun findImagesByAuctionId(auctionId: String): AuctionImagesResponse {
@@ -28,10 +40,37 @@ class ImageFacade(
         )
     }
 
-    fun addImagesToAuction(auctionId: String, files: List<MultipartFile>): List<Image> {
+    fun createImages(auctionId: String, files: List<MultipartFile>): List<Image> {
         imageValidator.validateMultipartFiles(files)
-        addThumbnailToAuction(auctionId, files[0])
-        return saveImages(auctionId, files)
+        val images = saveImages(auctionId, files)
+
+        //TODO: Zadanie dla Filipa - sprawdzic dlaczego w metodzie asynchronicznej z uzyciem event publishera lecą 500
+        // z REST serwisu verifiera
+        // Cos sie psuje z naszym klientem (klasa z adnotacja @HttpExchange), moze jakies headery requesta sa usuwane/dodawane
+        // lub request jest jakos manipulowany
+//        eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
+        verifyImages(auctionId, files)
+        return images
+    }
+
+    fun verifyImages(auctionId: String, files: List<MultipartFile>) {
+        var foundInappropriateImage = false
+        try {
+            foundInappropriateImage = files.any { contentVerificationClient.verifyImage(it.resource).isInappropriate }
+        } catch (e: Exception) {
+            logger.error("Error during image verification", e)
+            // Here should be some re-check logic, or setting auction status to -manual-check-required-
+        }
+        if (foundInappropriateImage) {
+            logger.info("Found explicit image, deleting all images for auction of id $auctionId")
+            imageRepository.deleteAllByAuctionId(auctionId)
+            auctionFacade.reject(auctionId)
+            throw InappropriateImageException()
+        } else {
+            logger.info("All auction images verified positively for auction id $auctionId")
+            addThumbnailToAuction(auctionId, files[0])
+            auctionFacade.accept(auctionId)
+        }
     }
 
     private fun addThumbnailToAuction(auctionId: String, image: MultipartFile): Unit = auctionFacade.saveThumbnail(auctionId, resizeImageToThumbnailFormat(image))
@@ -52,7 +91,8 @@ class ImageFacade(
     }
 
     private fun saveImages(auctionId: String, images: List<MultipartFile>): List<Image> {
-        return images.map { file -> file.toImage(auctionId)
+        return images.map { file ->
+            file.toImage(auctionId)
                     .also { imageRepository.save(it) }
         }
     }
@@ -69,3 +109,5 @@ class ImageFacade(
     }
 
 }
+
+typealias ThumbnailAdder = (String, MultipartFile) -> Unit

@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
+import pl.kawaleria.auctsys.auctions.domain.CityFacade
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -11,7 +12,8 @@ import pl.kawaleria.auctsys.auctions.dto.responses.*
 
 @RestController
 @RequestMapping("/auction-service")
-class AuctionCrudController(private val auctionFacade: AuctionFacade) {
+class AuctionCrudController(private val auctionFacade: AuctionFacade,
+                            private val cityFacade: CityFacade) {
 
     @GetMapping("/auctions")
     fun searchAuctions(
@@ -70,5 +72,15 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
             : ResponseEntity<Unit> {
         auctionFacade.delete(auctionId)
         return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/admin/import-cities")
+    fun importCities(): ResponseEntity<String> {
+        return cityFacade.importCities()
+    }
+
+    @DeleteMapping("/admin/delete-cities")
+    fun deleteCities(): ResponseEntity<String> {
+        return cityFacade.deleteCities()
     }
 }

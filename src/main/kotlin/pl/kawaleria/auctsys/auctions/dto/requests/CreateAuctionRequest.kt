@@ -4,5 +4,7 @@ data class CreateAuctionRequest(
         val name: String,
         val description: String,
         val price: Double,
-        val categoryId: String
+        val categoryId: String,
+        val cityId: String,
+        val productCondition: String
 )

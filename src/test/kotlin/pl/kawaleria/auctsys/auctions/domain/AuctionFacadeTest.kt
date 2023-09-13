@@ -34,7 +34,7 @@ class AuctionFacadeTest {
     @Test
     fun `should accept archived auction`() {
         // given
-        val auctionId = thereIsArchivedAuction()
+        val auctionId: String = thereIsArchivedAuction()
 
         // when
         auctionFacade.accept(auctionId)
@@ -47,7 +47,7 @@ class AuctionFacadeTest {
     @Test
     fun `should ignore accepting when auction is accepted`() {
         // given
-        val auctionId = thereIsAcceptedAuction()
+        val auctionId: String = thereIsAcceptedAuction()
 
         // when
         auctionFacade.accept(auctionId)
@@ -59,7 +59,7 @@ class AuctionFacadeTest {
     @Test
     fun `should not allow to accept rejected auction`() {
         // given
-        val auctionId = thereIsRejectedAuction()
+        val auctionId: String = thereIsRejectedAuction()
 
         // when then
         Assertions.assertThatThrownBy { auctionFacade.accept(auctionId) }
@@ -70,7 +70,7 @@ class AuctionFacadeTest {
     @Test
     fun `should reject newly created auction`() {
         // given
-        val auctionId = thereIsNewAuction()
+        val auctionId: String = thereIsNewAuction()
 
         // when
         auctionFacade.reject(auctionId)
@@ -82,7 +82,7 @@ class AuctionFacadeTest {
     @Test
     fun `should reject accepted auction`() {
         // given
-        val auctionId = thereIsAcceptedAuction()
+        val auctionId: String = thereIsAcceptedAuction()
 
         // when
         auctionFacade.reject(auctionId)
@@ -94,7 +94,7 @@ class AuctionFacadeTest {
     @Test
     fun `should not allow to reject archived auction`() {
         // given
-        val auctionId = thereIsArchivedAuction()
+        val auctionId: String = thereIsArchivedAuction()
 
         // when then
         Assertions.assertThatThrownBy { auctionFacade.reject(auctionId) }
@@ -105,7 +105,7 @@ class AuctionFacadeTest {
     @Test
     fun `should ignore rejecting already rejected auction`() {
         // given
-        val auctionId = thereIsRejectedAuction()
+        val auctionId: String = thereIsRejectedAuction()
 
         // when
         auctionFacade.reject(auctionId)
@@ -117,7 +117,7 @@ class AuctionFacadeTest {
     @Test
     fun `should archive newly created auction`() {
         // given
-        val auctionId = thereIsNewAuction()
+        val auctionId: String = thereIsNewAuction()
 
         // when
         auctionFacade.archive(auctionId)
@@ -129,7 +129,7 @@ class AuctionFacadeTest {
     @Test
     fun `should archive rejected auction`() {
         // given
-        val auctionId = thereIsRejectedAuction()
+        val auctionId: String = thereIsRejectedAuction()
 
         // when
         auctionFacade.archive(auctionId)
@@ -141,7 +141,7 @@ class AuctionFacadeTest {
     @Test
     fun `should archive accepted auction`() {
         // given
-        val auctionId = thereIsAcceptedAuction()
+        val auctionId: String = thereIsAcceptedAuction()
 
         // when
         auctionFacade.archive(auctionId)
@@ -153,7 +153,7 @@ class AuctionFacadeTest {
     @Test
     fun `should not allow to archive already archived auction`() {
         // given
-        val auctionId = thereIsArchivedAuction()
+        val auctionId: String = thereIsArchivedAuction()
 
         // when then
         Assertions.assertThatThrownBy { auctionFacade.archive(auctionId) }
@@ -193,13 +193,15 @@ class AuctionFacadeTest {
     }
 
     private fun thereIsAuctionAfterOperationOf(action: (String) -> Unit = {}): String {
-        val finalCategory = thereIsSampleCategoryTree()
+        val finalCategory: CategoryResponse = thereIsSampleCategoryTree()
 
         val auction = CreateAuctionRequest(
                 name = "Adidas shoes",
                 categoryId = finalCategory.id,
                 description = "Breathable sports shoes",
-                price = 145.2
+                price = 145.2,
+                cityId = "przykladoweID",
+                productCondition = "Używany"
         )
         val auctionId: String = auctionFacade.addNewAuction(createRequest = auction, auctioneerId = "auctioneer-${UUID.randomUUID()}").id!!
         action(auctionId)
@@ -207,7 +209,7 @@ class AuctionFacadeTest {
     }
 
     private fun thereIsSampleCategoryTree(): CategoryResponse {
-        val topLevelCategory = categoryFacade.create(request = CategoryCreateRequest(
+        val topLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
                 name = "Clothing",
                 description = "Just clothing",
                 parentCategoryId = null,
@@ -215,7 +217,7 @@ class AuctionFacadeTest {
                 isFinalNode = false
         ))
 
-        val sneakersCategory = categoryFacade.create(request = CategoryCreateRequest(
+        val sneakersCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
                 name = "Sneakers",
                 description = "Nice sneakers",
                 parentCategoryId = topLevelCategory.id,
@@ -223,7 +225,7 @@ class AuctionFacadeTest {
                 isFinalNode = false
         ))
 
-        val adidasSneakersCategory = categoryFacade.create(request = CategoryCreateRequest(
+        val adidasSneakersCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
                 name = "Adidas sneakers",
                 description = "Nice adidas sneakers",
                 parentCategoryId = sneakersCategory.id,
@@ -233,4 +235,5 @@ class AuctionFacadeTest {
 
         return adidasSneakersCategory
     }
+
 }

@@ -89,7 +89,9 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                         name = "Modern Dell laptop",
                         description = "Modern dell laptop with radeon graphics",
                         price = 12.4,
-                        categoryId = gamingLaptops.id
+                        categoryId = gamingLaptops.id,
+                        cityId = "",
+                        productCondition = "Nowy"
                 ), auctioneerId = "auctioneer-id")
     }
 }

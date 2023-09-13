@@ -16,15 +16,13 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
-import pl.kawaleria.auctsys.auctions.domain.Auction
-import pl.kawaleria.auctsys.auctions.domain.AuctionRepository
-import pl.kawaleria.auctsys.auctions.domain.Category
-import pl.kawaleria.auctsys.auctions.domain.CategoryPath
+import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.images.domain.Image
 import pl.kawaleria.auctsys.images.domain.ImageRepository
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
@@ -61,6 +59,9 @@ class ImageControllerTest {
     private lateinit var auctionRepository: AuctionRepository
 
     @Autowired
+    private lateinit var cityRepository: CityRepository
+
+    @Autowired
     private lateinit var mongoTemplate: MongoTemplate
 
     @Autowired
@@ -79,11 +80,11 @@ class ImageControllerTest {
         fun `should upload images for auction`() {
             // given
             val auctionId: String = thereIsAuction()
-            val imageFiles = listOf("audi.jpg", "skoda.png", "nissan.jpg")
-            val imagePart = imageFiles.map { createMockMultipartFile(it) }
+            val imageFiles: List<String> = listOf("audi.jpg", "skoda.png", "nissan.jpg")
+            val imagePart: List<MockMultipartFile> = imageFiles.map { createMockMultipartFile(it) }
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     multipart("/auction-service/auctions/$auctionId/images")
                             .file(imagePart[0])
                             .file(imagePart[1])
@@ -93,7 +94,7 @@ class ImageControllerTest {
                     .andReturn()
 
             // then
-            val response = result.response.contentAsString
+            val response: String = result.response.contentAsString
             logger.info("response = $response")
             val mappedImages: List<ImageDetailedResponse> =
                     objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageDetailedResponse::class.java))
@@ -114,7 +115,7 @@ class ImageControllerTest {
                     txtContent.toByteArray())
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     multipart("/auction-service/auctions/$auctionId/images")
                             .file(txtFile))
                     // then
@@ -137,7 +138,7 @@ class ImageControllerTest {
                     txtContent.toByteArray())
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     multipart("/auction-service/auctions/$auctionId/images")
                             .file(txtFile))
                     // then
@@ -152,10 +153,10 @@ class ImageControllerTest {
             // given
             val auctionId: String = thereIsAuction()
 
-            val file = createMockMultipartFileWithInvalidContentType("audi.jpg")
+            val file: MockMultipartFile = createMockMultipartFileWithInvalidContentType("audi.jpg")
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     multipart("/auction-service/auctions/$auctionId/images")
                             .file(file))
                     // then
@@ -166,7 +167,6 @@ class ImageControllerTest {
         }
     }
 
-
     @Nested
     inner class ImageRetrievalTest {
         @Test
@@ -176,7 +176,7 @@ class ImageControllerTest {
             val images: List<Image> = thereAreImagesOfAuction(auctionId)
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
@@ -196,7 +196,7 @@ class ImageControllerTest {
             val auctionId: String = thereIsAuction()
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
@@ -216,11 +216,11 @@ class ImageControllerTest {
             val auctionId: String = thereIsAuction()
             val images: List<Image> = thereAreImagesOfAuction(auctionId)
 
-            val selectedImageId = images[0].id
+            val selectedImageId: String? = images[0].id
             val selectedImageBinary: ByteArray = images[0].binaryData
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images/$selectedImageId")
                             .contentType(MediaType.IMAGE_JPEG_VALUE))
                     .andExpect(status().isOk())
@@ -239,7 +239,7 @@ class ImageControllerTest {
             val nonExistingImageId = "fake-image-id"
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images/$nonExistingImageId")
                             .contentType(MediaType.IMAGE_JPEG_VALUE))
                     .andExpect(status().isNotFound)
@@ -247,7 +247,6 @@ class ImageControllerTest {
             // then
             Assertions.assertThat(result.response.errorMessage).contains("Image does not exists")
         }
-
 
     }
 
@@ -260,7 +259,7 @@ class ImageControllerTest {
             val auctionId: String = thereIsAuction()
             val images: List<Image> = thereAreImagesOfAuction(auctionId)
 
-            val selectedImageId = images[0].id
+            val selectedImageId: String? = images[0].id
 
             // when
             mockMvc.perform(
@@ -269,7 +268,7 @@ class ImageControllerTest {
                     .andExpect(status().isNoContent)
 
             // then
-            val existsAfterDelete = selectedImageId?.let { imageRepository.existsById(it) }
+            val existsAfterDelete: Boolean? = selectedImageId?.let { imageRepository.existsById(it) }
             Assertions.assertThat(existsAfterDelete).isFalse
         }
 
@@ -280,7 +279,7 @@ class ImageControllerTest {
             val nonExistingImageId = "fake-image-id"
 
             // when
-            val result = mockMvc.perform(
+            val result: MvcResult = mockMvc.perform(
                     MockMvcRequestBuilders.delete("/auction-service/auctions/$auctionId/images/$nonExistingImageId")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound)
@@ -298,6 +297,8 @@ class ImageControllerTest {
                 pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
         )
 
+        val cityId: String = thereIsCity()
+
         val auction = Auction(
                 name = "Wireless Samsung headphones",
                 category = wirelessHeadphones,
@@ -306,18 +307,34 @@ class ImageControllerTest {
                 price = 1.23,
                 auctioneerId = "user-id",
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+                cityId = cityId,
+                productCondition = "Nie dotyczy"
         )
 
         return auctionRepository.save(auction).id!!
     }
 
+    private fun thereIsCity(): String {
+        val city = City(
+            name = "Miasto1",
+            type = "village",
+            province = "Województwo",
+            district = "Powiat",
+            commune = "Gmina",
+            latitude = 1.23,
+            longitude = 4.56
+        )
+
+        return cityRepository.save(city).id.toString()
+    }
+
     private fun thereAreImagesOfAuction(auctionId: String): List<Image> {
-        val imageFiles = listOf("audi.jpg", "skoda.png", "nissan.jpg")
+        val imageFiles: List<String> = listOf("audi.jpg", "skoda.png", "nissan.jpg")
 
         val images: List<Image> = imageFiles.map { fileName ->
             val resource = ClassPathResource("test_images/$fileName")
-            val contentType = MediaType.IMAGE_JPEG_VALUE
-            val content = resource.inputStream.readAllBytes()
+            val contentType: String = MediaType.IMAGE_JPEG_VALUE
+            val content: ByteArray= resource.inputStream.readAllBytes()
 
             val image = Image(
                     type = contentType,
@@ -332,17 +349,17 @@ class ImageControllerTest {
 
     private fun createMockMultipartFile(fileName: String): MockMultipartFile {
         val resource = ClassPathResource("test_images/$fileName")
-        val originalFileName = fileName
-        val contentType = MediaType.IMAGE_PNG_VALUE
-        val content = resource.inputStream.readAllBytes()
+        val originalFileName: String = fileName
+        val contentType: String = MediaType.IMAGE_PNG_VALUE
+        val content: ByteArray = resource.inputStream.readAllBytes()
         return MockMultipartFile("files", originalFileName, contentType, content)
     }
 
     private fun createMockMultipartFileWithInvalidContentType(fileName: String): MockMultipartFile {
         val resource = ClassPathResource("test_images/$fileName")
-        val originalFileName = fileName
-        val contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE
-        val content = resource.inputStream.readAllBytes()
+        val originalFileName: String = fileName
+        val contentType: String = MediaType.APPLICATION_OCTET_STREAM_VALUE
+        val content: ByteArray = resource.inputStream.readAllBytes()
         return MockMultipartFile("files", originalFileName, contentType, content)
     }
 

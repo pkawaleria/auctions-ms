@@ -11,6 +11,8 @@ data class Auction(
         @Id
         var id: String? = null,
         var name: String? = null,
+        var cityId: String? = null,
+        var productCondition: String,
         var category: Category,
         var categoryPath: CategoryPath,
         var description: String? = null,

@@ -10,7 +10,7 @@ data class PagedAuctions(
 )
 
 fun Page<Auction>.toPagedAuctions(): PagedAuctions {
-    val auctionSimplifiedList = this.content.map { auction ->
+    val auctionSimplifiedList: List<AuctionSimplifiedResponse> = this.content.map { auction ->
         auction.toSimplifiedResponse()
     }
     return PagedAuctions(

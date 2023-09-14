@@ -308,7 +308,7 @@ class ImageControllerTest {
                 auctioneerId = "user-id",
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 cityId = cityId,
-                productCondition = "Nie dotyczy"
+                productCondition = Condition.`Not applicable`
         )
 
         return auctionRepository.save(auction).id!!

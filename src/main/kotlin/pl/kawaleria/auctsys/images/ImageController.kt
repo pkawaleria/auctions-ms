@@ -13,22 +13,23 @@ import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.images.domain.Image
 import pl.kawaleria.auctsys.images.domain.ImageFacade
 import pl.kawaleria.auctsys.images.dto.responses.*
+
 @RestController
 @RequestMapping("/auction-service/auctions")
 class ImageController(private val imageFacade: ImageFacade) {
 
     @PostMapping("/{auctionId}/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun addImages(
-        @PathVariable auctionId: String,
-        @RequestPart files: List<MultipartFile>
+            @PathVariable auctionId: String,
+            @RequestPart files: List<MultipartFile>
     ): List<ImageDetailedResponse> {
         return imageFacade.createImages(auctionId, files).map { image -> image.toImageDetailedResponse() }
     }
 
     @GetMapping("/{auctionId}/images/{imageId}")
     fun getImage(
-        @PathVariable auctionId: String,
-        @PathVariable imageId: String
+            @PathVariable auctionId: String,
+            @PathVariable imageId: String
     ): ResponseEntity<ByteArray> {
         val image: Image = imageFacade.findImageById(imageId)
 
@@ -38,14 +39,12 @@ class ImageController(private val imageFacade: ImageFacade) {
     }
 
     @GetMapping("/{auctionId}/images")
-    fun getImages(@PathVariable auctionId: String): ResponseEntity<AuctionImagesResponse> {
-        return ResponseEntity.ok(imageFacade.findImagesByAuctionId(auctionId))
-    }
+    fun getImages(@PathVariable auctionId: String): ResponseEntity<AuctionImagesResponse> = ResponseEntity.ok(imageFacade.findImagesByAuctionId(auctionId))
 
     @DeleteMapping("/{auctionId}/images/{imageId}")
     fun deleteImage(
-        @PathVariable auctionId: String,
-        @PathVariable imageId: String
+            @PathVariable auctionId: String,
+            @PathVariable imageId: String
     ): ResponseEntity<Unit> {
         imageFacade.delete(imageId)
 

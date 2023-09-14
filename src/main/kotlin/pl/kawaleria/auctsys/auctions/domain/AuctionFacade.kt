@@ -59,6 +59,8 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
             auction.name = payload.name
             auction.price = payload.price
             auction.description = payload.description
+            auction.productCondition = payload.productCondition
+            auction.cityId = payload.cityId
 
             return auctionRepository.save(auction)
         } else throw ApiException(400, "UpdateAuctionRequest is not valid")

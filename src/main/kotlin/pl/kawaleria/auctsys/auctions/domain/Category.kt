@@ -5,7 +5,6 @@ data class Category(
         val name: String
 )
 
-
 data class CategoryPath(
         val pathElements: MutableList<Category>
 ) {

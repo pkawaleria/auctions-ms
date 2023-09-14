@@ -7,9 +7,8 @@ import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileExtensionException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileSizeException
 import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileTypeException
 
-
 @Component
- class ImageValidator(
+class ImageValidator(
         private val JPG: String = "jpg",
         private val PNG: String = "png",
         private val CONTENT_TYPE_JPG: String = "image/jpg",
@@ -22,6 +21,7 @@ import pl.kawaleria.auctsys.images.dto.exceptions.InvalidFileTypeException
             validateMultipartFile(file)
         }
     }
+
     private fun validateMultipartFile(file: MultipartFile) {
         validateFileType(file)
         validateContentType(file)

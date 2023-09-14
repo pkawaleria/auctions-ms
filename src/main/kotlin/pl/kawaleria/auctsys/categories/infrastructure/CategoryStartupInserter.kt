@@ -4,6 +4,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
+import pl.kawaleria.auctsys.auctions.domain.Condition
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.categories.domain.Category
 import pl.kawaleria.auctsys.categories.domain.CategoryRepository
@@ -91,7 +92,7 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                         price = 12.4,
                         categoryId = gamingLaptops.id,
                         cityId = "",
-                        productCondition = "Nowy"
+                        productCondition = Condition.New
                 ), auctioneerId = "auctioneer-id")
     }
 }

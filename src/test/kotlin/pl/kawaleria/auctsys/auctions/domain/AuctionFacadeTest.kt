@@ -201,7 +201,7 @@ class AuctionFacadeTest {
                 description = "Breathable sports shoes",
                 price = 145.2,
                 cityId = "przykladoweID",
-                productCondition = "Używany"
+                productCondition = Condition.Used
         )
         val auctionId: String = auctionFacade.addNewAuction(createRequest = auction, auctioneerId = "auctioneer-${UUID.randomUUID()}").id!!
         action(auctionId)

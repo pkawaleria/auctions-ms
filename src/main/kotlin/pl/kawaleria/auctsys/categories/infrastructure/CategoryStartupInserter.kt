@@ -92,7 +92,7 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                         price = 12.4,
                         categoryId = gamingLaptops.id,
                         cityId = "",
-                        productCondition = Condition.New
+                        productCondition = Condition.NEW
                 ), auctioneerId = "auctioneer-id")
     }
 }

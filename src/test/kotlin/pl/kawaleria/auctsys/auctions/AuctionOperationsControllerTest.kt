@@ -120,7 +120,7 @@ class AuctionOperationsControllerTest {
                 auctioneerId = "user-id",
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 cityId = cityId,
-                productCondition = Condition.New
+                productCondition = Condition.NEW
         )
 
         return auctionRepository.save(auction)

@@ -326,7 +326,7 @@ class AuctionControllerTest {
                     description = "Best headphones you can have",
                     price = 1.23,
                     cityId = cityId,
-                    productCondition = Condition.New
+                    productCondition = Condition.NEW
             )
 
             // when
@@ -361,7 +361,7 @@ class AuctionControllerTest {
                     description = "Headphones",
                     price = 1.23,
                     cityId = cityId,
-                    productCondition = Condition.New
+                    productCondition = Condition.NEW
             )
 
             val expectedErrorMessage = "CreateAuctionRequest is not valid"
@@ -392,7 +392,7 @@ class AuctionControllerTest {
                     description = "Headphones",
                     price = 1.23,
                     cityId = cityId,
-                    productCondition = Condition.Used
+                    productCondition = Condition.USED
             )
 
             val expectedErrorMessage = "CreateAuctionRequest is not valid"
@@ -423,7 +423,7 @@ class AuctionControllerTest {
                     description = "Headphones",
                     price = 1.23,
                     cityId = cityId,
-                    productCondition = Condition.`Not applicable`
+                    productCondition = Condition.`NOT_APPLICABLE`
             )
 
             val expectedErrorMessage = "CreateAuctionRequest is not valid"
@@ -454,7 +454,7 @@ class AuctionControllerTest {
                     description = "Best headphones you can have",
                     price = -13.0,
                     cityId = cityId,
-                    productCondition = Condition.Used
+                    productCondition = Condition.USED
             )
 
             val expectedErrorMessage = "CreateAuctionRequest is not valid"
@@ -485,7 +485,7 @@ class AuctionControllerTest {
                     categoryId = category.id,
                     price = 13.0,
                     cityId = cityId,
-                    productCondition = Condition.`Not applicable`
+                    productCondition = Condition.`NOT_APPLICABLE`
             )
 
             val expectedErrorMessage = "CreateAuctionRequest is not valid"
@@ -625,7 +625,7 @@ class AuctionControllerTest {
             // stara aukcja ma "Nowy" stan produktu
             val oldAuction: Auction = thereIsAuction()
 
-            val expectedProductCondition: Condition = Condition.Used
+            val expectedProductCondition: Condition = Condition.USED
 
             val updateAuctionRequest = UpdateAuctionRequest(
                     name = oldAuction.name!!,
@@ -801,7 +801,7 @@ class AuctionControllerTest {
                     name = "Wireless Samsung headphones",
                     description = "Best headphones you can have",
                     price = 1.23,
-                    productCondition = Condition.Used,
+                    productCondition = Condition.USED,
                     cityId = cityId
             )
 
@@ -880,7 +880,7 @@ class AuctionControllerTest {
                 auctioneerId = "user-id",
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 cityId = cityId,
-                productCondition = Condition.New
+                productCondition = Condition.NEW
         )
 
         return auctionRepository.save(auction)
@@ -967,7 +967,7 @@ class AuctionControllerTest {
                         auctioneerId = "user-id",
                         expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                         cityId = cities[0].id,
-                        productCondition = Condition.New
+                        productCondition = Condition.NEW
                 ),
                 Auction(
                         name = "Wireless JBL headphones",
@@ -978,7 +978,7 @@ class AuctionControllerTest {
                         auctioneerId = "user-id",
                         expiresAt = defaultExpiration(),
                         cityId = cities[1].id,
-                        productCondition = Condition.Used
+                        productCondition = Condition.USED
                 ),
                 Auction(
                         name = "jbl Speaker",
@@ -989,7 +989,7 @@ class AuctionControllerTest {
                         auctioneerId = "user-id",
                         expiresAt = defaultExpiration(),
                         cityId = cities[2].id,
-                        productCondition = Condition.`Not applicable`
+                        productCondition = Condition.`NOT_APPLICABLE`
                 ),
                 Auction(
                         name = "Adidas T-Shirt",
@@ -1000,7 +1000,7 @@ class AuctionControllerTest {
                         auctioneerId = "user-id",
                         expiresAt = defaultExpiration(),
                         cityId = cities[1].id,
-                        productCondition = Condition.Used
+                        productCondition = Condition.USED
                 )
         )
 

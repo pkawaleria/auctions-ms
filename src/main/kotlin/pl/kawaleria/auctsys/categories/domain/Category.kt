@@ -14,7 +14,8 @@ data class Category(
         var isFinalNode: Boolean,
         var parentCategoryId: String? = null,
 ) {
-        fun changeParent(categoryId: String?) {
-                this.parentCategoryId = categoryId
-        }
+
+    fun changeParent(categoryId: String?) {
+        this.parentCategoryId = categoryId
+    }
 }

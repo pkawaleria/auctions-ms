@@ -8,24 +8,24 @@ private const val AUCTION_BATCH_SIZE = 100
 
 class AuctionCategoryDeleter(private val auctionRepository: AuctionRepository) {
 
-    private val log = LoggerFactory.getLogger(AuctionCategoryDeleter::class.java)
+    private val logger = LoggerFactory.getLogger(AuctionCategoryDeleter::class.java)
 
     fun eraseCategoryFromAuctions(categoryName: String) {
-        log.info("Starting to erase category with ID: $categoryName from auctions")
+        logger.info("Starting to erase category with ID: $categoryName from auctions")
         var page = 0
         do {
             val pageable: PageRequest = PageRequest.of(page++, AUCTION_BATCH_SIZE)
             val auctions: Page<Auction> = auctionRepository.findAuctionsWithCategoryInPath(categoryName, pageable)
-            log.info("Processing auctions with category in path ${auctions.content}")
+            logger.info("Processing auctions with category in path ${auctions.content}")
 
             auctions.content
                     .forEach{ it.dropCategoryFromPath(categoryName) }
             auctions.content
                     .forEach{ auctionRepository.save(it) }
 
-            log.debug("Processed page $page of auctions")
+            logger.debug("Processed page $page of auctions")
         } while (auctions.hasNext())
 
-        log.info("Finished erasing category with ID: $categoryName from auctions")
+        logger.info("Finished erasing category with ID: $categoryName from auctions")
     }
 }

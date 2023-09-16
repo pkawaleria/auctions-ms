@@ -1,7 +1,6 @@
 package pl.kawaleria.auctsys.auctions.domain
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.domain.PageRequest
@@ -17,19 +16,19 @@ class CityFacade(private val cityRepository: CityRepository,
                  private val objectMapper: ObjectMapper) {
 
     fun importCities() {
+        if (cityRepository.count() != 0L) throw CanNotImportCitiesException()
+
         val resource = ClassPathResource("city_data.json")
         val cities: List<City> = objectMapper.readValue(resource.inputStream)
 
-        if (cityRepository.count() == 0L) {
-            cityRepository.saveAll(cities)
-        } else throw CanNotImportCitiesException()
+        cityRepository.saveAll(cities)
     }
 
     fun deleteCities() {
-        if (cityRepository.count() > 0) {
-            cityRepository.deleteAll()
-            mongoTemplate.dropCollection("cities")
-        } else throw CanNotDeleteCitiesCollectionException()
+        if (cityRepository.count() <= 0) throw CanNotDeleteCitiesCollectionException()
+
+        cityRepository.deleteAll()
+        mongoTemplate.dropCollection("cities")
     }
 
     fun searchCities(searchRequest: CitiesSearchRequest, pageRequest: PageRequest): PagedCities {

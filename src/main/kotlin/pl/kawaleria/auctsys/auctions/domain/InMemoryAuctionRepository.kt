@@ -45,9 +45,7 @@ class InMemoryAuctionRepository : AuctionRepository {
         return auction
     }
 
-    override fun findById(id: String): Optional<Auction> {
-        return Optional.ofNullable(map[id])
-    }
+    override fun findById(id: String): Optional<Auction> = Optional.ofNullable(map[id])
 
     override fun findAll(pageable: Pageable): Page<Auction> {
         val allAuctions: List<Auction> = map.values.toList()

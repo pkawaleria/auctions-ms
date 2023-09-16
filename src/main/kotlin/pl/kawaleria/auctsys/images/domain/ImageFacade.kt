@@ -9,7 +9,7 @@ import pl.kawaleria.auctsys.configs.ThumbnailRules
 import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
 import pl.kawaleria.auctsys.images.dto.exceptions.InappropriateImageException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
-import pl.kawaleria.auctsys.images.infrastructure.ContentVerificationClient
+import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -17,15 +17,12 @@ import java.util.*
 import javax.imageio.ImageIO
 
 @EnableConfigurationProperties(ThumbnailRules::class)
-open class ImageFacade(
-        private val imageRepository: ImageRepository,
-        private val thumbnailRules: ThumbnailRules,
-        private val auctionFacade: AuctionFacade,
-        private val imageValidator: ImageValidator,
-        private val eventPublisher: ApplicationEventPublisher,
-        private val contentVerificationClient: ContentVerificationClient
-
-) {
+open class ImageFacade(private val imageRepository: ImageRepository,
+                       private val thumbnailRules: ThumbnailRules,
+                       private val auctionFacade: AuctionFacade,
+                       private val imageValidator: ImageValidator,
+                       private val eventPublisher: ApplicationEventPublisher,
+                       private val contentVerificationClient: ContentVerificationClient) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 

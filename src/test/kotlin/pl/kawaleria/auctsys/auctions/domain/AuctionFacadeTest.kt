@@ -9,15 +9,15 @@ import pl.kawaleria.auctsys.categories.domain.CategoryConfiguration
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
+import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import java.util.*
 
-class AuctionFacadeTest {
+class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
 
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
 
-    private val auctionFacade: AuctionFacade = AuctionConfiguration().auctionFacadeWithInMemoryRepo(
-            categoryFacade
-    )
+    private val auctionFacade: AuctionFacade =
+        AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade, contentVerificationClient)
 
     @Test
     fun `should accept newly created auction`() {

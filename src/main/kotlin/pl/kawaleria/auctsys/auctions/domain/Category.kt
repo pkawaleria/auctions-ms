@@ -8,19 +8,11 @@ data class Category(
 data class CategoryPath(
         val pathElements: MutableList<Category>
 ) {
-    fun lastCategory(): Category {
-        return pathElements.last()
-    }
+    fun lastCategory(): Category = pathElements.last()
 
-    fun containsCategoryOfName(categoryName: String): Boolean {
-        return pathElements.map { it.name }.contains(categoryName)
-    }
+    fun containsCategoryOfName(categoryName: String): Boolean = pathElements.map { it.name }.contains(categoryName)
 
-    fun removeLast() {
-        pathElements.removeLast()
-    }
+    fun removeLast(): Category = pathElements.removeLast()
 
-    fun remove(categoryName: String) {
-        pathElements.removeIf { it.name == categoryName }
-    }
+    fun remove(categoryName: String): Boolean = pathElements.removeIf { it.name == categoryName }
 }

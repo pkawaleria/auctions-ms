@@ -71,5 +71,4 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
         auctionFacade.delete(auctionId)
         return ResponseEntity.noContent().build()
     }
-
 }

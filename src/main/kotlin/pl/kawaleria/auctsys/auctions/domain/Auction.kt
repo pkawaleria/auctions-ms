@@ -24,24 +24,21 @@ data class Auction(
 ) {
 
     fun assignPath(categoryPath: CategoryPath) {
-        if (categoryPath.pathElements.isEmpty()) {
-            throw InvalidAuctionCategoryPathException()
-        }
+        if (categoryPath.pathElements.isEmpty()) throw InvalidAuctionCategoryPathException()
+
         this.categoryPath = categoryPath
         this.category = categoryPath.lastCategory()
     }
 
     fun accept() {
-        if (isExpired()) {
-            throw ExpiredAuctionException()
-        }
+        if (isExpired()) throw ExpiredAuctionException()
+
         updateStatus(status.accept(auction = this))
     }
 
     fun reject() {
-        if (isExpired()) {
-            throw ExpiredAuctionException()
-        }
+        if (isExpired()) throw ExpiredAuctionException()
+
         updateStatus(status.reject(auction = this))
     }
 

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.categories.dto.events.CategoryDeletedEvent
 
-
 @Component
 class CategoryEventListener(private val auctionFacade: AuctionFacade) {
 

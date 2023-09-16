@@ -6,14 +6,13 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
-import pl.kawaleria.auctsys.images.infrastructure.ContentVerificationClient
+import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 
 @Component
-class AsyncImageVerifier(
-        private val contentVerificationClient: ContentVerificationClient,
-        private val imageRepository: ImageRepository,
-        private val auctionFacade: AuctionFacade
-) {
+class AsyncImageVerifier(private val contentVerificationClient: ContentVerificationClient,
+                         private val imageRepository: ImageRepository,
+                         private val auctionFacade: AuctionFacade) {
+
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     @EventListener

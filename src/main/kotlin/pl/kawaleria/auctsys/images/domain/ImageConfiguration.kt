@@ -6,20 +6,20 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.configs.ThumbnailRules
-import pl.kawaleria.auctsys.images.infrastructure.ContentVerificationClient
+import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 
 @Configuration
 @EnableConfigurationProperties(ThumbnailRules::class)
 class ImageConfiguration {
     @Bean
     fun imageService(
-            repository: ImageRepository,
-            thumbnailRules: ThumbnailRules,
-            auctionFacade: AuctionFacade,
-            imageVerifier: AsyncImageVerifier,
-            imageValidator: ImageValidator,
-            contentVerificationClient: ContentVerificationClient,
-            applicationEventPublisher: ApplicationEventPublisher
+        repository: ImageRepository,
+        thumbnailRules: ThumbnailRules,
+        auctionFacade: AuctionFacade,
+        imageVerifier: AsyncImageVerifier,
+        imageValidator: ImageValidator,
+        contentVerificationClient: ContentVerificationClient,
+        applicationEventPublisher: ApplicationEventPublisher
     ): ImageFacade {
         return ImageFacade(repository, thumbnailRules, auctionFacade, imageValidator, applicationEventPublisher, contentVerificationClient)
     }

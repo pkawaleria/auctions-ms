@@ -1,7 +1,11 @@
 package pl.kawaleria.auctsys.auctions.domain
 
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.InappropriateContentException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCreationRequestException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionUpdateRequestException
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -9,15 +13,21 @@ import pl.kawaleria.auctsys.auctions.dto.responses.*
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
+import pl.kawaleria.auctsys.verifications.ContentVerificationClient
+import pl.kawaleria.auctsys.verifications.TextRequest
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
 class AuctionFacade(private val auctionRepository: AuctionRepository,
+                    private val contentVerificationClient: ContentVerificationClient,
                     private val categoryFacade: CategoryFacade,
                     private val auctionRules: AuctionRules,
                     private val auctionCategoryDeleter: AuctionCategoryDeleter,
                     private val clock: Clock) {
+
+    private val logger = LoggerFactory.getLogger(this.javaClass)
+
     fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> = auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
@@ -27,13 +37,14 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
         val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
+
         return auctionRepository.save(auction).toDetailedResponse()
     }
 
     fun addNewAuction(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
-        if (!validateCreateAuctionRequest(createRequest)) {
-            throw ApiException(400, "CreateAuctionRequest is not valid")
-        }
+        if (!validateCreateAuctionRequest(createRequest)) throw InvalidAuctionCreationRequestException()
+
+        verifyAuctionContent(createRequest.name, createRequest.description)
 
         val categoryPath: CategoryPath = categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
 
@@ -49,28 +60,45 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                 categoryPath = categoryPath,
                 productCondition = createRequest.productCondition
         )
+
         return auctionRepository.save(auction)
     }
 
+    fun verifyAuctionContent(name: String, description: String) {
+        var foundInappropriateContent = false
+        val textToVerify = TextRequest("$name $description")
+
+        try {
+            foundInappropriateContent = contentVerificationClient.verifyText(textToVerify).isInappropriate
+        } catch (e: Exception) {
+            logger.error("Error during name and description verification", e)
+        }
+
+        if (foundInappropriateContent) {
+            logger.info("Found explicit content")
+            throw InappropriateContentException()
+        } else {
+            logger.info("Auction name and description verified positively")
+        }
+    }
+
     fun update(id: String, payload: UpdateAuctionRequest): Auction {
-        if (validateUpdateAuctionRequest(payload)) {
-            val auction: Auction = findAuctionById(id)
+        if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
 
-            auction.name = payload.name
-            auction.price = payload.price
-            auction.description = payload.description
-            auction.productCondition = payload.productCondition
-            auction.cityId = payload.cityId
+        val auction: Auction = findAuctionById(id)
 
-            return auctionRepository.save(auction)
-        } else throw ApiException(400, "UpdateAuctionRequest is not valid")
+        auction.name = payload.name
+        auction.price = payload.price
+        auction.description = payload.description
+        auction.productCondition = payload.productCondition
+        auction.cityId = payload.cityId
+
+        return auctionRepository.save(auction)
     }
 
     fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
 
-    fun eraseCategoryFromAuctions(categoryName: String) {
-        auctionCategoryDeleter.eraseCategoryFromAuctions(categoryName)
-    }
+    fun eraseCategoryFromAuctions(categoryName: String): Unit = auctionCategoryDeleter.eraseCategoryFromAuctions(categoryName)
 
     fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
         val auction: Auction = findAuctionById(auctionId)
@@ -148,7 +176,6 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
     }
 
     private fun validatePrice(price: Double): Boolean = price > 0
-
 }
 
 private fun CategoryPathResponse.toAuctionCategoryPathModel(): CategoryPath {

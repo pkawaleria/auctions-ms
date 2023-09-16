@@ -11,6 +11,8 @@ data class Auction(
         @Id
         var id: String? = null,
         var name: String? = null,
+        var cityId: String? = null,
+        var productCondition: Condition,
         var category: Category,
         var categoryPath: CategoryPath,
         var description: String? = null,
@@ -43,7 +45,7 @@ data class Auction(
         updateStatus(status.reject(auction = this))
     }
 
-    fun archive() = updateStatus(status.archive(auction = this))
+    fun archive(): Unit = updateStatus(status.archive(auction = this))
 
     private fun isExpired(): Boolean = expiresAt.isBefore(Instant.now())
 
@@ -60,7 +62,7 @@ data class Auction(
         }
     }
 
-    private fun isCurrentCategory(categoryId: String) = categoryId == category.id
+    private fun isCurrentCategory(categoryId: String): Boolean = categoryId == category.id
 
     fun isAccepted(): Boolean = this.status == AuctionStatus.ACCEPTED
     fun isRejected(): Boolean = this.status == AuctionStatus.REJECTED

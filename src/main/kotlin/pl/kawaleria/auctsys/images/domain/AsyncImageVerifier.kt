@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
+import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.images.infrastructure.ContentVerificationClient
 
@@ -18,12 +19,12 @@ class AsyncImageVerifier(
     @EventListener
     @Async
     fun handle(imagesVerificationEvent: ImagesVerificationEvent) {
-        val files = imagesVerificationEvent.images
-        val auctionId = imagesVerificationEvent.auctionId
-        val addThumbnailFunction = imagesVerificationEvent.addThumbnailFunction
+        val files: List<MultipartFile> = imagesVerificationEvent.images
+        val auctionId: String = imagesVerificationEvent.auctionId
+        val addThumbnailFunction: ThumbnailAdder = imagesVerificationEvent.addThumbnailFunction
 
         try {
-            val inappropriateImage = files.find { contentVerificationClient.verifyImage(it.resource).isInappropriate }
+            val inappropriateImage: MultipartFile? = files.find { contentVerificationClient.verifyImage(it.resource).isInappropriate }
 
             if (inappropriateImage != null) {
                 logger.info("Found explicit image, deleting all images for auction of id $auctionId")

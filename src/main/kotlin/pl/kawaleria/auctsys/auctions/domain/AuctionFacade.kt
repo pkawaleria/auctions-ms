@@ -23,9 +23,9 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
     fun changeCategory(auctionId: String, categoryId: String): AuctionDetailedResponse {
-        val auction = findAuctionById(auctionId)
-        val pathDto = categoryFacade.getFullCategoryPath(categoryId)
-        val path = pathDto.toAuctionCategoryPathModel()
+        val auction: Auction = findAuctionById(auctionId)
+        val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
+        val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
         return auctionRepository.save(auction).toDetailedResponse()
     }
@@ -34,7 +34,8 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         if (!validateCreateAuctionRequest(createRequest)) {
             throw ApiException(400, "CreateAuctionRequest is not valid")
         }
-        val categoryPath = categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
+
+        val categoryPath: CategoryPath = categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
 
         val auction = Auction(
                 name = createRequest.name,
@@ -43,19 +44,23 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                 auctioneerId = auctioneerId,
                 thumbnail = byteArrayOf(),
                 expiresAt = newExpirationInstant(),
+                cityId = createRequest.cityId,
                 category = categoryPath.lastCategory(),
                 categoryPath = categoryPath,
+                productCondition = createRequest.productCondition
         )
         return auctionRepository.save(auction)
     }
 
     fun update(id: String, payload: UpdateAuctionRequest): Auction {
         if (validateUpdateAuctionRequest(payload)) {
-            val auction = findAuctionById(id)
+            val auction: Auction = findAuctionById(id)
 
             auction.name = payload.name
             auction.price = payload.price
             auction.description = payload.description
+            auction.productCondition = payload.productCondition
+            auction.cityId = payload.cityId
 
             return auctionRepository.save(auction)
         } else throw ApiException(400, "UpdateAuctionRequest is not valid")
@@ -68,7 +73,7 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
     }
 
     fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
-        val auction = findAuctionById(auctionId)
+        val auction: Auction = findAuctionById(auctionId)
         auction.thumbnail = byteArray
         auctionRepository.save(auction)
     }
@@ -110,34 +115,34 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
     }
 
     private fun newExpirationInstant(): Instant {
-        val daysToExpire = auctionRules.days.toLong()
+        val daysToExpire: Long = auctionRules.days.toLong()
         return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
     }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
-        val validatedName = validateName(payload.name)
-        val validatedDescription = validateDescription(payload.description)
-        val validatedPrice = validatePrice(payload.price)
+        val validatedName: Boolean = validateName(payload.name)
+        val validatedDescription: Boolean = validateDescription(payload.description)
+        val validatedPrice: Boolean = validatePrice(payload.price)
 
         return (validatedName && validatedDescription && validatedPrice)
     }
 
     private fun validateUpdateAuctionRequest(payload: UpdateAuctionRequest): Boolean {
-        val validatedName = validateName(payload.name)
-        val validatedDescription = validateDescription(payload.description)
-        val validatedPrice = validatePrice(payload.price)
+        val validatedName: Boolean = validateName(payload.name)
+        val validatedDescription: Boolean = validateDescription(payload.description)
+        val validatedPrice: Boolean = validatePrice(payload.price)
 
         return (validatedName && validatedDescription && validatedPrice)
     }
 
     private fun validateName(name: String): Boolean {
-        val regex = "^[a-zA-Z0-9 .]*$".toRegex()
+        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
 
         return name.isNotEmpty() && name.length in 5..100 && regex.matches(name)
     }
 
     private fun validateDescription(description: String): Boolean {
-        val regex = "^[a-zA-Z0-9 .]*$".toRegex()
+        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
 
         return description.isNotEmpty() && description.length in 20..500 && regex.matches(description)
     }

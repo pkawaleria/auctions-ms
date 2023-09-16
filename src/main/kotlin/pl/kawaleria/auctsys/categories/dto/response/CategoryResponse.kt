@@ -7,8 +7,7 @@ data class CategoryResponse(
         val description: String,
         val subcategories: List<SubcategoryResponse>,
         val isFinalNode: Boolean
-) {
-}
+)
 
 data class SubcategoryResponse(
         val id: String,

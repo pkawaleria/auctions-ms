@@ -33,7 +33,7 @@ open class ImageFacade(
 
     fun findImagesByAuctionId(auctionId: String): AuctionImagesResponse {
         val images: List<Image> = imageRepository.findImagesByAuctionId(auctionId)
-        val imageIDs = images.mapNotNull { it.id }
+        val imageIDs: List<String> = images.mapNotNull { it.id }
         return AuctionImagesResponse(
                 imagesCount = images.size,
                 imageIDs = imageIDs
@@ -42,7 +42,7 @@ open class ImageFacade(
 
     fun createImages(auctionId: String, files: List<MultipartFile>): List<Image> {
         imageValidator.validateMultipartFiles(files)
-        val images = saveImages(auctionId, files)
+        val images: List<Image> = saveImages(auctionId, files)
 
         //TODO: Zadanie dla Filipa - sprawdzic dlaczego w metodzie asynchronicznej z uzyciem event publishera lecą 500
         // z REST serwisu verifiera

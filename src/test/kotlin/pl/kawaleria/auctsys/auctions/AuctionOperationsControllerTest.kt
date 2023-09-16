@@ -39,6 +39,9 @@ class AuctionOperationsControllerTest {
     private lateinit var auctionRepository: MongoAuctionRepository
 
     @Autowired
+    private lateinit var cityRepository: CityRepository
+
+    @Autowired
     private lateinit var mongoTemplate: MongoTemplate
 
     @Autowired
@@ -52,7 +55,7 @@ class AuctionOperationsControllerTest {
     @Test
     fun `should accept auction`() {
         // given
-        val auction = thereIsAuction()
+        val auction: Auction = thereIsAuction()
 
         // when
         mockMvc.perform(
@@ -61,14 +64,14 @@ class AuctionOperationsControllerTest {
 
         // then
         val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
-        val isAccepted = auctionAfterAcceptance?.isAccepted() ?: false
+        val isAccepted: Boolean = auctionAfterAcceptance?.isAccepted() ?: false
         Assertions.assertThat(isAccepted).isTrue()
     }
 
     @Test
     fun `should reject auction`() {
         // given
-        val auction = thereIsAuction()
+        val auction: Auction = thereIsAuction()
 
         // when
         mockMvc.perform(
@@ -77,14 +80,14 @@ class AuctionOperationsControllerTest {
 
         // then
         val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
-        val isRejected = auctionAfterAcceptance?.isRejected() ?: false
+        val isRejected: Boolean = auctionAfterAcceptance?.isRejected() ?: false
         Assertions.assertThat(isRejected).isTrue()
     }
 
     @Test
     fun `should archive auction`() {
         // given
-        val auction = thereIsAuction()
+        val auction: Auction = thereIsAuction()
 
         // when
         mockMvc.perform(
@@ -93,7 +96,7 @@ class AuctionOperationsControllerTest {
 
         // then
         val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
-        val isArchived = auctionAfterAcceptance?.isArchived() ?: false
+        val isArchived: Boolean = auctionAfterAcceptance?.isArchived() ?: false
         Assertions.assertThat(isArchived).isTrue()
     }
 
@@ -106,6 +109,8 @@ class AuctionOperationsControllerTest {
                 pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
         )
 
+        val cityId: String = thereIsCity()
+
         val auction = Auction(
                 name = "Wireless Samsung headphones",
                 category = wirelessHeadphones,
@@ -114,11 +119,28 @@ class AuctionOperationsControllerTest {
                 price = 1.23,
                 auctioneerId = "user-id",
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+                cityId = cityId,
+                productCondition = Condition.NEW
         )
 
         return auctionRepository.save(auction)
     }
 
-    private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
+    private fun thereIsCity(): String {
+        val city = City(
+            name = "Miasto1",
+            type = "village",
+            province = "Województwo",
+            district = "Powiat",
+            commune = "Gmina",
+            latitude = 1.23,
+            longitude = 4.56
+        )
+
+        return cityRepository.save(city).id.toString()
+    }
+
+    // zakomentowałem bo nigdzie nie używana funkcja
+    // private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
 
 }

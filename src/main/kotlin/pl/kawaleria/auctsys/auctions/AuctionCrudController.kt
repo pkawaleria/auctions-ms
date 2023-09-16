@@ -20,7 +20,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
             @RequestParam(required = false) searchPhrase: String?,
             @RequestParam(required = false) category: String?
     ): PagedAuctions {
-        val pageRequest = PageRequest.of(page, pageSize)
+        val pageRequest: PageRequest = PageRequest.of(page, pageSize)
         val searchRequest = AuctionsSearchRequest(searchPhrase, category)
 
         return auctionFacade.searchAuctions(searchRequest, pageRequest)
@@ -71,4 +71,5 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
         auctionFacade.delete(auctionId)
         return ResponseEntity.noContent().build()
     }
+
 }

@@ -6,6 +6,4 @@ data class CategoryCreateRequest(
         val parentCategoryId: String?,
         val isTopLevel: Boolean,
         val isFinalNode: Boolean
-
-) {
-}
+)

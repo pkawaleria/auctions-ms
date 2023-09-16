@@ -15,7 +15,7 @@ class InMemoryAuctionRepository : AuctionRepository {
     }
 
     override fun findByNameContainingIgnoreCaseAndCategoryPathContaining(name: String, categoryName: String, pageable: Pageable): Page<Auction> {
-        val filteredAuctions = map.values
+        val filteredAuctions: MutableList<Auction> = map.values
                 .filter { auction -> auction.categoryPath.containsCategoryOfName(categoryName) }
                 .filter { it.name?.contains(name, ignoreCase = true) ?: false }
                 .toMutableList()
@@ -23,12 +23,12 @@ class InMemoryAuctionRepository : AuctionRepository {
     }
 
     override fun findAuctionsWithCategoryInPath(categoryName: String, pageable: Pageable): Page<Auction> {
-        val filteredAuctions = map.values.filter { e -> e.categoryPath.containsCategoryOfName(categoryName) }.toMutableList()
+        val filteredAuctions: MutableList<Auction> = map.values.filter { e -> e.categoryPath.containsCategoryOfName(categoryName) }.toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 
     override fun findByNameContainingIgnoreCase(name: String, pageable: Pageable): Page<Auction> {
-        val filteredAuctions = map.values
+        val filteredAuctions: MutableList<Auction> = map.values
                 .filter { it.name?.contains(name, ignoreCase = true) ?: false }
                 .toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
@@ -37,7 +37,7 @@ class InMemoryAuctionRepository : AuctionRepository {
     override fun save(auction: Auction): Auction {
         if (auction.id == null) {
             // If the auction doesn't have an ID, it's a new auction, generate a new ID.
-            val auctionId = ObjectId().toString()
+            val auctionId: String = ObjectId().toString()
             auction.id = auctionId
         }
         // Save the auction with the generated ID or the existing ID (if it's an update).
@@ -50,7 +50,7 @@ class InMemoryAuctionRepository : AuctionRepository {
     }
 
     override fun findAll(pageable: Pageable): Page<Auction> {
-        val allAuctions = map.values.toList()
+        val allAuctions: List<Auction> = map.values.toList()
         return PageImpl(allAuctions, pageable, allAuctions.size.toLong())
     }
 

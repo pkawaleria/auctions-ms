@@ -28,7 +28,6 @@ class AuctionConfiguration {
                     categoryFacade = categoryFacade
             )
 
-
     fun auctionFacadeWithInMemoryRepo(categoryFacade: CategoryFacade): AuctionFacade {
         val auctionRepository = InMemoryAuctionRepository()
         return AuctionFacade(

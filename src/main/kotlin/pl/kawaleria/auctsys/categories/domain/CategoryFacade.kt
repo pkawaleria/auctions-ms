@@ -15,7 +15,7 @@ class CategoryFacade(private val categoryRepository: CategoryRepository,
 
     @Transactional
     fun delete(categoryId: String) {
-        val category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
+        val category: Category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
 
         if (category.isTopLevel) {
             throw InvalidCategoryActionException("Cannot delete top level category")
@@ -24,8 +24,8 @@ class CategoryFacade(private val categoryRepository: CategoryRepository,
             transferFinalNodeResponsibility(category)
         }
 
-        val subcategories = categoryRepository.findSubcategories(categoryId)
-        val newParentId = category.parentCategoryId
+        val subcategories: List<Category> = categoryRepository.findSubcategories(categoryId)
+        val newParentId: String? = category.parentCategoryId
         subcategories.forEach { it.changeParent(newParentId) }
         categoryRepository.saveAll(subcategories.toMutableList())
         categoryRepository.delete(category)
@@ -44,8 +44,8 @@ class CategoryFacade(private val categoryRepository: CategoryRepository,
     }
 
     fun get(categoryId: String): CategoryResponse {
-        val category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
-        val subcategories = categoryRepository.findSubcategories(categoryId)
+        val category: Category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
+        val subcategories: List<Category> = categoryRepository.findSubcategories(categoryId)
         return category.toResponse(subcategories.toSubcategoriesResponse())
     }
 
@@ -58,12 +58,12 @@ class CategoryFacade(private val categoryRepository: CategoryRepository,
     }
 
     fun getFullCategoryPath(categoryId: String): CategoryPathResponse {
-        val category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
-        val categoryPath = mutableListOf(category.toCategoryNameResponse())
+        val category: Category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
+        val categoryPath: MutableList<CategoryNameResponse> = mutableListOf(category.toCategoryNameResponse())
 
         var parentCategoryId: String? = category.parentCategoryId
         while (parentCategoryId != null) {
-            val parentCategory = categoryRepository.findById(parentCategoryId).orElseThrow { CategoryNotFound() }
+            val parentCategory: Category = categoryRepository.findById(parentCategoryId).orElseThrow { CategoryNotFound() }
             parentCategoryId = parentCategory.parentCategoryId
             categoryPath.add(parentCategory.toCategoryNameResponse())
         }

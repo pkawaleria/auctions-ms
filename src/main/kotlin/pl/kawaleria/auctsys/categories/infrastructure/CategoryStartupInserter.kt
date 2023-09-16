@@ -4,6 +4,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
+import pl.kawaleria.auctsys.auctions.domain.Condition
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.categories.domain.Category
 import pl.kawaleria.auctsys.categories.domain.CategoryRepository
@@ -89,7 +90,9 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                         name = "Modern Dell laptop",
                         description = "Modern dell laptop with radeon graphics",
                         price = 12.4,
-                        categoryId = gamingLaptops.id
+                        categoryId = gamingLaptops.id,
+                        cityId = "",
+                        productCondition = Condition.NEW
                 ), auctioneerId = "auctioneer-id")
     }
 }

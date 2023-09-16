@@ -2,7 +2,6 @@ package pl.kawaleria.auctsys.categories.domain
 
 import java.util.*
 
-
 interface CategoryRepository {
     fun findSubcategories(categoryId: String): List<Category>
     fun getTopLevelOnes(): List<Category>

@@ -3,7 +3,6 @@ package pl.kawaleria.auctsys.categories.domain
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
 
-
 interface MongoCategoryRepository : CategoryRepository, MongoRepository<Category, String> {
     @Query("{'parentCategoryId': ?0}")
     override fun findSubcategories(categoryId: String): List<Category>

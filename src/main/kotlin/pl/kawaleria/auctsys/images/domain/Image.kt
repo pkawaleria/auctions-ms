@@ -5,10 +5,10 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "images")
 data class Image(
-    @Id
-    var id: String? = null,
-    var type: String,
-    var size: Long,
-    var binaryData: ByteArray,
-    var auctionId: String
+        @Id
+        var id: String? = null,
+        var type: String,
+        var size: Long,
+        var binaryData: ByteArray,
+        var auctionId: String
 )

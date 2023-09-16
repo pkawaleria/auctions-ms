@@ -13,6 +13,7 @@ fun Page<Auction>.toPagedAuctions(): PagedAuctions {
     val auctionSimplifiedList: List<AuctionSimplifiedResponse> = this.content.map { auction ->
         auction.toSimplifiedResponse()
     }
+
     return PagedAuctions(
             auctions = auctionSimplifiedList,
             pageNumber = this.number,

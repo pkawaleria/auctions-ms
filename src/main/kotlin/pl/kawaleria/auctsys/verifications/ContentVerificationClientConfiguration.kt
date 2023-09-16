@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.images.infrastructure
+package pl.kawaleria.auctsys.verifications
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

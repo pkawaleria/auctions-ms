@@ -91,7 +91,7 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
                         description = "Modern dell laptop with radeon graphics",
                         price = 12.4,
                         categoryId = gamingLaptops.id,
-                        cityId = "",
+                        cityId = "city-id",
                         productCondition = Condition.NEW
                 ), auctioneerId = "auctioneer-id")
     }

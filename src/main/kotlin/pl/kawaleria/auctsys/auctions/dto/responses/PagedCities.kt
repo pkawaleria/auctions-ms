@@ -15,8 +15,8 @@ fun Page<City>.toPagedCities(): PagedCities {
     }
 
     return PagedCities(
-        cities = auctionSimplifiedList,
-        pageNumber = this.number,
-        pageCount = this.totalPages
+            cities = auctionSimplifiedList,
+            pageNumber = this.number,
+            pageCount = this.totalPages
     )
 }

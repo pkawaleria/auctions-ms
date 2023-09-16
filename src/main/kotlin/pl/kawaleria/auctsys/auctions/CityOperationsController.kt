@@ -9,6 +9,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
 @RestController
 @RequestMapping("/cities")
 class CityOperationsController(private val cityFacade: CityFacade) {
+
     @PostMapping("/import")
     fun importCities(): Unit = cityFacade.importCities()
 

@@ -8,27 +8,27 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document(collection = "cities")
 @JsonIgnoreProperties("Id")
 data class City(
-    @Id
-    val id: String? = null,
+        @Id
+        val id: String? = null,
 
-    @JsonProperty("Name")
-    val name: String,
+        @JsonProperty("Name")
+        val name: String,
 
-    @JsonProperty("Type")
-    val type: String,
+        @JsonProperty("Type")
+        val type: String,
 
-    @JsonProperty("Province")
-    val province: String,
+        @JsonProperty("Province")
+        val province: String,
 
-    @JsonProperty("District")
-    val district: String,
+        @JsonProperty("District")
+        val district: String,
 
-    @JsonProperty("Commune")
-    val commune: String,
+        @JsonProperty("Commune")
+        val commune: String,
 
-    @JsonProperty("Latitude")
-    val latitude: Double,
+        @JsonProperty("Latitude")
+        val latitude: Double,
 
-    @JsonProperty("Longitude")
-    val longitude: Double
+        @JsonProperty("Longitude")
+        val longitude: Double
 )

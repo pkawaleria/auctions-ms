@@ -85,14 +85,14 @@ class CategoryStartupInserter(private val categoryRepository: CategoryRepository
         )
         categoryRepository.saveAll(mutableListOf(gamingLaptops, businessLaptops))
 
-        auctionFacade.addNewAuction(
-                createRequest = CreateAuctionRequest(
-                        name = "Modern Dell laptop",
-                        description = "Modern dell laptop with radeon graphics",
-                        price = 12.4,
-                        categoryId = gamingLaptops.id,
-                        cityId = "city-id",
-                        productCondition = Condition.NEW
-                ), auctioneerId = "auctioneer-id")
+//        auctionFacade.addNewAuction(
+//                createRequest = CreateAuctionRequest(
+//                        name = "Modern Dell laptop",
+//                        description = "Modern dell laptop with radeon graphics",
+//                        price = 12.4,
+//                        categoryId = gamingLaptops.id,
+//                        cityId = "city-id",
+//                        productCondition = Condition.NEW
+//                ), auctioneerId = "auctioneer-id")
     }
 }

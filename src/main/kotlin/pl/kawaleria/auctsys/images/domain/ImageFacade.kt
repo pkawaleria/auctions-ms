@@ -41,17 +41,15 @@ open class ImageFacade(private val imageRepository: ImageRepository,
         imageValidator.validateMultipartFiles(files)
         val images: List<Image> = saveImages(auctionId, files)
 
-        //TODO: Zadanie dla Filipa - sprawdzic dlaczego w metodzie asynchronicznej z uzyciem event publishera lecą 500
-        // z REST serwisu verifiera
-        // Cos sie psuje z naszym klientem (klasa z adnotacja @HttpExchange), moze jakies headery requesta sa usuwane/dodawane
-        // lub request jest jakos manipulowany
-//        eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
-        verifyImages(auctionId, files)
+        eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
+        //verifyImages(auctionId, files)
+
         return images
     }
 
-    fun verifyImages(auctionId: String, files: List<MultipartFile>) {
+    private fun verifyImages(auctionId: String, files: List<MultipartFile>) {
         var foundInappropriateImage = false
+
         try {
             foundInappropriateImage = files.any { contentVerificationClient.verifyImage(it.resource).isInappropriate }
         } catch (e: Exception) {

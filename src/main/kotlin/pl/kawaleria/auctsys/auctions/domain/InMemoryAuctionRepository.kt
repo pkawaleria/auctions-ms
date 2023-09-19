@@ -4,6 +4,9 @@ import org.bson.types.ObjectId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.Point
+import pl.kawaleria.auctsys.categories.domain.Category
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -34,6 +37,17 @@ class InMemoryAuctionRepository : AuctionRepository {
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 
+    override fun findAuctionsByCityId(cityId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values.filter { it.cityId == cityId}.toMutableList()
+
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    override fun findByLocationNear(startPoint: Point, distance: Distance, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = mutableListOf()
+        return PageImpl(filteredAuctions, pageable, 0)
+    }
+
     override fun save(auction: Auction): Auction {
         if (auction.id == null) {
             // If the auction doesn't have an ID, it's a new auction, generate a new ID.
@@ -62,5 +76,13 @@ class InMemoryAuctionRepository : AuctionRepository {
 
     override fun delete(auction: Auction) {
         map.remove(auction.id)
+    }
+
+    override fun deleteAll() {
+        map.clear()
+    }
+
+    override fun <S : Auction?> saveAll(entities: MutableIterable<S>): List<Auction> {
+        return entities.map { save(it!!) }
     }
 }

@@ -7,6 +7,9 @@ data class CreateAuctionRequest(
         val description: String,
         val price: Double,
         val categoryId: String,
+        val productCondition: Condition,
         val cityId: String,
-        val productCondition: Condition
+        val cityName: String,
+        val latitude: Double,
+        val longitude: Double
 )

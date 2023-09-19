@@ -2,10 +2,11 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
-import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
-import pl.kawaleria.auctsys.auctions.dto.exceptions.InappropriateContentException
-import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCreationRequestException
-import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionUpdateRequestException
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.Metrics
+import org.springframework.data.geo.Point
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import pl.kawaleria.auctsys.auctions.dto.exceptions.*
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -18,11 +19,14 @@ import pl.kawaleria.auctsys.verifications.TextRequest
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.abs
 
 class AuctionFacade(private val auctionRepository: AuctionRepository,
+                    private val cityRepository: CityRepository,
                     private val contentVerificationClient: ContentVerificationClient,
                     private val categoryFacade: CategoryFacade,
                     private val auctionRules: AuctionRules,
+                    private val radiusRules: RadiusRules,
                     private val auctionCategoryDeleter: AuctionCategoryDeleter,
                     private val clock: Clock) {
 
@@ -54,11 +58,13 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                 price = createRequest.price,
                 auctioneerId = auctioneerId,
                 thumbnail = byteArrayOf(),
-                expiresAt = newExpirationInstant(),
-                cityId = createRequest.cityId,
                 category = categoryPath.lastCategory(),
                 categoryPath = categoryPath,
-                productCondition = createRequest.productCondition
+                productCondition = createRequest.productCondition,
+                cityId = createRequest.cityId,
+                cityName = createRequest.cityName,
+                location = GeoJsonPoint(createRequest.latitude, createRequest.longitude),
+                expiresAt = newExpirationInstant()
         )
 
         return auctionRepository.save(auction)
@@ -92,6 +98,8 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         auction.description = payload.description
         auction.productCondition = payload.productCondition
         auction.cityId = payload.cityId
+        auction.cityName = payload.cityName
+        auction.location = payload.location
 
         return auctionRepository.save(auction)
     }
@@ -109,15 +117,34 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
         val categoryName: String? = searchRequest.categoryName
         val searchPhrase: String? = searchRequest.searchPhrase?.takeIf { it.isNotBlank() }
+        val cityId: String? = searchRequest.cityId
+        var radius: Double? = searchRequest.radius
+
+        if (radius != null && radius < 0) radius = abs(radius)
+        if (radius != null && radius !in radiusRules.min .. radiusRules.max) throw SearchRadiusOutOfBoundsException()
+        if (cityId == null && radius != null) throw SearchRadiusWithoutCityException()
 
         return when {
-            searchPhrase != null && categoryName != null ->
+            cityId != null && radius != null && (radius in radiusRules.min ..radiusRules.max) -> {
+                val city: City = cityRepository.findById(cityId).get()
+                val latitude: Double = city.latitude
+                val longitude: Double = city.longitude
+
+                val startPoint = Point(latitude, longitude)
+                val distance = Distance(radius, Metrics.KILOMETERS)
+                auctionRepository.findByLocationNear(startPoint, distance, pageRequest)
+            }
+
+            cityId != null && (radius == null || radius == 0.0) ->
+                auctionRepository.findAuctionsByCityId(cityId, pageRequest)
+
+            cityId == null && searchPhrase != null && categoryName != null ->
                 auctionRepository.findByNameContainingIgnoreCaseAndCategoryPathContaining(searchPhrase, categoryName, pageRequest)
 
-            searchPhrase == null && categoryName != null ->
+            cityId == null && searchPhrase == null && categoryName != null ->
                 auctionRepository.findAuctionsWithCategoryInPath(categoryName, pageRequest)
 
-            searchPhrase != null && categoryName == null ->
+            cityId == null && searchPhrase != null && categoryName == null ->
                 auctionRepository.findByNameContainingIgnoreCase(searchPhrase, pageRequest)
 
             else -> auctionRepository.findAll(pageRequest)

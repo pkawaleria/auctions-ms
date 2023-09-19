@@ -1,6 +1,9 @@
 package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pl.kawaleria.auctsys.auctions.dto.exceptions.ExpiredAuctionException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCategoryPathException
@@ -11,14 +14,17 @@ data class Auction(
         @Id
         var id: String? = null,
         var name: String? = null,
-        var cityId: String? = null,
-        var productCondition: Condition,
-        var category: Category,
-        var categoryPath: CategoryPath,
         var description: String? = null,
         var price: Double? = null,
         var auctioneerId: String? = null,
         var thumbnail: ByteArray? = null,
+        var category: Category,
+        var categoryPath: CategoryPath,
+        var productCondition: Condition,
+        var cityId: String,
+        var cityName: String,
+        @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+        var location: GeoJsonPoint,
         var status: AuctionStatus = AuctionStatus.NEW,
         var expiresAt: Instant
 ) {

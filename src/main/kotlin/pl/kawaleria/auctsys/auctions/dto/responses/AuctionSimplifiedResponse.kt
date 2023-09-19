@@ -9,7 +9,9 @@ data class AuctionSimplifiedResponse(
         val name: String?,
         val category: Category,
         val categoryPath: CategoryPath,
-        val price: Double?
+        val price: Double?,
+        val thumbnail: ByteArray?,
+        val cityName: String?
 )
 
-fun Auction.toSimplifiedResponse(): AuctionSimplifiedResponse = AuctionSimplifiedResponse(id, name, category, categoryPath, price)
+fun Auction.toSimplifiedResponse(): AuctionSimplifiedResponse = AuctionSimplifiedResponse(id, name, category, categoryPath, price, thumbnail, cityName)

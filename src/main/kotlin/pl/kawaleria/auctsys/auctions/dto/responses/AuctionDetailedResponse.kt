@@ -4,7 +4,6 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import pl.kawaleria.auctsys.auctions.domain.Auction
 import pl.kawaleria.auctsys.auctions.domain.Category
 import pl.kawaleria.auctsys.auctions.domain.Condition
-import pl.kawaleria.auctsys.auctions.domain.Location
 
 data class AuctionDetailedResponse(
         val id: String?,

@@ -6,7 +6,6 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Point
-import pl.kawaleria.auctsys.categories.domain.Category
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -30,9 +29,9 @@ class InMemoryAuctionRepository : AuctionRepository {
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 
-    override fun findByNameContainingIgnoreCase(name: String, pageable: Pageable): Page<Auction> {
+    override fun findByNameContainingIgnoreCase(searchPhrase: String, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = map.values
-                .filter { it.name?.contains(name, ignoreCase = true) ?: false }
+                .filter { it.name?.contains(searchPhrase, ignoreCase = true) ?: false }
                 .toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }

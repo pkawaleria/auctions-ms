@@ -15,7 +15,7 @@ interface AuctionRepository {
     fun findByLocationNear(startPoint: Point, distance: Distance, pageable: Pageable): Page<Auction>
     fun save(auction: Auction): Auction
     fun findById(id: String): Optional<Auction>
-    fun findAll(pageRequest: Pageable): Page<Auction>
+    fun findAll(pageable: Pageable): Page<Auction>
     fun deleteById(auctionId: String)
     fun existsById(auctionId: String): Boolean
     fun delete(auction: Auction)

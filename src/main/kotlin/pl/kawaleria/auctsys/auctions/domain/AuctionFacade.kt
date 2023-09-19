@@ -63,14 +63,14 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                 productCondition = createRequest.productCondition,
                 cityId = createRequest.cityId,
                 cityName = createRequest.cityName,
-                location = GeoJsonPoint(createRequest.latitude, createRequest.longitude),
+                location = createRequest.location,
                 expiresAt = newExpirationInstant()
         )
 
         return auctionRepository.save(auction)
     }
 
-    fun verifyAuctionContent(name: String, description: String) {
+    private fun verifyAuctionContent(name: String, description: String) {
         var foundInappropriateContent = false
         val textToVerify = TextRequest("$name $description")
 
@@ -120,9 +120,10 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         val cityId: String? = searchRequest.cityId
         var radius: Double? = searchRequest.radius
 
-        if (radius != null && radius < 0) radius = abs(radius)
         if (radius != null && radius !in radiusRules.min .. radiusRules.max) throw SearchRadiusOutOfBoundsException()
         if (cityId == null && radius != null) throw SearchRadiusWithoutCityException()
+
+        if (radius != null && radius < 0) radius = abs(radius)
 
         return when {
             cityId != null && radius != null && (radius in radiusRules.min ..radiusRules.max) -> {

@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.geo.Point
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
@@ -23,8 +24,10 @@ data class Auction(
         var productCondition: Condition,
         var cityId: String,
         var cityName: String,
+
         @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
         var location: GeoJsonPoint,
+
         var status: AuctionStatus = AuctionStatus.NEW,
         var expiresAt: Instant
 ) {

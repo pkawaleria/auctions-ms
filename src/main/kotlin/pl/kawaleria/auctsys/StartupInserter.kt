@@ -2,6 +2,8 @@ package pl.kawaleria.auctsys
 
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
+import org.springframework.data.geo.Point
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Component
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -131,48 +133,44 @@ class StartupInserter(private val categoryRepository: CategoryRepository,
 
         val auctionRequests: List<CreateAuctionRequest> = listOf(
                 CreateAuctionRequest(
-                    name = "Modern Dell laptop",
-                    description = "Modern dell laptop with radeon graphics",
-                    price = 12.4,
-                    categoryId = gamingLaptops.id,
-                    productCondition = Condition.NEW,
-                    cityId = cities[0].id!!,
-                    cityName = cities[0].name,
-                    latitude = cities[0].latitude,
-                    longitude = cities[0].longitude
+                        name = "Modern Dell laptop",
+                        description = "Modern dell laptop with radeon graphics",
+                        price = 12.4,
+                        categoryId = gamingLaptops.id,
+                        productCondition = Condition.NEW,
+                        cityId = cities[0].id!!,
+                        cityName = cities[0].name,
+                        location = GeoJsonPoint(cities[0].latitude, cities[0].longitude)
                 ),
                 CreateAuctionRequest(
-                    name = "Modern HP laptop",
-                    description = "Modern hp laptop with nvidia graphics",
-                    price = 35.7,
-                    categoryId = gamingLaptops.id,
-                    productCondition = Condition.USED,
-                    cityId = cities[1].id!!,
-                    cityName = cities[1].name,
-                    latitude = cities[1].latitude,
-                    longitude = cities[1].longitude
+                        name = "Modern HP laptop",
+                        description = "Modern hp laptop with nvidia graphics",
+                        price = 35.7,
+                        categoryId = gamingLaptops.id,
+                        productCondition = Condition.USED,
+                        cityId = cities[1].id!!,
+                        cityName = cities[1].name,
+                        location = GeoJsonPoint(cities[1].latitude, cities[1].longitude)
                 ),
                 CreateAuctionRequest(
-                    name = "Modern Lenovo laptop",
-                    description = "Modern lenovo laptop with nvidia and radeon graphics",
-                    price = 35.7,
-                    categoryId = gamingLaptops.id,
-                    productCondition = Condition.USED,
-                    cityId = cities[2].id!!,
-                    cityName = cities[2].name,
-                    latitude = cities[2].latitude,
-                    longitude = cities[2].longitude
+                        name = "Modern Lenovo laptop",
+                        description = "Modern lenovo laptop with nvidia and radeon graphics",
+                        price = 35.7,
+                        categoryId = gamingLaptops.id,
+                        productCondition = Condition.USED,
+                        cityId = cities[2].id!!,
+                        cityName = cities[2].name,
+                        location = GeoJsonPoint(cities[2].latitude, cities[2].longitude)
                 ),
                 CreateAuctionRequest(
-                    name = "Modern Asus laptop",
-                    description = "Modern asus laptop with two radeon graphics",
-                    price = 35.7,
-                    categoryId = gamingLaptops.id,
-                    productCondition = Condition.USED,
-                    cityId = cities[3].id!!,
-                    cityName = cities[3].name,
-                    latitude = cities[3].latitude,
-                    longitude = cities[3].longitude
+                        name = "Modern Asus laptop",
+                        description = "Modern asus laptop with two radeon graphics",
+                        price = 35.7,
+                        categoryId = gamingLaptops.id,
+                        productCondition = Condition.USED,
+                        cityId = cities[3].id!!,
+                        cityName = cities[3].name,
+                        location = GeoJsonPoint(cities[3].latitude, cities[3].longitude)
                 )
         )
 

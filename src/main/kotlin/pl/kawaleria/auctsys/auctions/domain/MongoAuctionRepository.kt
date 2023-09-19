@@ -11,4 +11,5 @@ interface MongoAuctionRepository : AuctionRepository, MongoRepository<Auction, S
 
     @Query("{ 'name': { \$regex: ?0, \$options: 'i' }, 'categoryPath.pathElements.name': ?1 }")
     override fun findByNameContainingIgnoreCaseAndCategoryPathContaining(name: String, categoryName: String, pageable: Pageable): Page<Auction>
+
 }

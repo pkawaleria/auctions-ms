@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.categories.domain
 
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.slf4j.Logger
@@ -35,6 +36,10 @@ class CategoryFacadeTest {
     @Autowired
     private lateinit var categoryFacade: CategoryFacade
 
+    @AfterEach
+    fun cleanUp() {
+        mongoTemplate.dropCollection("categories")
+    }
 
     @Test
     // TODO

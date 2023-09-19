@@ -12,7 +12,7 @@ interface AuctionRepository {
     fun findAuctionsWithCategoryInPath(categoryName: String, pageable: Pageable): Page<Auction>
     fun findByNameContainingIgnoreCase(searchPhrase: String, pageable: Pageable): Page<Auction>
     fun findAuctionsByCityId(cityId: String, pageable: Pageable): Page<Auction>
-    fun findByLocationNear(startPoint: Point, distance: Distance, pageable: Pageable): Page<Auction>
+    fun findByLocationNear(location: Point, distance: Distance, pageable: Pageable): Page<Auction>
     fun save(auction: Auction): Auction
     fun findById(id: String): Optional<Auction>
     fun findAll(pageable: Pageable): Page<Auction>

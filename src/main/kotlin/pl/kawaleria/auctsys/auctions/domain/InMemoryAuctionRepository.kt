@@ -42,7 +42,8 @@ class InMemoryAuctionRepository : AuctionRepository {
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 
-    override fun findByLocationNear(startPoint: Point, distance: Distance, pageable: Pageable): Page<Auction> {
+    // TODO implement findByLocationNear
+    override fun findByLocationNear(location: Point, distance: Distance, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = mutableListOf()
         return PageImpl(filteredAuctions, pageable, 0)
     }

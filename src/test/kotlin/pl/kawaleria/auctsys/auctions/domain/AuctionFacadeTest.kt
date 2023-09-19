@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.UnsupportedOperationOnAuctionException
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -12,13 +13,15 @@ import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import java.util.*
 
-class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
+class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient,
+                        cityRepository: CityRepository) {
 
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
 
     private val auctionFacade: AuctionFacade =
-        AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade, contentVerificationClient)
-
+        AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade,
+                                                             contentVerificationClient,
+                                                             cityRepository)
     @Test
     fun `should accept newly created auction`() {
         // given
@@ -197,14 +200,18 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
 
         val auction = CreateAuctionRequest(
                 name = "Adidas shoes",
-                categoryId = finalCategory.id,
                 description = "Breathable sports shoes",
                 price = 145.2,
-                cityId = "przykladoweID",
-                productCondition = Condition.USED
+                categoryId = finalCategory.id,
+                productCondition = Condition.USED,
+                cityId = "sampleID",
+                cityName = "sampleName",
+                location = GeoJsonPoint(Random().nextDouble(49.2989, 54.7908), Random().nextDouble(14.2471, 23.8925))
         )
+
         val auctionId: String = auctionFacade.addNewAuction(createRequest = auction, auctioneerId = "auctioneer-${UUID.randomUUID()}").id!!
         action(auctionId)
+
         return auctionId
     }
 

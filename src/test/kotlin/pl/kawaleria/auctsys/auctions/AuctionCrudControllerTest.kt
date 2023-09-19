@@ -222,17 +222,16 @@ class AuctionControllerTest {
         }
 
         @Test
-        fun `should search among auctions with selected city and radius`() {
+        fun `should search among auctions with selected city and without radius`() {
             // given
             val cities: List<City> = thereAreAuctions().second
 
             val selectedPage = 0
             val selectedPageSize = 10
             val selectedCityId: String = cities[0].id!!
-            val selectedRadius = 16.0
 
             val expectedPageCount = 1
-            val expectedFilteredAuctionsCount = 2
+            val expectedFilteredAuctionsCount = 1
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -240,14 +239,76 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
-                    .param("radius", selectedRadius.toString())
                     .contentType(MediaType.APPLICATION_JSON))
-//                .andExpect(status().isOk())
+                .andExpect(status().isOk())
                 .andReturn()
 
             // then
             val responseJson: String = result.response.contentAsString
-            logger.info(responseJson)
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+        }
+
+        // TODO implement this test
+//        @Test
+//        fun `should search among auctions with selected city and radius`() {
+//            // given
+//            val cities: List<City> = thereAreAuctions().second
+//
+//            val selectedPage = 0
+//            val selectedPageSize = 10
+//            val selectedCityId: String = cities[0].id!!
+//            val selectedRadius = 16.0
+//
+//            val expectedPageCount = 1
+//            val expectedFilteredAuctionsCount = 2
+//
+//            // when
+//            val result: MvcResult = mockMvc.perform(
+//                get(auctionSearchUrl)
+//                    .param("page", selectedPage.toString())
+//                    .param("pageSize", selectedPageSize.toString())
+//                    .param("cityId", selectedCityId)
+//                    .param("radius", selectedRadius.toString())
+//                    .contentType(MediaType.APPLICATION_JSON))
+//                .andExpect(status().isOk())
+//                .andReturn()
+//
+//            // then
+//            val responseJson: String = result.response.contentAsString
+//            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+//
+//            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+//            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+//        }
+
+        @Test
+        fun `should not search among auctions with radius only`() {
+            // given
+            thereAreAuctions()
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedRadius = 16.0
+
+            val expectedError = "Cannot found auctions with radius only"
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("radius", selectedRadius.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseError: String = result.response.errorMessage.toString()
+
+            Assertions.assertThat(responseError).isEqualTo(expectedError)
         }
     }
 
@@ -262,7 +323,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    get("$auctionCrudUrl/$auctionId")
+                    get("$auctionSearchUrl/$auctionId")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -329,7 +390,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    get("$auctionCrudUrl/nonExistingAuctionId")
+                    get("$auctionSearchUrl/nonExistingAuctionId")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andReturn()
@@ -403,7 +464,7 @@ class AuctionControllerTest {
                     location = location
             )
 
-            val expectedErrorMessage = "CreateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -437,7 +498,7 @@ class AuctionControllerTest {
                     location = location
             )
 
-            val expectedErrorMessage = "CreateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -471,7 +532,7 @@ class AuctionControllerTest {
                     location = location
             )
 
-            val expectedErrorMessage = "CreateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -505,7 +566,7 @@ class AuctionControllerTest {
                     location = location
             )
 
-            val expectedErrorMessage = "CreateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -539,7 +600,7 @@ class AuctionControllerTest {
                     location = location
             )
 
-            val expectedErrorMessage = "CreateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -742,7 +803,7 @@ class AuctionControllerTest {
                     location = oldAuction.location
             )
 
-            val expectedErrorMessage = "UpdateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -775,7 +836,7 @@ class AuctionControllerTest {
                     location = oldAuction.location
             )
 
-            val expectedErrorMessage = "UpdateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -815,7 +876,7 @@ class AuctionControllerTest {
                     location = oldAuction.location
             )
 
-            val expectedErrorMessage = "UpdateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
 
             // when
             val result:MvcResult = mockMvc.perform(
@@ -848,7 +909,7 @@ class AuctionControllerTest {
                     location = oldAuction.location
             )
 
-            val expectedErrorMessage = "UpdateAuctionRequest is not valid"
+            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -1005,8 +1066,8 @@ class AuctionControllerTest {
                         description = "Best headphones you can have",
                         price = 1.23,
                         auctioneerId = "user-id",
-                        category = wirelessHeadphones,
-                        categoryPath = wirelessHeadphonesCategoryPath,
+                        category = clothing,
+                        categoryPath = tShirtsCategoryPath,
                         productCondition = Condition.NEW,
                         cityId = cities[0].id!!,
                         cityName = cities[0].name,
@@ -1018,8 +1079,8 @@ class AuctionControllerTest {
                         description = "Worst headphones you can have",
                         price = 4.56,
                         auctioneerId = "user-id",
-                        category = speakers,
-                        categoryPath = speakersCategoryPath,
+                        category = wirelessHeadphones,
+                        categoryPath = wirelessHeadphonesCategoryPath,
                         productCondition = Condition.USED,
                         cityId = cities[1].id!!,
                         cityName = cities[1].name,
@@ -1031,8 +1092,8 @@ class AuctionControllerTest {
                         description = "Best sony headphones you can have",
                         price = 78.9,
                         auctioneerId = "user-id",
-                        category = tShirts,
-                        categoryPath = tShirtsCategoryPath,
+                        category = headphones,
+                        categoryPath = speakersCategoryPath,
                         productCondition = Condition.USED,
                         cityId = cities[2].id!!,
                         cityName = cities[2].name,
@@ -1040,12 +1101,12 @@ class AuctionControllerTest {
                         expiresAt = defaultExpiration(),
                 ),
                 Auction(
-                        name = "Wireless Apple headphones",
-                        description = "Worst apple headphones you can have",
+                        name = "Wireless Jbl headphones",
+                        description = "Worst jbl headphones you can have",
                         price = 159.43,
                         auctioneerId = "user-id",
-                        category = tShirts,
-                        categoryPath = tShirtsCategoryPath,
+                        category = electronics,
+                        categoryPath = wirelessHeadphonesCategoryPath,
                         productCondition = Condition.NOT_APPLICABLE,
                         cityId = cities[3].id!!,
                         cityName = cities[3].name,
@@ -1069,7 +1130,7 @@ class AuctionControllerTest {
                         longitude = 22.5666
                         ),
                 City(
-                        name = "Świdnik",
+                        name = "Swidnik",
                         type = "village",
                         province = "Province-2",
                         district = "District-2",
@@ -1087,7 +1148,7 @@ class AuctionControllerTest {
                         longitude = 23.0088
                 ),
                 City(
-                        name = "Chełm",
+                        name = "Chelm",
                         type = "village",
                         province = "Province-4",
                         district = "District-4",

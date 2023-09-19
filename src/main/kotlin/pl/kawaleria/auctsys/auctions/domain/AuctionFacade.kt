@@ -4,7 +4,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Metrics
-import org.springframework.data.geo.Point
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import pl.kawaleria.auctsys.auctions.dto.exceptions.*
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
@@ -131,7 +130,7 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                 val latitude: Double = city.latitude
                 val longitude: Double = city.longitude
 
-                val startPoint = Point(latitude, longitude)
+                val startPoint = GeoJsonPoint(latitude, longitude)
                 val distance = Distance(radius, Metrics.KILOMETERS)
                 auctionRepository.findByLocationNear(startPoint, distance, pageRequest)
             }

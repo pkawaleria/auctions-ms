@@ -1,7 +1,6 @@
 package pl.kawaleria.auctsys.auctions
 
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade

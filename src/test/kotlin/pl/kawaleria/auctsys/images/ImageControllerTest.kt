@@ -13,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.dropCollection
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile

@@ -55,7 +55,6 @@ class CategoryFacadeTest {
 //        Assertions.assertThat(path.path).}
     }
 
-
     fun thereAreCategories(): String {
         val electronics = Category(
                 name = "Electronics",

@@ -102,7 +102,6 @@ class AuctionOperationsControllerTest {
         Assertions.assertThat(isArchived).isTrue()
     }
 
-
     private fun thereIsAuction(): Auction {
         val electronics = Category(UUID.randomUUID().toString(), "Electronics")
         val headphones = Category(UUID.randomUUID().toString(), "Headphones")
@@ -113,21 +112,21 @@ class AuctionOperationsControllerTest {
 
         val city: City = thereIsCity()
 
-        val auction = Auction(
-            name = "Wireless Samsung headphones",
-            description = "Best headphones you can have",
-            price = 1.23,
-            auctioneerId = "user-id",
-            category = wirelessHeadphones,
-            categoryPath = categoryPath,
-            productCondition = Condition.NEW,
-            cityId = city.id!!,
-            cityName = city.name,
-            location = GeoJsonPoint(city.latitude, city.longitude),
-            expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+        return auctionRepository.save(
+                Auction(
+                        name = "Wireless Samsung headphones",
+                        description = "Best headphones you can have",
+                        price = 1.23,
+                        auctioneerId = "user-id",
+                        category = wirelessHeadphones,
+                        categoryPath = categoryPath,
+                        productCondition = Condition.NEW,
+                        cityId = city.id!!,
+                        cityName = city.name,
+                        location = GeoJsonPoint(city.latitude, city.longitude),
+                        expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds())
+                )
         )
-
-        return auctionRepository.save(auction)
     }
 
     private fun thereIsCity(): City {

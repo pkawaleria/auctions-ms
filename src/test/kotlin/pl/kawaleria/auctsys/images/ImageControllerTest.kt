@@ -99,7 +99,7 @@ class ImageControllerTest {
 
             // then
             val response: String = result.response.contentAsString
-            logger.info("response = $response")
+//            logger.info("response = $response")
             val mappedImages: List<ImageDetailedResponse> =
                     objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageDetailedResponse::class.java))
 

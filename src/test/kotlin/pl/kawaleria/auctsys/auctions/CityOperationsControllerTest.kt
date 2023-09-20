@@ -1,8 +1,10 @@
 package pl.kawaleria.auctsys.auctions
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.AfterEach
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.slf4j.Logger
@@ -10,7 +12,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.dropCollection
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
@@ -18,11 +22,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import pl.kawaleria.auctsys.auctions.domain.City
 import pl.kawaleria.auctsys.auctions.domain.CityFacade
 import pl.kawaleria.auctsys.auctions.domain.CityRepository
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
 
-private const val baseUrl = "/admin"
+private const val baseUrl = "/cities"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -57,6 +62,11 @@ class CityOperationsControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
+    @BeforeEach
+    fun setUp() {
+        cityRepository.deleteAll()
+    }
+
     @AfterEach
     fun cleanUp() {
         mongoTemplate.dropCollection("cities")
@@ -65,18 +75,16 @@ class CityOperationsControllerTest {
     @Test
     fun `should insert cities from json file if document is empty`() {
         // given
-        cityRepository.deleteAll()
-
-        val expectedMessage = "Successfully added cities"
+        val resource = ClassPathResource("city_data.json")
+        val citiesSize: Long = objectMapper.readValue<List<City>>(resource.inputStream).size.toLong()
 
         // when
-        val result: MvcResult = mockMvc.perform(
-                post("$baseUrl/import-cities"))
+        mockMvc.perform(
+                post("$baseUrl/import"))
                 .andExpect(status().isOk())
-                .andReturn()
 
         // then
-        Assertions.assertThat(result.response.contentAsString).isEqualTo(expectedMessage)
+        Assertions.assertThat(cityRepository.count()).isEqualTo(citiesSize)
     }
 
     @Test
@@ -84,16 +92,16 @@ class CityOperationsControllerTest {
         // given
         cityFacade.importCities()
 
-        val expectedMessage = "Cities document is not empty"
+        val expectedMessage = "Can not import cities"
 
         // when
         val result: MvcResult = mockMvc.perform(
-                post("$baseUrl/import-cities"))
+                post("$baseUrl/import"))
                 .andExpect(status().isBadRequest())
                 .andReturn()
 
         // then
-        Assertions.assertThat(result.response.contentAsString).isEqualTo(expectedMessage)
+        Assertions.assertThat(result.response.errorMessage).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -101,33 +109,28 @@ class CityOperationsControllerTest {
         // given
         cityFacade.importCities()
 
-        val expectedMessage = "Successfully deleted cities"
-
         // when
-        val result: MvcResult = mockMvc.perform(
-                delete("$baseUrl/delete-cities"))
+        mockMvc.perform(
+                delete("$baseUrl/clear"))
                 .andExpect(status().isOk())
-                .andReturn()
 
         // then
-        Assertions.assertThat(result.response.contentAsString).isEqualTo(expectedMessage)
+        Assertions.assertThat(cityRepository.count()).isEqualTo(0L)
     }
 
     @Test
     fun `should not delete cities from database if document is empty`() {
         // given
-        cityRepository.deleteAll()
-
-        val expectedMessage = "Cities document is empty"
+        val expectedMessage = "Can not delete cities collection"
 
         // when
         val result: MvcResult = mockMvc.perform(
-                delete("$baseUrl/delete-cities"))
+                delete("$baseUrl/clear"))
                 .andExpect(status().isBadRequest())
                 .andReturn()
 
         // then
-        Assertions.assertThat(result.response.contentAsString).isEqualTo(expectedMessage)
+        Assertions.assertThat(result.response.errorMessage).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -144,7 +147,7 @@ class CityOperationsControllerTest {
 
         // when
         val result: MvcResult = mockMvc.perform(
-                get("$baseUrl/cities")
+                get("$baseUrl/search")
                         .param("page", selectedPage.toString())
                         .param("pageSize", selectedPageSize.toString())
                         .param("searchCityName", selectedCityNamePhrase)
@@ -155,9 +158,8 @@ class CityOperationsControllerTest {
         // then
         val responseJson: String = result.response.contentAsString
         val pagedCities: PagedCities = objectMapper.readValue(responseJson, PagedCities::class.java)
-        logger.info("Received response from rest controller: {}", responseJson)
 
-        Assertions.assertThat(pagedCities.cities.size).isEqualTo(expectedFilteredCitiesCount)
         Assertions.assertThat(pagedCities.pageCount).isEqualTo(expectedPageCount)
+        Assertions.assertThat(pagedCities.cities.size).isEqualTo(expectedFilteredCitiesCount)
     }
 }

@@ -259,12 +259,10 @@ class AuctionControllerTest {
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
         }
 
-        // TODO implement this test
         @Test
         fun `should search among auctions with selected city and radius`() {
             // given
             val cities: List<City> = thereAreAuctions().second
-            logger.info(cities.toString())
 
             val selectedPage = 0
             val selectedPageSize = 10
@@ -288,7 +286,6 @@ class AuctionControllerTest {
             // then
             val responseJson: String = result.response.contentAsString
             val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
-            logger.info(pagedAuctions.auctions.toString())
 
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
@@ -320,6 +317,34 @@ class AuctionControllerTest {
 
             Assertions.assertThat(responseError).isEqualTo(expectedError)
         }
+
+        @Test
+        fun `should not search among auctions with selected city and radius out of bounds`() {
+            val cities: List<City> = thereAreAuctions().second
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedCityId: String = cities[0].id!!
+            val selectedRadius = 55.0
+
+            val expectedErrorMessage = "Search radius is out of bounds"
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("cityId", selectedCityId)
+                    .param("radius", selectedRadius.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseErrorMessage: String = result.response.errorMessage.toString()
+
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+        }
     }
 
     @Nested
@@ -329,11 +354,10 @@ class AuctionControllerTest {
         fun `should return specific auction`() {
             // given
             val auction: Auction = thereIsAuction()
-            val auctionId: String? = auction.id
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    get("$auctionSearchUrl/$auctionId")
+                    get("$auctionSearchUrl/${auction.id}")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -344,12 +368,14 @@ class AuctionControllerTest {
 
             Assertions.assertThat(foundAuction.id).isEqualTo(auction.id)
             Assertions.assertThat(foundAuction.name).isEqualTo(auction.name)
-            Assertions.assertThat(foundAuction.cityId).isEqualTo(auction.cityId)
-            Assertions.assertThat(foundAuction.productCondition).isEqualTo(auction.productCondition)
-            Assertions.assertThat(foundAuction.category).isEqualTo(auction.category)
             Assertions.assertThat(foundAuction.description).isEqualTo(auction.description)
             Assertions.assertThat(foundAuction.price).isEqualTo(auction.price)
             Assertions.assertThat(foundAuction.auctioneerId).isEqualTo(auction.auctioneerId)
+            Assertions.assertThat(foundAuction.category).isEqualTo(auction.category)
+            Assertions.assertThat(foundAuction.productCondition).isEqualTo(auction.productCondition)
+            Assertions.assertThat(foundAuction.cityId).isEqualTo(auction.cityId)
+            Assertions.assertThat(foundAuction.cityName).isEqualTo(auction.cityName)
+            Assertions.assertThat(foundAuction.location).isEqualTo(auction.location)
         }
 
 
@@ -376,11 +402,12 @@ class AuctionControllerTest {
         @Test
         fun `should return empty list of auctions of non-existing user`() {
             // given
+            val nonExistingUserUrl = "/auction-service/users/nonExistingUserId/auctions"
             val expectedNumberOfAuctions = 0
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    get("/auction-service/users/nonExistingUserId/auctions")
+                    get(nonExistingUserUrl)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -663,11 +690,11 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.name).isEqualTo(expectedAuctionName)
             Assertions.assertThat(updatedAuction.description).isEqualTo(updateAuctionRequest.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(updateAuctionRequest.price)
+            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
             Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
-            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
         }
 
         @Test
@@ -704,11 +731,11 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
             Assertions.assertThat(updatedAuction.description).isEqualTo(expectedAuctionDescription)
             Assertions.assertThat(updatedAuction.price).isEqualTo(expectedAuctionPrice)
+            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
             Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
-            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
         }
 
         @Test
@@ -747,11 +774,11 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
             Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
+            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(expectedCityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(expectedCityName)
             Assertions.assertThat(updatedAuction.location).isEqualTo(expectedLocation)
-            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
         }
 
         @Test
@@ -789,11 +816,11 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
             Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
+            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(expectedProductCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
             Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
-            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
         }
 
         @Test
@@ -868,7 +895,7 @@ class AuctionControllerTest {
             val oldAuction: Auction = thereIsAuction()
 
             // this description has 525 chars
-            val newDescription = "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc" +
+            val newDescription: String = "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc" +
                     "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc" +
                     "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc" +
                     "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc" +

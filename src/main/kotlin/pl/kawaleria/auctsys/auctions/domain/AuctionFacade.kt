@@ -117,12 +117,13 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         val categoryName: String? = searchRequest.categoryName
         val searchPhrase: String? = searchRequest.searchPhrase?.takeIf { it.isNotBlank() }
         val cityId: String? = searchRequest.cityId
-        var radius: Double? = searchRequest.radius
+        val radius: Double? = searchRequest.radius
 
         if (radius != null && radius !in radiusRules.min .. radiusRules.max) throw SearchRadiusOutOfBoundsException()
         if (cityId == null && radius != null) throw SearchRadiusWithoutCityException()
 
-        if (radius != null && radius < 0) radius = abs(radius)
+        // chyba nie potrzebne skoro w 122 linii jezeli radius jest poza przedzialem to wyjatek
+        // if (radius != null && radius < 0) radius = abs(radius)
 
         return when {
             cityId != null && radius != null && (radius in radiusRules.min ..radiusRules.max) -> {

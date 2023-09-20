@@ -11,22 +11,22 @@ import java.time.Instant
 
 @Document(collection = "auctions")
 data class Auction(
-        @Id
-        var id: String? = null,
-        var name: String? = null,
-        var description: String? = null,
-        var price: Double? = null,
-        var auctioneerId: String? = null,
-        var thumbnail: ByteArray? = null,
-        var category: Category,
-        var categoryPath: CategoryPath,
-        var productCondition: Condition,
-        var cityId: String,
-        var cityName: String,
-        @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
-        var location: GeoJsonPoint,
-        var status: AuctionStatus = AuctionStatus.NEW,
-        var expiresAt: Instant
+    @Id
+    var id: String? = null,
+    var name: String? = null,
+    var description: String? = null,
+    var price: Double? = null,
+    var auctioneerId: String? = null,
+    var thumbnail: ByteArray? = null,
+    var category: Category,
+    var categoryPath: CategoryPath,
+    var productCondition: Condition,
+    var cityId: String,
+    var cityName: String,
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    var location: GeoJsonPoint,
+    var status: AuctionStatus = AuctionStatus.NEW,
+    var expiresAt: Instant
 ) {
 
     fun assignPath(categoryPath: CategoryPath) {

@@ -2,10 +2,7 @@ package pl.kawaleria.auctsys.auctions
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,6 +24,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
+import pl.kawaleria.auctsys.categories.domain.CategoryRepository
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
 import java.time.Duration
@@ -68,10 +66,20 @@ class AuctionControllerTest {
     private lateinit var cityRepository: CityRepository
 
     @Autowired
+    private lateinit var categoryRepository: CategoryRepository
+
+    @Autowired
     private lateinit var mongoTemplate: MongoTemplate
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
+    @BeforeEach
+    fun setUp() {
+        auctionRepository.deleteAll()
+        cityRepository.deleteAll()
+        categoryRepository.deleteAll()
+    }
 
     @AfterEach
     fun cleanUp() {
@@ -252,37 +260,39 @@ class AuctionControllerTest {
         }
 
         // TODO implement this test
-//        @Test
-//        fun `should search among auctions with selected city and radius`() {
-//            // given
-//            val cities: List<City> = thereAreAuctions().second
-//
-//            val selectedPage = 0
-//            val selectedPageSize = 10
-//            val selectedCityId: String = cities[0].id!!
-//            val selectedRadius = 16.0
-//
-//            val expectedPageCount = 1
-//            val expectedFilteredAuctionsCount = 2
-//
-//            // when
-//            val result: MvcResult = mockMvc.perform(
-//                get(auctionSearchUrl)
-//                    .param("page", selectedPage.toString())
-//                    .param("pageSize", selectedPageSize.toString())
-//                    .param("cityId", selectedCityId)
-//                    .param("radius", selectedRadius.toString())
-//                    .contentType(MediaType.APPLICATION_JSON))
-//                .andExpect(status().isOk())
-//                .andReturn()
-//
-//            // then
-//            val responseJson: String = result.response.contentAsString
-//            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
-//
-//            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
-//            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
-//        }
+        @Test
+        fun `should search among auctions with selected city and radius`() {
+            // given
+            val cities: List<City> = thereAreAuctions().second
+            logger.info(cities.toString())
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedCityId: String = cities[0].id!!
+            val selectedRadius = 16.0
+
+            val expectedPageCount = 1
+            val expectedFilteredAuctionsCount = 2
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("cityId", selectedCityId)
+                    .param("radius", selectedRadius.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+            logger.info(pagedAuctions.auctions.toString())
+
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+        }
 
         @Test
         fun `should not search among auctions with radius only`() {
@@ -1121,38 +1131,38 @@ class AuctionControllerTest {
     private fun thereAreCities(): List<City> {
         return cityRepository.saveAll(listOf(
                 City(
-                        name = "Lublin",
+                        name = "Lublin testowy",
                         type = "village",
-                        province = "Province-1",
-                        district = "District-1",
-                        commune = "Commune-1",
+                        province = "Wojewodztwo pierwsze",
+                        district = "Powiat pierwszy",
+                        commune = "Gmina pierwsza",
                         latitude = 51.25,
                         longitude = 22.5666
                         ),
                 City(
-                        name = "Swidnik",
+                        name = "Swidnik testowy",
                         type = "village",
-                        province = "Province-2",
-                        district = "District-2",
-                        commune = "Commune-2",
+                        province = "Wojewodztwo drugie",
+                        district = "Powiat drugi",
+                        commune = "Gmina druga",
                         latitude = 51.2197,
                         longitude = 22.7
                 ),
                 City(
-                        name = "Dorohucz",
+                        name = "Dorohucza testowy",
                         type = "village",
-                        province = "Province-3",
-                        district = "District-3",
-                        commune = "Commune-3",
+                        province = "Wojewodztwo trzecie",
+                        district = "Powiat trzeci",
+                        commune = "Gmina trzecia",
                         latitude = 51.1625,
                         longitude = 23.0088
                 ),
                 City(
-                        name = "Chelm",
+                        name = "Chelm testowy",
                         type = "village",
-                        province = "Province-4",
-                        district = "District-4",
-                        commune = "Commune-4",
+                        province = "Wojewodztwo czwarte",
+                        district = "Powiat czwarty",
+                        commune = "Gmina czwarta",
                         latitude = 51.1322,
                         longitude = 23.4777
                 )

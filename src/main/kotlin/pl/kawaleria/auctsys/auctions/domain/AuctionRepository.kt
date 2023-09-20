@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import java.time.Instant
 import java.util.*
 
 interface AuctionRepository {
@@ -15,4 +16,9 @@ interface AuctionRepository {
     fun deleteById(auctionId: String)
     fun existsById(auctionId: String): Boolean
     fun delete(auction: Auction)
+    fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
+    fun findAcceptedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
+    fun findExpiredAuctions(now: Instant, auctioneerId: String, pageable: Pageable): Page<Auction>
+    fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
+    fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
 }

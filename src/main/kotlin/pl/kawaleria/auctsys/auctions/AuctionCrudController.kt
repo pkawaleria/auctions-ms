@@ -1,17 +1,24 @@
 package pl.kawaleria.auctsys.auctions
 
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.annotation.CurrentSecurityContext
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.*
+import pl.kawaleria.auctsys.configs.toAuctioneerId
 
 @RestController
 @RequestMapping("/auction-service")
 class AuctionCrudController(private val auctionFacade: AuctionFacade) {
+
+    private val logger = LoggerFactory.getLogger(this.javaClass)
 
     @GetMapping("/auctions")
     fun searchAuctions(
@@ -34,11 +41,13 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
     }
 
     @PutMapping("/auctions/{auctionId}/categories/{categoryId}")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     fun changeCategory(
             @PathVariable auctionId: String,
-            @PathVariable categoryId: String)
+            @PathVariable categoryId: String,
+            @CurrentSecurityContext(expression = "authentication") authContext: Authentication)
             : AuctionDetailedResponse {
-        return auctionFacade.changeCategory(auctionId, categoryId)
+        return auctionFacade.changeCategory(auctionId, categoryId, authContext)
     }
 
     @GetMapping("/users/{userId}/auctions")
@@ -46,29 +55,33 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
         return auctionFacade.findAuctionsByAuctioneer(userId).map { auction -> auction.toSimplifiedResponse() }
     }
 
-    @PostMapping("/users/{userId}/auctions")
+    @PostMapping("/auctions")
+    @PreAuthorize("hasRole('ROLE_USER')")
     fun addAuction(
-            @PathVariable userId: String,
-            @RequestBody payload: CreateAuctionRequest
+            @RequestBody payload: CreateAuctionRequest,
+            @CurrentSecurityContext(expression = "authentication") authContext: Authentication,
     ): AuctionDetailedResponse {
-        return auctionFacade.addNewAuction(payload, userId).toDetailedResponse()
+        logger.info("Creating auction of request {$payload} for logged in auctioneer of id {${authContext.toAuctioneerId()}}")
+        return auctionFacade.create(payload, authContext.toAuctioneerId()).toDetailedResponse()
     }
 
-    @PutMapping("/users/{userId}/auctions/{auctionId}")
+    @PutMapping("/auctions/{auctionId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     fun updateAuction(
-            @PathVariable userId: String,
             @PathVariable auctionId: String,
-            @RequestBody payload: UpdateAuctionRequest
+            @RequestBody payload: UpdateAuctionRequest,
+            @CurrentSecurityContext(expression = "authentication") authContext: Authentication
     ): AuctionDetailedResponse {
-        return auctionFacade.update(auctionId, payload).toDetailedResponse()
+        return auctionFacade.update(auctionId, payload, authContext).toDetailedResponse()
     }
 
-    @DeleteMapping("/users/{userId}/auctions/{auctionId}")
+    @DeleteMapping("/auctions/{auctionId}")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     fun deleteAuction(
-            @PathVariable userId: String,
-            @PathVariable auctionId: String)
+            @PathVariable auctionId: String,
+            @CurrentSecurityContext(expression = "authentication") authContext: Authentication)
             : ResponseEntity<Unit> {
-        auctionFacade.delete(auctionId)
+        auctionFacade.delete(auctionId, authContext)
         return ResponseEntity.noContent().build()
     }
 }

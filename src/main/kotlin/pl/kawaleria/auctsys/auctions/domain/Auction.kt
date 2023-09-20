@@ -17,7 +17,7 @@ data class Auction(
         var categoryPath: CategoryPath,
         var description: String? = null,
         var price: Double? = null,
-        var auctioneerId: String? = null,
+        var auctioneerId: String,
         var thumbnail: ByteArray? = null,
         var status: AuctionStatus = AuctionStatus.NEW,
         var expiresAt: Instant

@@ -2,6 +2,8 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.security.core.Authentication
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.InappropriateContentException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCreationRequestException
@@ -9,10 +11,14 @@ import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionUpdateRequestE
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
-import pl.kawaleria.auctsys.auctions.dto.responses.*
+import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
+import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.toDetailedResponse
+import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
+import pl.kawaleria.auctsys.configs.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.TextRequest
 import java.time.Clock
@@ -24,6 +30,7 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                     private val categoryFacade: CategoryFacade,
                     private val auctionRules: AuctionRules,
                     private val auctionCategoryDeleter: AuctionCategoryDeleter,
+                    private val securityHelper: SecurityHelper,
                     private val clock: Clock) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -32,8 +39,9 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
-    fun changeCategory(auctionId: String, categoryId: String): AuctionDetailedResponse {
+    fun changeCategory(auctionId: String, categoryId: String, authContext: Authentication): AuctionDetailedResponse {
         val auction: Auction = findAuctionById(auctionId)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
         val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
         val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
@@ -41,11 +49,9 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         return auctionRepository.save(auction).toDetailedResponse()
     }
 
-    fun addNewAuction(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
+    fun create(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
         if (!validateCreateAuctionRequest(createRequest)) throw InvalidAuctionCreationRequestException()
-
         verifyAuctionContent(createRequest.name, createRequest.description)
-
         val categoryPath: CategoryPath = categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
 
         val auction = Auction(
@@ -82,10 +88,11 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         }
     }
 
-    fun update(id: String, payload: UpdateAuctionRequest): Auction {
+    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): Auction {
         if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
 
         val auction: Auction = findAuctionById(id)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
 
         auction.name = payload.name
         auction.price = payload.price
@@ -96,7 +103,11 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         return auctionRepository.save(auction)
     }
 
-    fun delete(auctionId: String): Unit = auctionRepository.delete(findAuctionById(auctionId))
+    fun delete(auctionId: String, authContext: Authentication) {
+        val auctionToDelete = findAuctionById(auctionId)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auctionToDelete.auctioneerId)
+        auctionRepository.delete(auctionToDelete)
+    }
 
     fun eraseCategoryFromAuctions(categoryName: String): Unit = auctionCategoryDeleter.eraseCategoryFromAuctions(categoryName)
 
@@ -130,8 +141,9 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         auctionRepository.save(auction)
     }
 
-    fun archive(auctionId: String) {
+    fun archive(auctionId: String, authContext: Authentication) {
         val auction: Auction = findAuctionById(auctionId)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
         auction.archive()
         auctionRepository.save(auction)
     }
@@ -141,6 +153,21 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
         auction.reject()
         auctionRepository.save(auction)
     }
+
+    fun findRejectedAuctions(auctioneerId: String, pageable: Pageable) =
+        auctionRepository.findRejectedAuctions(auctioneerId, pageable).toPagedAuctions()
+
+    fun findActiveAuctions(auctioneerId: String, pageable: Pageable) =
+        auctionRepository.findAcceptedAuctions(auctioneerId, pageable).toPagedAuctions()
+
+    fun findExpiredAuctions(auctioneerId: String, pageable: Pageable) =
+        auctionRepository.findExpiredAuctions(Instant.now(clock), auctioneerId, pageable).toPagedAuctions()
+
+    fun findArchivedAuctions(auctioneerId: String, pageable: Pageable) =
+        auctionRepository.findArchivedAuctions(auctioneerId, pageable).toPagedAuctions()
+
+    fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable) =
+        auctionRepository.findAwaitingAcceptanceAuctions(auctioneerId, pageable).toPagedAuctions()
 
     private fun newExpirationInstant(): Instant {
         val daysToExpire: Long = auctionRules.days.toLong()

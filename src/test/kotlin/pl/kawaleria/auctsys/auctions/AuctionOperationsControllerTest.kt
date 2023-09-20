@@ -14,7 +14,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import pl.kawaleria.auctsys.AUCTIONEER_ID_UNDER_TEST
 import pl.kawaleria.auctsys.auctions.domain.*
+import pl.kawaleria.auctsys.withAuthenticatedAdmin
+import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -59,8 +62,10 @@ class AuctionOperationsControllerTest {
 
         // when
         mockMvc.perform(
-                MockMvcRequestBuilders.post("$baseUrl/${auction.id}/operations/accept"))
-                .andExpect { MockMvcResultMatchers.status().isAccepted }
+            MockMvcRequestBuilders.post("$baseUrl/${auction.id}/operations/accept")
+                .withAuthenticatedAdmin()
+        )
+            .andExpect { MockMvcResultMatchers.status().isAccepted }
 
         // then
         val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
@@ -75,8 +80,10 @@ class AuctionOperationsControllerTest {
 
         // when
         mockMvc.perform(
-                MockMvcRequestBuilders.post("$baseUrl/${auction.id}/operations/reject"))
-                .andExpect { MockMvcResultMatchers.status().isAccepted }
+            MockMvcRequestBuilders.post("$baseUrl/${auction.id}/operations/reject")
+                .withAuthenticatedAdmin()
+        )
+            .andExpect { MockMvcResultMatchers.status().isAccepted }
 
         // then
         val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
@@ -91,8 +98,10 @@ class AuctionOperationsControllerTest {
 
         // when
         mockMvc.perform(
-                MockMvcRequestBuilders.post("$baseUrl/${auction.id}/operations/archive"))
-                .andExpect { MockMvcResultMatchers.status().isAccepted }
+            MockMvcRequestBuilders.post("$baseUrl/${auction.id}/operations/archive")
+                .withAuthenticatedAuctioneer()
+        )
+            .andExpect { MockMvcResultMatchers.status().isAccepted }
 
         // then
         val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
@@ -106,21 +115,21 @@ class AuctionOperationsControllerTest {
         val headphones = Category(UUID.randomUUID().toString(), "Headphones")
         val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
         val categoryPath = CategoryPath(
-                pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
+            pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
         )
 
         val cityId: String = thereIsCity()
 
         val auction = Auction(
-                name = "Wireless Samsung headphones",
-                category = wirelessHeadphones,
-                categoryPath = categoryPath,
-                description = "Best headphones you can have",
-                price = 1.23,
-                auctioneerId = "user-id",
-                expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
-                cityId = cityId,
-                productCondition = Condition.NEW
+            name = "Wireless Samsung headphones",
+            category = wirelessHeadphones,
+            categoryPath = categoryPath,
+            description = "Best headphones you can have",
+            price = 1.23,
+            auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+            expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+            cityId = cityId,
+            productCondition = Condition.NEW
         )
 
         return auctionRepository.save(auction)

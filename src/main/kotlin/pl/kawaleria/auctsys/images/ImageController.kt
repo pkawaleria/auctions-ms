@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.images
 
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -19,6 +20,7 @@ import pl.kawaleria.auctsys.images.dto.responses.*
 class ImageController(private val imageFacade: ImageFacade) {
 
     @PostMapping("/{auctionId}/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasRole('ROLE_USER')")
     fun addImages(
             @PathVariable auctionId: String,
             @RequestPart files: List<MultipartFile>
@@ -42,6 +44,7 @@ class ImageController(private val imageFacade: ImageFacade) {
     fun getImages(@PathVariable auctionId: String): ResponseEntity<AuctionImagesResponse> = ResponseEntity.ok(imageFacade.findImagesByAuctionId(auctionId))
 
     @DeleteMapping("/{auctionId}/images/{imageId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     fun deleteImage(
             @PathVariable auctionId: String,
             @PathVariable imageId: String

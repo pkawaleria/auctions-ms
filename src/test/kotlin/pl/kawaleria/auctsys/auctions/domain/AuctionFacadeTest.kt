@@ -2,6 +2,8 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.security.core.Authentication
+import pl.kawaleria.auctsys.TestAuctioneerAuthentication
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.UnsupportedOperationOnAuctionException
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -9,15 +11,14 @@ import pl.kawaleria.auctsys.categories.domain.CategoryConfiguration
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
-import pl.kawaleria.auctsys.verifications.ContentVerificationClient
-import java.util.*
+import pl.kawaleria.auctsys.configs.toAuctioneerId
 
-class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
+class AuctionFacadeTest {
 
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
 
     private val auctionFacade: AuctionFacade =
-        AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade, contentVerificationClient)
+        AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade)
 
     @Test
     fun `should accept newly created auction`() {
@@ -63,8 +64,8 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
 
         // when then
         Assertions.assertThatThrownBy { auctionFacade.accept(auctionId) }
-                .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-                .hasMessageContaining("Cannot perform acceptance on rejected auction")
+            .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
+            .hasMessageContaining("Cannot perform acceptance on rejected auction")
     }
 
     @Test
@@ -98,8 +99,8 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
 
         // when then
         Assertions.assertThatThrownBy { auctionFacade.reject(auctionId) }
-                .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-                .hasMessageContaining("Cannot perform rejection on archived auction")
+            .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
+            .hasMessageContaining("Cannot perform rejection on archived auction")
     }
 
     @Test
@@ -120,7 +121,7 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
         val auctionId: String = thereIsNewAuction()
 
         // when
-        auctionFacade.archive(auctionId)
+        auctionFacade.archive(auctionId, getDefaultAuthContext())
 
         // then
         Assertions.assertThat(auctionFacade.findAuctionById(auctionId).status).isEqualTo(AuctionStatus.ARCHIVED)
@@ -132,7 +133,7 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
         val auctionId: String = thereIsRejectedAuction()
 
         // when
-        auctionFacade.archive(auctionId)
+        auctionFacade.archive(auctionId, getDefaultAuthContext())
 
         // then
         Assertions.assertThat(auctionFacade.findAuctionById(auctionId).status).isEqualTo(AuctionStatus.ARCHIVED)
@@ -144,7 +145,7 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
         val auctionId: String = thereIsAcceptedAuction()
 
         // when
-        auctionFacade.archive(auctionId)
+        auctionFacade.archive(auctionId, getDefaultAuthContext())
 
         // then
         Assertions.assertThat(auctionFacade.findAuctionById(auctionId).status).isEqualTo(AuctionStatus.ARCHIVED)
@@ -156,9 +157,9 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
         val auctionId: String = thereIsArchivedAuction()
 
         // when then
-        Assertions.assertThatThrownBy { auctionFacade.archive(auctionId) }
-                .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-                .hasMessageContaining("Cannot perform archiving on archived auction")
+        Assertions.assertThatThrownBy { auctionFacade.archive(auctionId, getDefaultAuthContext()) }
+            .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
+            .hasMessageContaining("Cannot perform archiving on archived auction")
     }
 
     @Test
@@ -168,12 +169,12 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
 
         // when then
         Assertions.assertThatThrownBy {
-            auctionFacade.archive(auctionId)
+            auctionFacade.archive(auctionId, getDefaultAuthContext())
             auctionFacade.reject(auctionId)
-            auctionFacade.archive(auctionId)
+            auctionFacade.archive(auctionId, getDefaultAuthContext())
         }
-                .isInstanceOf(AuctionNotFoundException::class.java)
-                .hasMessageContaining("Accessed auction does not exist")
+            .isInstanceOf(AuctionNotFoundException::class.java)
+            .hasMessageContaining("Accessed auction does not exist")
     }
 
     private fun thereIsRejectedAuction(): String {
@@ -181,7 +182,7 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
     }
 
     private fun thereIsArchivedAuction(): String {
-        return thereIsAuctionAfterOperationOf { auctionId -> auctionFacade.archive(auctionId) }
+        return thereIsAuctionAfterOperationOf { auctionId -> auctionFacade.archive(auctionId, getDefaultAuthContext()) }
     }
 
     private fun thereIsAcceptedAuction(): String {
@@ -192,46 +193,57 @@ class AuctionFacadeTest(contentVerificationClient: ContentVerificationClient) {
         return thereIsAuctionAfterOperationOf()
     }
 
+    private fun getDefaultAuthContext(): Authentication {
+        return TestAuctioneerAuthentication()
+    }
+
     private fun thereIsAuctionAfterOperationOf(action: (String) -> Unit = {}): String {
         val finalCategory: CategoryResponse = thereIsSampleCategoryTree()
 
         val auction = CreateAuctionRequest(
-                name = "Adidas shoes",
-                categoryId = finalCategory.id,
-                description = "Breathable sports shoes",
-                price = 145.2,
-                cityId = "przykladoweID",
-                productCondition = Condition.USED
+            name = "Adidas shoes",
+            categoryId = finalCategory.id,
+            description = "Breathable sports shoes",
+            price = 145.2,
+            cityId = "przykladoweID",
+            productCondition = Condition.USED
         )
-        val auctionId: String = auctionFacade.addNewAuction(createRequest = auction, auctioneerId = "auctioneer-${UUID.randomUUID()}").id!!
+        val auctionId: String =
+            auctionFacade.create(createRequest = auction, auctioneerId = getDefaultAuthContext().toAuctioneerId()).id!!
         action(auctionId)
         return auctionId
     }
 
     private fun thereIsSampleCategoryTree(): CategoryResponse {
-        val topLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
+        val topLevelCategory: CategoryResponse = categoryFacade.create(
+            request = CategoryCreateRequest(
                 name = "Clothing",
                 description = "Just clothing",
                 parentCategoryId = null,
                 isTopLevel = true,
                 isFinalNode = false
-        ))
+            )
+        )
 
-        val sneakersCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
+        val sneakersCategory: CategoryResponse = categoryFacade.create(
+            request = CategoryCreateRequest(
                 name = "Sneakers",
                 description = "Nice sneakers",
                 parentCategoryId = topLevelCategory.id,
                 isTopLevel = false,
                 isFinalNode = false
-        ))
+            )
+        )
 
-        val adidasSneakersCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
+        val adidasSneakersCategory: CategoryResponse = categoryFacade.create(
+            request = CategoryCreateRequest(
                 name = "Adidas sneakers",
                 description = "Nice adidas sneakers",
                 parentCategoryId = sneakersCategory.id,
                 isTopLevel = false,
                 isFinalNode = true
-        ))
+            )
+        )
 
         return adidasSneakersCategory
     }

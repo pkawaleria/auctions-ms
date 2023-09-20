@@ -4,6 +4,7 @@ import org.bson.types.ObjectId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -62,5 +63,39 @@ class InMemoryAuctionRepository : AuctionRepository {
 
     override fun delete(auction: Auction) {
         map.remove(auction.id)
+    }
+
+    override fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values
+                .filter { it.status == AuctionStatus.REJECTED }
+                .toMutableList()
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    override fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values
+                .filter { it.status == AuctionStatus.NEW }
+                .toMutableList()
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+    override fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values
+                .filter { it.status == AuctionStatus.ARCHIVED }
+                .toMutableList()
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    override fun findAcceptedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values
+                .filter { it.status == AuctionStatus.ACCEPTED }
+                .toMutableList()
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    override fun findExpiredAuctions(now: Instant, auctioneerId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values
+                .filter { it.expiresAt.isBefore(Instant.now()) }
+                .toMutableList()
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 }

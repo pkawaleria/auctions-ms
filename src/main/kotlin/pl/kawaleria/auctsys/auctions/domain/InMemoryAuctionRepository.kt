@@ -4,6 +4,8 @@ import org.bson.types.ObjectId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.Point
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,11 +29,23 @@ class InMemoryAuctionRepository : AuctionRepository {
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 
-    override fun findByNameContainingIgnoreCase(name: String, pageable: Pageable): Page<Auction> {
+    override fun findByNameContainingIgnoreCase(searchPhrase: String, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = map.values
-                .filter { it.name?.contains(name, ignoreCase = true) ?: false }
+                .filter { it.name?.contains(searchPhrase, ignoreCase = true) ?: false }
                 .toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    override fun findAuctionsByCityId(cityId: String, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = map.values.filter { it.cityId == cityId}.toMutableList()
+
+        return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    // TODO implement findByLocationNear
+    override fun findByLocationNear(location: Point, distance: Distance, pageable: Pageable): Page<Auction> {
+        val filteredAuctions: MutableList<Auction> = mutableListOf()
+        return PageImpl(filteredAuctions, pageable, 0)
     }
 
     override fun save(auction: Auction): Auction {
@@ -62,5 +76,13 @@ class InMemoryAuctionRepository : AuctionRepository {
 
     override fun delete(auction: Auction) {
         map.remove(auction.id)
+    }
+
+    override fun deleteAll() {
+        map.clear()
+    }
+
+    override fun <S : Auction?> saveAll(entities: MutableIterable<S>): List<Auction> {
+        return entities.map { save(it!!) }
     }
 }

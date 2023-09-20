@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.auctions.dto.requests
 
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import pl.kawaleria.auctsys.auctions.domain.Condition
 
 data class CreateAuctionRequest(
@@ -7,6 +8,8 @@ data class CreateAuctionRequest(
         val description: String,
         val price: Double,
         val categoryId: String,
+        val productCondition: Condition,
         val cityId: String,
-        val productCondition: Condition
+        val cityName: String,
+        val location: GeoJsonPoint
 )

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
@@ -19,7 +20,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
-import pl.kawaleria.auctsys.AUCTIONEER_ID_UNDER_TEST
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -29,7 +29,6 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
-import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -84,7 +83,7 @@ class AuctionControllerTest {
         @Test
         fun `should return selected page from all auctions when search phrase and search category are not specified`() {
             // given
-            val existingAuctionsCount: Int = thereAreAuctions()
+            val existingAuctionsCount: Int = thereAreAuctions().first.size
 
             val selectedPage = 0
             val selectedPageSize = 10
@@ -227,6 +226,123 @@ class AuctionControllerTest {
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
         }
+
+        @Test
+        fun `should search among auctions with selected city and without radius`() {
+            // given
+            val cities: List<City> = thereAreAuctions().second
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedCityId: String = cities[0].id!!
+
+            val expectedPageCount = 1
+            val expectedFilteredAuctionsCount = 1
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("cityId", selectedCityId)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+        }
+
+        @Test
+        fun `should search among auctions with selected city and radius`() {
+            // given
+            val cities: List<City> = thereAreAuctions().second
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedCityId: String = cities[0].id!!
+            val selectedRadius = 16.0
+
+            val expectedPageCount = 1
+            val expectedFilteredAuctionsCount = 2
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("cityId", selectedCityId)
+                    .param("radius", selectedRadius.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+        }
+
+        @Test
+        fun `should not search among auctions with radius only`() {
+            // given
+            thereAreAuctions()
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedRadius = 16.0
+
+            val expectedError = "Cannot found auctions with radius only"
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("radius", selectedRadius.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseError: String = result.response.errorMessage.toString()
+
+            Assertions.assertThat(responseError).isEqualTo(expectedError)
+        }
+
+        @Test
+        fun `should not search among auctions with selected city and radius out of bounds`() {
+            val cities: List<City> = thereAreAuctions().second
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedCityId: String = cities[0].id!!
+            val selectedRadius = 55.0
+
+            val expectedErrorMessage = "Search radius is out of bounds"
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("cityId", selectedCityId)
+                    .param("radius", selectedRadius.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+
+            // then
+            val responseErrorMessage: String = result.response.errorMessage.toString()
+
+            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+        }
     }
 
     @Nested
@@ -256,12 +372,14 @@ class AuctionControllerTest {
 
             Assertions.assertThat(foundAuction.id).isEqualTo(auction.id)
             Assertions.assertThat(foundAuction.name).isEqualTo(auction.name)
-            Assertions.assertThat(foundAuction.cityId).isEqualTo(auction.cityId)
-            Assertions.assertThat(foundAuction.productCondition).isEqualTo(auction.productCondition)
-            Assertions.assertThat(foundAuction.category).isEqualTo(auction.category)
             Assertions.assertThat(foundAuction.description).isEqualTo(auction.description)
             Assertions.assertThat(foundAuction.price).isEqualTo(auction.price)
             Assertions.assertThat(foundAuction.auctioneerId).isEqualTo(auction.auctioneerId)
+            Assertions.assertThat(foundAuction.category).isEqualTo(auction.category)
+            Assertions.assertThat(foundAuction.productCondition).isEqualTo(auction.productCondition)
+            Assertions.assertThat(foundAuction.cityId).isEqualTo(auction.cityId)
+            Assertions.assertThat(foundAuction.cityName).isEqualTo(auction.cityName)
+            Assertions.assertThat(foundAuction.location).isEqualTo(auction.location)
         }
 
 
@@ -350,7 +468,8 @@ class AuctionControllerTest {
         fun `should create auction`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
@@ -388,15 +507,18 @@ class AuctionControllerTest {
         fun `should not create auction with blank name`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "",
-                categoryId = category.id,
                 description = "Headphones",
                 price = 1.23,
-                cityId = cityId,
-                productCondition = Condition.NEW
+                categoryId = category.id,
+                productCondition = Condition.NEW,
+                cityId = city.id!!,
+                cityName = city.name,
+                location = location
             )
 
             val expectedErrorMessage = "Invalid CreateAuctionRequest"
@@ -421,15 +543,16 @@ class AuctionControllerTest {
         fun `should not create auction with description containing less than 20 characters`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
-                name = "Wireless Samsung headphones",
-                categoryId = category.id,
-                description = "Headphones",
-                price = 1.23,
-                cityId = cityId,
-                productCondition = Condition.USED
+                    name = "Wireless Samsung headphones",
+                    categoryId = category.id,
+                    description = "Headphones",
+                    price = 1.23,
+                    cityId = cityId,
+                    productCondition = Condition.USED
             )
 
             val expectedErrorMessage = "Invalid CreateAuctionRequest"
@@ -454,15 +577,18 @@ class AuctionControllerTest {
         fun `should not create auction with name containing more than 100 characters`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Extra Ultra Mega Best Giga Fastest Smoothest Cleanest Cheapest Samsung headphones with Bluetooth",
-                categoryId = category.id,
                 description = "Headphones",
                 price = 1.23,
-                cityId = cityId,
-                productCondition = Condition.`NOT_APPLICABLE`
+                categoryId = category.id,
+                productCondition = Condition.NOT_APPLICABLE,
+                cityId = city.id!!,
+                cityName = city.name,
+                location = location
             )
 
             val expectedErrorMessage = "Invalid CreateAuctionRequest"
@@ -487,15 +613,18 @@ class AuctionControllerTest {
         fun `should not create auction with negative price`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
-                categoryId = category.id,
                 description = "Best headphones you can have",
                 price = -13.0,
-                cityId = cityId,
-                productCondition = Condition.USED
+                categoryId = category.id,
+                productCondition = Condition.USED,
+                cityId = city.id!!,
+                cityName = city.name,
+                location = location
             )
 
             val expectedErrorMessage = "Invalid CreateAuctionRequest"
@@ -520,17 +649,19 @@ class AuctionControllerTest {
         fun `should not create auction with invalid description syntax`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
                 description = "Best headphones you can have;[,.[;.;~??",
-                categoryId = category.id,
                 price = 13.0,
-                cityId = cityId,
-                productCondition = Condition.`NOT_APPLICABLE`
+                categoryId = category.id,
+                productCondition = Condition.NOT_APPLICABLE,
+                cityId = city.id!!,
+                cityName = city.name,
+                location = location
             )
-
             val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
             // when
@@ -566,9 +697,10 @@ class AuctionControllerTest {
                 description = oldAuction.description!!,
                 price = oldAuction.price!!,
                 productCondition = oldAuction.productCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
-
             // when
             val result: MvcResult = mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
@@ -581,16 +713,17 @@ class AuctionControllerTest {
 
             // then
             val responseJson: String = result.response.contentAsString
-            val updatedAuction: AuctionDetailedResponse =
-                objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
+            val updatedAuction: AuctionDetailedResponse = objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
             Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
             Assertions.assertThat(updatedAuction.name).isEqualTo(expectedAuctionName)
-            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
-            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.description).isEqualTo(updateAuctionRequest.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(updateAuctionRequest.price)
             Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
+            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
+            Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
+            Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
         }
 
         @Test
@@ -606,8 +739,11 @@ class AuctionControllerTest {
                 description = expectedAuctionDescription,
                 price = expectedAuctionPrice,
                 productCondition = oldAuction.productCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
+
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -624,13 +760,16 @@ class AuctionControllerTest {
             val updatedAuction: AuctionDetailedResponse =
                 objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
+
             Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
             Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
-            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
-            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.description).isEqualTo(expectedAuctionDescription)
             Assertions.assertThat(updatedAuction.price).isEqualTo(expectedAuctionPrice)
             Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
+            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
+            Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
+            Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
         }
 
         @Test
@@ -640,13 +779,15 @@ class AuctionControllerTest {
             val oldAuction: Auction = thereIsAuction()
 
             val expectedCityId: String = cities[1].id.toString()
+            val expectedCityName: String = cities[1].name
+            val expectedLocation = GeoJsonPoint(cities[1].latitude, cities[1].longitude)
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                name = oldAuction.name!!,
-                description = oldAuction.description!!,
-                price = oldAuction.price!!,
-                productCondition = oldAuction.productCondition,
-                cityId = expectedCityId
+                    name = oldAuction.name!!,
+                    description = oldAuction.description!!,
+                    price = oldAuction.price!!,
+                    productCondition = oldAuction.productCondition,
+                    cityId = expectedCityId
             )
 
             // when
@@ -664,19 +805,22 @@ class AuctionControllerTest {
             val updatedAuction: AuctionDetailedResponse =
                 objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
+
             Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
             Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
-            Assertions.assertThat(updatedAuction.cityId).isEqualTo(expectedCityId)
-            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
             Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
+            Assertions.assertThat(updatedAuction.cityId).isEqualTo(expectedCityId)
+            Assertions.assertThat(updatedAuction.cityName).isEqualTo(expectedCityName)
+            Assertions.assertThat(updatedAuction.location).isEqualTo(expectedLocation)
         }
 
         @Test
         fun `should update product condition in auction`() {
             // given
-            // stara aukcja ma "Nowy" stan produktu
+            // old auction has Condition.new condition
             val oldAuction: Auction = thereIsAuction()
 
             val expectedProductCondition: Condition = Condition.USED
@@ -686,7 +830,9 @@ class AuctionControllerTest {
                 description = oldAuction.description!!,
                 price = oldAuction.price!!,
                 productCondition = expectedProductCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
 
             // when
@@ -707,11 +853,13 @@ class AuctionControllerTest {
 
             Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
             Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
-            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
-            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(expectedProductCondition)
             Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
             Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(expectedProductCondition)
+            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
+            Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
+            Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
         }
 
         @Test
@@ -727,8 +875,11 @@ class AuctionControllerTest {
                 description = oldAuction.description!!,
                 price = newPrice,
                 productCondition = oldAuction.productCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
+
 
             val expectedErrorMessage = "Invalid UpdateAuctionRequest"
 
@@ -756,12 +907,15 @@ class AuctionControllerTest {
 
             val newName = "Bike"
 
+
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = newName,
                 description = oldAuction.description!!,
                 price = oldAuction.price!!,
                 productCondition = oldAuction.productCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
 
             val expectedErrorMessage = "Invalid UpdateAuctionRequest"
@@ -796,7 +950,9 @@ class AuctionControllerTest {
                 description = newDescription,
                 price = oldAuction.price!!,
                 productCondition = oldAuction.productCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
 
             val expectedErrorMessage = "Invalid UpdateAuctionRequest"
@@ -830,7 +986,9 @@ class AuctionControllerTest {
                 description = oldAuction.description!!,
                 price = oldAuction.price!!,
                 productCondition = oldAuction.productCondition,
-                cityId = oldAuction.cityId!!
+                cityId = oldAuction.cityId,
+                cityName = oldAuction.cityName,
+                location = oldAuction.location
             )
 
             val expectedErrorMessage = "Invalid UpdateAuctionRequest"
@@ -854,14 +1012,17 @@ class AuctionControllerTest {
         @Test
         fun `should not update non-existing auction`() {
             // given
-            val cityId: String = thereIsCity()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = "Wireless Samsung headphones",
                 description = "Best headphones you can have",
                 price = 1.23,
                 productCondition = Condition.USED,
-                cityId = cityId
+                cityId = city.id!!,
+                cityName = city.name,
+                location = location
             )
 
             val expectedErrorMessage = "Accessed auction does not exist"
@@ -926,6 +1087,7 @@ class AuctionControllerTest {
         }
     }
 
+
     private fun thereIsAuction(): Auction {
         val electronics = Category(UUID.randomUUID().toString(), "Electronics")
         val headphones = Category(UUID.randomUUID().toString(), "Headphones")
@@ -934,73 +1096,41 @@ class AuctionControllerTest {
             pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
         )
 
-        val cityId: String = thereAreCities()[0].id.toString()
+        val city: City = thereIsCity()
 
         val auction = Auction(
             name = "Wireless Samsung headphones",
-            category = wirelessHeadphones,
-            categoryPath = categoryPath,
             description = "Best headphones you can have",
             price = 1.23,
-            auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+            auctioneerId = "user-id",
+            category = wirelessHeadphones,
+            categoryPath = categoryPath,
+            productCondition = Condition.NEW,
+            cityId = city.id!!,
+            cityName = city.name,
+            location = GeoJsonPoint(city.latitude, city.longitude),
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
-            cityId = cityId,
-            productCondition = Condition.NEW
         )
 
         return auctionRepository.save(auction)
     }
 
-    private fun thereAreCities(): List<City> {
-        return listOf(
+    private fun thereIsCity(): City {
+        return cityRepository.save(
             City(
                 id = "id1",
-                name = "Nazwa1",
+                name = "Lublin",
                 type = "village",
-                province = "Województwo1",
-                district = "Powiat1",
-                commune = "Gmina1",
-                latitude = 123.0,
-                longitude = 456.0
-            ),
-            City(
-                id = "id2",
-                name = "Nazwa2",
-                type = "village",
-                province = "Województwo2",
-                district = "Powiat2",
-                commune = "Gmina2",
-                latitude = 234.0,
-                longitude = 567.0
-            ),
-            City(
-                id = "id3",
-                name = "Nazwa3",
-                type = "village",
-                province = "Województwo3",
-                district = "Powiat3",
-                commune = "Gmina3",
-                latitude = 987.0,
-                longitude = 654.0
+                province = "Province-1",
+                district = "District-1",
+                commune = "Commune-1",
+                latitude = 51.25,
+                longitude = 22.5666
             )
         )
     }
 
-    private fun thereIsCity(): String {
-        val city = City(
-            name = "Miasto1",
-            type = "village",
-            province = "Województwo",
-            district = "Powiat",
-            commune = "Gmina",
-            latitude = 1.23,
-            longitude = 4.56
-        )
-
-        return cityRepository.save(city).id.toString()
-    }
-
-    private fun thereAreAuctions(): Int {
+    private fun thereAreAuctions(): Pair<List<Auction>, List<City>> {
         val electronics = Category(UUID.randomUUID().toString(), "Electronics")
         val headphones = Category(UUID.randomUUID().toString(), "Headphones")
         val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
@@ -1015,9 +1145,9 @@ class AuctionControllerTest {
 
         val clothing = Category(UUID.randomUUID().toString(), "Clothing")
         val unisexClothing = Category(UUID.randomUUID().toString(), "Unisex")
-        val tshirts = Category(UUID.randomUUID().toString(), "Tshirts")
-        val tshirtsCategoryPath = CategoryPath(
-            pathElements = mutableListOf(clothing, unisexClothing, tshirts)
+        val tShirts = Category(UUID.randomUUID().toString(), "TShirts")
+        val tShirtsCategoryPath = CategoryPath(
+            pathElements = mutableListOf(clothing, unisexClothing, tShirts)
         )
 
         val cities: List<City> = thereAreCities()
@@ -1025,87 +1155,130 @@ class AuctionControllerTest {
         val auctions: List<Auction> = listOf(
             Auction(
                 name = "Wireless Samsung headphones",
-                category = wirelessHeadphones,
-                categoryPath = wirelessHeadphonesCategoryPath,
                 description = "Best headphones you can have",
                 price = 1.23,
-                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+                auctioneerId = "user-id",
+                category = clothing,
+                categoryPath = tShirtsCategoryPath,
+                productCondition = Condition.NEW,
+                cityId = cities[0].id!!,
+                cityName = cities[0].name,
+                location = GeoJsonPoint(cities[0].latitude, cities[0].longitude),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
-                cityId = cities[0].id,
-                productCondition = Condition.NEW
             ),
             Auction(
                 name = "Wireless JBL headphones",
+                description = "Worst headphones you can have",
+                price = 4.56,
+                auctioneerId = "user-id",
                 category = wirelessHeadphones,
                 categoryPath = wirelessHeadphonesCategoryPath,
-                description = "Headphones",
-                price = 1.13,
-                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+                productCondition = Condition.USED,
+                cityId = cities[1].id!!,
+                cityName = cities[1].name,
+                location = GeoJsonPoint(cities[1].latitude, cities[1].longitude),
                 expiresAt = defaultExpiration(),
-                cityId = cities[1].id,
-                productCondition = Condition.USED
             ),
             Auction(
-                name = "jbl Speaker",
-                category = speakers,
+                name = "Wireless Sony headphones",
+                description = "Best sony headphones you can have",
+                price = 78.9,
+                auctioneerId = "user-id",
+                category = headphones,
                 categoryPath = speakersCategoryPath,
-                description = "Speaker",
-                price = 5.99,
-                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+                productCondition = Condition.USED,
+                cityId = cities[2].id!!,
+                cityName = cities[2].name,
+                location = GeoJsonPoint(cities[2].latitude, cities[2].longitude),
                 expiresAt = defaultExpiration(),
-                cityId = cities[2].id,
-                productCondition = Condition.`NOT_APPLICABLE`
             ),
             Auction(
-                name = "Adidas T-Shirt",
-                category = tshirts,
-                categoryPath = tshirtsCategoryPath,
-                description = "T-Shirt",
-                price = 9.11,
-                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+                name = "Wireless Jbl headphones",
+                description = "Worst jbl headphones you can have",
+                price = 159.43,
+                auctioneerId = "user-id",
+                category = electronics,
+                categoryPath = wirelessHeadphonesCategoryPath,
+                productCondition = Condition.NOT_APPLICABLE,
+                cityId = cities[3].id!!,
+                cityName = cities[3].name,
+                location = GeoJsonPoint(cities[3].latitude, cities[3].longitude),
                 expiresAt = defaultExpiration(),
-                cityId = cities[1].id,
-                productCondition = Condition.USED
             )
         )
 
-        auctionRepository.saveAll(auctions)
-        return auctions.size
+        return Pair(auctionRepository.saveAll(auctions), cities)
+    }
+
+    private fun thereAreCities(): List<City> {
+        return cityRepository.saveAll(listOf(
+            City(
+                name = "Lublin testowy",
+                type = "village",
+                province = "Wojewodztwo pierwsze",
+                district = "Powiat pierwszy",
+                commune = "Gmina pierwsza",
+                latitude = 51.25,
+                longitude = 22.5666
+            ),
+            City(
+                name = "Swidnik testowy",
+                type = "village",
+                province = "Wojewodztwo drugie",
+                district = "Powiat drugi",
+                commune = "Gmina druga",
+                latitude = 51.2197,
+                longitude = 22.7
+            ),
+            City(
+                name = "Dorohucza testowy",
+                type = "village",
+                province = "Wojewodztwo trzecie",
+                district = "Powiat trzeci",
+                commune = "Gmina trzecia",
+                latitude = 51.1625,
+                longitude = 23.0088
+            ),
+            City(
+                name = "Chelm testowy",
+                type = "village",
+                province = "Wojewodztwo czwarte",
+                district = "Powiat czwarty",
+                commune = "Gmina czwarta",
+                latitude = 51.1322,
+                longitude = 23.4777
+            )
+        ))
     }
 
     private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
 
     private fun thereIsSampleCategoryTree(): CategoryResponse {
-        val topLevelCategory: CategoryResponse = categoryFacade.create(
-            request = CategoryCreateRequest(
-                name = "Top level category",
-                description = "Just top level category",
-                parentCategoryId = null,
-                isTopLevel = true,
-                isFinalNode = false
-            )
-        )
+        val topLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
+            name = "Top level category",
+            description = "Just top level category",
+            parentCategoryId = null,
+            isTopLevel = true,
+            isFinalNode = false
+        ))
 
-        val secondLevelCategory: CategoryResponse = categoryFacade.create(
-            request = CategoryCreateRequest(
-                name = "Second level category",
-                description = "Just second level category",
-                parentCategoryId = topLevelCategory.id,
-                isTopLevel = false,
-                isFinalNode = false
-            )
-        )
+        val secondLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
+            name = "Second level category",
+            description = "Just second level category",
+            parentCategoryId = topLevelCategory.id,
+            isTopLevel = false,
+            isFinalNode = false
+        ))
 
-        val finalLevelCategory: CategoryResponse = categoryFacade.create(
-            request = CategoryCreateRequest(
-                name = "Final level category",
-                description = "Nice final level category",
-                parentCategoryId = secondLevelCategory.id,
-                isTopLevel = false,
-                isFinalNode = true
-            )
-        )
+        val finalLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
+            name = "Final level category",
+            description = "Nice final level category",
+            parentCategoryId = secondLevelCategory.id,
+            isTopLevel = false,
+            isFinalNode = true
+        ))
 
         return finalLevelCategory
     }
+
 }

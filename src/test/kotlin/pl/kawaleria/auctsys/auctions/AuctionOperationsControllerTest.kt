@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
@@ -53,6 +54,7 @@ class AuctionOperationsControllerTest {
     @AfterEach
     fun cleanUp() {
         mongoTemplate.dropCollection("auctions")
+        mongoTemplate.dropCollection("cities")
     }
 
     @Test
@@ -118,32 +120,39 @@ class AuctionOperationsControllerTest {
             pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
         )
 
-        val cityId: String = thereIsCity()
+        val city: City = thereIsCity()
 
-        val auction = Auction(
-            name = "Wireless Samsung headphones",
-            category = wirelessHeadphones,
-            categoryPath = categoryPath,
-            description = "Best headphones you can have",
-            price = 1.23,
-            auctioneerId = AUCTIONEER_ID_UNDER_TEST,
-            expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
-            cityId = cityId,
-            productCondition = Condition.NEW
+        return auctionRepository.save(
+                Auction(
+                        name = "Wireless Samsung headphones",
+                        description = "Best headphones you can have",
+                        price = 1.23,
+                        auctioneerId = "user-id",
+                        category = wirelessHeadphones,
+                        categoryPath = categoryPath,
+                        productCondition = Condition.NEW,
+                        cityId = city.id!!,
+                        cityName = city.name,
+                        location = GeoJsonPoint(city.latitude, city.longitude),
+                        expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds())
+                )
         )
 
         return auctionRepository.save(auction)
     }
 
-    private fun thereIsCity(): String {
-        val city = City(
-            name = "Miasto1",
-            type = "village",
-            province = "Województwo",
-            district = "Powiat",
-            commune = "Gmina",
-            latitude = 1.23,
-            longitude = 4.56
+    private fun thereIsCity(): City {
+        return cityRepository.save(
+                City(
+                    id = "id1",
+                    name = "Lublin",
+                    type = "village",
+                    province = "Province-1",
+                    district = "District-1",
+                    commune = "Commune-1",
+                    latitude = 51.25,
+                    longitude = 22.5666
+                )
         )
 
         return cityRepository.save(city).id.toString()

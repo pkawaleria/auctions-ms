@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
@@ -31,6 +32,8 @@ import pl.kawaleria.auctsys.images.dto.responses.ImageDetailedResponse
 import java.time.Duration
 import java.time.Instant
 import java.util.*
+
+private const val baseUrl = "/auction-service/auctions"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -72,6 +75,7 @@ class ImageControllerTest {
     fun cleanUp() {
         mongoTemplate.dropCollection("images")
         mongoTemplate.dropCollection("auctions")
+        mongoTemplate.dropCollection("cities")
     }
 
     @Nested
@@ -92,20 +96,14 @@ class ImageControllerTest {
                     .file(imagePart[2])
                     .withAuthenticatedAuctioneer()
             )
-                .andExpect(status().isOk())
-                .andReturn()
+                    .andExpect(status().isOk())
+                    .andReturn()
 
             // then
             val response: String = result.response.contentAsString
             logger.info("response = $response")
             val mappedImages: List<ImageDetailedResponse> =
-                objectMapper.readValue(
-                    response,
-                    objectMapper.typeFactory.constructCollectionType(
-                        List::class.java,
-                        ImageDetailedResponse::class.java
-                    )
-                )
+                    objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageDetailedResponse::class.java))
 
             Assertions.assertThat(mappedImages).hasSize(3)
         }
@@ -344,18 +342,19 @@ class ImageControllerTest {
         return auctionRepository.save(auction).id!!
     }
 
-    private fun thereIsCity(): String {
-        val city = City(
-            name = "Miasto1",
-            type = "village",
-            province = "Województwo",
-            district = "Powiat",
-            commune = "Gmina",
-            latitude = 1.23,
-            longitude = 4.56
+    private fun thereIsCity(): City {
+        return cityRepository.save(
+            City(
+                id = "id1",
+                name = "Lublin",
+                type = "village",
+                province = "Province-1",
+                district = "District-1",
+                commune = "Commune-1",
+                latitude = 51.25,
+                longitude = 22.5666
+            )
         )
-
-        return cityRepository.save(city).id.toString()
     }
 
     private fun thereAreImagesOfAuction(auctionId: String): List<Image> {

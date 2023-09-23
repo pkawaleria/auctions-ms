@@ -250,7 +250,8 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
-                    .contentType(MediaType.APPLICATION_JSON))
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
                 .andExpect(status().isOk())
                 .andReturn()
 
@@ -282,7 +283,8 @@ class AuctionControllerTest {
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
                     .param("radius", selectedRadius.toString())
-                    .contentType(MediaType.APPLICATION_JSON))
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
                 .andExpect(status().isOk())
                 .andReturn()
 
@@ -311,7 +313,8 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("radius", selectedRadius.toString())
-                    .contentType(MediaType.APPLICATION_JSON))
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
                 .andExpect(status().isBadRequest())
                 .andReturn()
 
@@ -339,7 +342,8 @@ class AuctionControllerTest {
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
                     .param("radius", selectedRadius.toString())
-                    .contentType(MediaType.APPLICATION_JSON))
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
                 .andExpect(status().isBadRequest())
                 .andReturn()
 
@@ -556,14 +560,14 @@ class AuctionControllerTest {
             val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
-                    name = "Wireless Samsung headphones",
-                    categoryId = category.id,
-                    description = "Headphones",
-                    price = 1.23,
-                    cityId = city.id,
-                    cityName = city.name,
-                    location = location,
-                    productCondition = Condition.USED
+                name = "Wireless Samsung headphones",
+                categoryId = category.id,
+                description = "Headphones",
+                price = 1.23,
+                cityId = city.id,
+                cityName = city.name,
+                location = location,
+                productCondition = Condition.USED
             )
 
             val expectedErrorMessage = "Invalid CreateAuctionRequest"
@@ -724,7 +728,8 @@ class AuctionControllerTest {
 
             // then
             val responseJson: String = result.response.contentAsString
-            val updatedAuction: AuctionDetailedResponse = objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
+            val updatedAuction: AuctionDetailedResponse =
+                objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
             Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
             Assertions.assertThat(updatedAuction.name).isEqualTo(expectedAuctionName)
@@ -794,13 +799,13 @@ class AuctionControllerTest {
             val expectedLocation = GeoJsonPoint(cities.first().latitude, cities.first().longitude)
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                    name = oldAuction.name,
-                    description = oldAuction.description,
-                    price = oldAuction.price,
-                    productCondition = oldAuction.productCondition,
-                    cityId = expectedCityId,
-                    cityName = expectedCityName,
-                    location = expectedLocation
+                name = oldAuction.name,
+                description = oldAuction.description,
+                price = oldAuction.price,
+                productCondition = oldAuction.productCondition,
+                cityId = expectedCityId,
+                cityName = expectedCityName,
+                location = expectedLocation
             )
 
             // when
@@ -1229,72 +1234,80 @@ class AuctionControllerTest {
     }
 
     private fun thereAreCities(): List<City> {
-        return cityRepository.saveAll(listOf(
-            City(
-                name = "Lublin testowy",
-                type = "village",
-                province = "Wojewodztwo pierwsze",
-                district = "Powiat pierwszy",
-                commune = "Gmina pierwsza",
-                latitude = 51.25,
-                longitude = 22.5666
-            ),
-            City(
-                name = "Swidnik testowy",
-                type = "village",
-                province = "Wojewodztwo drugie",
-                district = "Powiat drugi",
-                commune = "Gmina druga",
-                latitude = 51.2197,
-                longitude = 22.7
-            ),
-            City(
-                name = "Dorohucza testowy",
-                type = "village",
-                province = "Wojewodztwo trzecie",
-                district = "Powiat trzeci",
-                commune = "Gmina trzecia",
-                latitude = 51.1625,
-                longitude = 23.0088
-            ),
-            City(
-                name = "Chelm testowy",
-                type = "village",
-                province = "Wojewodztwo czwarte",
-                district = "Powiat czwarty",
-                commune = "Gmina czwarta",
-                latitude = 51.1322,
-                longitude = 23.4777
+        return cityRepository.saveAll(
+            mutableListOf(
+                City(
+                    name = "Lublin testowy",
+                    type = "village",
+                    province = "Wojewodztwo pierwsze",
+                    district = "Powiat pierwszy",
+                    commune = "Gmina pierwsza",
+                    latitude = 51.25,
+                    longitude = 22.5666
+                ),
+                City(
+                    name = "Swidnik testowy",
+                    type = "village",
+                    province = "Wojewodztwo drugie",
+                    district = "Powiat drugi",
+                    commune = "Gmina druga",
+                    latitude = 51.2197,
+                    longitude = 22.7
+                ),
+                City(
+                    name = "Dorohucza testowy",
+                    type = "village",
+                    province = "Wojewodztwo trzecie",
+                    district = "Powiat trzeci",
+                    commune = "Gmina trzecia",
+                    latitude = 51.1625,
+                    longitude = 23.0088
+                ),
+                City(
+                    name = "Chelm testowy",
+                    type = "village",
+                    province = "Wojewodztwo czwarte",
+                    district = "Powiat czwarty",
+                    commune = "Gmina czwarta",
+                    latitude = 51.1322,
+                    longitude = 23.4777
+                )
             )
-        ))
+        )
     }
 
     private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
 
     private fun thereIsSampleCategoryTree(): CategoryResponse {
-        val topLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
-            name = "Top level category",
-            description = "Just top level category",
-            parentCategoryId = null,
-            isTopLevel = true,
-            isFinalNode = false
-        ))
+        val topLevelCategory: CategoryResponse = categoryFacade.create(
+            request = CategoryCreateRequest(
+                name = "Top level category",
+                description = "Just top level category",
+                parentCategoryId = null,
+                isTopLevel = true,
+                isFinalNode = false
+            )
+        )
 
-        val secondLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
-            name = "Second level category",
-            description = "Just second level category",
-            parentCategoryId = topLevelCategory.id,
-            isTopLevel = false,
-            isFinalNode = false
-        ))
+        val secondLevelCategory: CategoryResponse = categoryFacade.create(
+            request = CategoryCreateRequest(
+                name = "Second level category",
+                description = "Just second level category",
+                parentCategoryId = topLevelCategory.id,
+                isTopLevel = false,
+                isFinalNode = false
+            )
+        )
 
-        val finalLevelCategory: CategoryResponse = categoryFacade.create(request = CategoryCreateRequest(
-            name = "Final level category",
-            description = "Nice final level category",
-            parentCategoryId = secondLevelCategory.id,
-            isTopLevel = false,
-            isFinalNode = true
-        ))
+        val finalLevelCategory: CategoryResponse = categoryFacade.create(
+            request = CategoryCreateRequest(
+                name = "Final level category",
+                description = "Nice final level category",
+                parentCategoryId = secondLevelCategory.id,
+                isTopLevel = false,
+                isFinalNode = true
+            )
+        )
 
         return finalLevelCategory
     }

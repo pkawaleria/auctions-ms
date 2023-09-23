@@ -13,18 +13,18 @@ interface MongoAuctionRepository : AuctionRepository, MongoRepository<Auction, S
     @Query("{ 'name': { \$regex: ?0, \$options: 'i' }, 'categoryPath.pathElements.name': ?1 }")
     override fun findByNameContainingIgnoreCaseAndCategoryPathContaining(name: String, categoryName: String, pageable: Pageable): Page<Auction>
 
-    @Query("{'status': AuctionStatus.REJECTED, 'auctioneerId' : ?0}")
+    @Query("{'status': 'REJECTED', 'auctioneerId' : ?0}")
     override fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
 
-    @Query("{'status': AuctionStatus.ACCEPTED, 'auctioneerId' : ?0}")
+    @Query("{'status': 'ACCEPTED', 'auctioneerId' : ?0}")
     override fun findAcceptedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
 
     @Query("{'expiresAt' : {'\$lt' : ?0 }, 'auctioneerId' : ?1 }")
     override fun findExpiredAuctions(now: Instant, auctioneerId: String, pageable: Pageable): Page<Auction>
 
-    @Query("{'status': AuctionStatus.ARCHIVED, 'auctioneerId' : ?0}")
+    @Query("{'status': 'ARCHIVED', 'auctioneerId' : ?0}")
     override fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
 
-    @Query("{'status': AuctionStatus.NEW, 'auctioneerId' : ?0}")
+    @Query("{'status': 'NEW', 'auctioneerId' : ?0}")
     override fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
 }

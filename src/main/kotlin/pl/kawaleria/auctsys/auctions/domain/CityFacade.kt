@@ -26,14 +26,14 @@ class CityFacade(private val cityRepository: CityRepository,
         val resource = ClassPathResource(cityImportFilepath)
         val cities: List<City> = objectMapper.readValue(resource.inputStream)
 
-        cityRepository.saveAll(cities)
+        cityRepository.saveAll(cities.toMutableList())
     }
 
     fun deleteCities() {
         if (cityRepository.count() <= 0) throw CanNotDeleteCitiesCollectionException()
 
         cityRepository.deleteAll()
-        mongoTemplate.dropCollection("cities")
+        mongoTemplate.dropCollection("cities") // ? Why twice
     }
 
     fun searchCities(searchRequest: CitiesSearchRequest, pageRequest: PageRequest): PagedCities {

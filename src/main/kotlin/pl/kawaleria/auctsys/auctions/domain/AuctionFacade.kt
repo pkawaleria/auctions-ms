@@ -2,10 +2,12 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
-import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
-import pl.kawaleria.auctsys.auctions.dto.exceptions.InappropriateContentException
-import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCreationRequestException
-import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionUpdateRequestException
+import org.springframework.data.domain.Pageable
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.Metrics
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.security.core.Authentication
+import pl.kawaleria.auctsys.auctions.dto.exceptions.*
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -66,10 +68,8 @@ class AuctionFacade(private val auctionRepository: AuctionRepository,
                 category = categoryPath.lastCategory(),
                 categoryPath = categoryPath,
                 productCondition = createRequest.productCondition,
-                cityId = createRequest.cityId,
                 cityName = createRequest.cityName,
                 location = createRequest.location,
-                expiresAt = newExpirationInstant()
         )
 
         return auctionRepository.save(auction)

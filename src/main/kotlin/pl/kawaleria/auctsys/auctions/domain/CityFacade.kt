@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -15,10 +16,14 @@ class CityFacade(private val cityRepository: CityRepository,
                  private val mongoTemplate: MongoTemplate,
                  private val objectMapper: ObjectMapper) {
 
+
+    @Value("\${files.import.cities.path}")
+    private val cityImportFilepath: String = ""
+
     fun importCities() {
         if (cityRepository.count() != 0L) throw CanNotImportCitiesException()
 
-        val resource = ClassPathResource("city_data.json")
+        val resource = ClassPathResource(cityImportFilepath)
         val cities: List<City> = objectMapper.readValue(resource.inputStream)
 
         cityRepository.saveAll(cities)

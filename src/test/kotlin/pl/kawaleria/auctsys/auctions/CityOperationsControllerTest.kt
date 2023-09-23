@@ -27,6 +27,7 @@ import pl.kawaleria.auctsys.auctions.domain.CityFacade
 import pl.kawaleria.auctsys.auctions.domain.CityRepository
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
 import pl.kawaleria.auctsys.withAuthenticatedAdmin
+import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 
 private const val baseUrl = "/cities"
 
@@ -146,7 +147,7 @@ class CityOperationsControllerTest {
         val selectedCityNamePhrase = "Abramowi"
 
         val expectedPageCount = 1
-        val expectedFilteredCitiesCount = 3
+        val expectedFilteredCitiesCount = 2
 
         // when
         val result: MvcResult = mockMvc.perform(

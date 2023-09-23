@@ -70,7 +70,7 @@ class AuctionOperationsControllerTest {
             .andExpect { MockMvcResultMatchers.status().isAccepted }
 
         // then
-        val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
+        val auctionAfterAcceptance: Auction? = auction.id.let { auctionRepository.findById(it).orElseThrow() }
         val isAccepted: Boolean = auctionAfterAcceptance?.isAccepted() ?: false
         Assertions.assertThat(isAccepted).isTrue()
     }
@@ -106,8 +106,8 @@ class AuctionOperationsControllerTest {
             .andExpect { MockMvcResultMatchers.status().isAccepted }
 
         // then
-        val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
-        val isArchived: Boolean = auctionAfterAcceptance?.isArchived() ?: false
+        val auctionAfterAcceptance: Auction = auction.id.let { auctionRepository.findById(it).orElseThrow() }
+        val isArchived: Boolean = auctionAfterAcceptance.isArchived()
         Assertions.assertThat(isArchived).isTrue()
     }
 
@@ -123,42 +123,37 @@ class AuctionOperationsControllerTest {
         val city: City = thereIsCity()
 
         return auctionRepository.save(
-                Auction(
-                        name = "Wireless Samsung headphones",
-                        description = "Best headphones you can have",
-                        price = 1.23,
-                        auctioneerId = "user-id",
-                        category = wirelessHeadphones,
-                        categoryPath = categoryPath,
-                        productCondition = Condition.NEW,
-                        cityId = city.id!!,
-                        cityName = city.name,
-                        location = GeoJsonPoint(city.latitude, city.longitude),
-                        expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds())
-                )
+            Auction(
+                name = "Wireless Samsung headphones",
+                description = "Best headphones you can have",
+                price = 1.23,
+                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
+                category = wirelessHeadphones,
+                categoryPath = categoryPath,
+                productCondition = Condition.NEW,
+                cityId = city.id,
+                cityName = city.name,
+                location = GeoJsonPoint(city.latitude, city.longitude),
+                expiresAt = defaultExpiration(),
+                thumbnail = byteArrayOf()
+            )
         )
-
-        return auctionRepository.save(auction)
     }
 
     private fun thereIsCity(): City {
         return cityRepository.save(
-                City(
-                    id = "id1",
-                    name = "Lublin",
-                    type = "village",
-                    province = "Province-1",
-                    district = "District-1",
-                    commune = "Commune-1",
-                    latitude = 51.25,
-                    longitude = 22.5666
-                )
+            City(
+                id = "id1",
+                name = "Lublin",
+                type = "village",
+                province = "Province-1",
+                district = "District-1",
+                commune = "Commune-1",
+                latitude = 51.25,
+                longitude = 22.5666
+            )
         )
-
-        return cityRepository.save(city).id.toString()
     }
 
-    // zakomentowałem bo nigdzie nie używana funkcja
-    // private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
-
+     private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
 }

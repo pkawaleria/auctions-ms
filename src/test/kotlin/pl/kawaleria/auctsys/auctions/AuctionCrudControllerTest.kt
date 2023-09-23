@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import pl.kawaleria.auctsys.AUCTIONEER_ID_UNDER_TEST
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -29,6 +30,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
+import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -80,6 +82,9 @@ class AuctionControllerTest {
     @Nested
     inner class AuctionsSearchTests {
 
+        private val auctionsSearchUrl: String = "$baseUrl/search"
+
+
         @Test
         fun `should return selected page from all auctions when search phrase and search category are not specified`() {
             // given
@@ -91,7 +96,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(baseUrl)
+                get(auctionsSearchUrl)
                     .withAuthenticatedAuctioneer()
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
@@ -124,7 +129,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(baseUrl)
+                get(auctionsSearchUrl)
                     .withAuthenticatedAuctioneer()
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
@@ -142,7 +147,7 @@ class AuctionControllerTest {
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
-                auction.name?.contains(selectedSearchPhrase, ignoreCase = true) ?: false
+                auction.name.contains(selectedSearchPhrase, ignoreCase = true)
             }
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
@@ -162,7 +167,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(baseUrl)
+                get(auctionsSearchUrl)
                     .withAuthenticatedAuctioneer()
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
@@ -180,10 +185,10 @@ class AuctionControllerTest {
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
-                auction.name?.contains(selectedSearchPhrase, ignoreCase = true) ?: false
+                auction.name.contains(selectedSearchPhrase, ignoreCase = true)
             }
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
-                auction.categoryPath.pathElements.map { it.name }.any { it.equals(selectedCategory) }
+                auction.categoryPath.pathElements.map { it.name }.any { it == selectedCategory }
             }
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
@@ -203,7 +208,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(baseUrl)
+                get(auctionsSearchUrl)
                     .withAuthenticatedAuctioneer()
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
@@ -221,7 +226,7 @@ class AuctionControllerTest {
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
-                auction.categoryPath.pathElements.map { it.name }.any { it.equals(selectedCategory) }
+                auction.categoryPath.pathElements.map { it.name }.any { it == selectedCategory }
             }
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
@@ -234,14 +239,14 @@ class AuctionControllerTest {
 
             val selectedPage = 0
             val selectedPageSize = 10
-            val selectedCityId: String = cities[0].id!!
+            val selectedCityId: String = cities[0].id
 
             val expectedPageCount = 1
             val expectedFilteredAuctionsCount = 1
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(auctionSearchUrl)
+                get(auctionsSearchUrl)
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
@@ -264,7 +269,7 @@ class AuctionControllerTest {
 
             val selectedPage = 0
             val selectedPageSize = 10
-            val selectedCityId: String = cities[0].id!!
+            val selectedCityId: String = cities.first().id
             val selectedRadius = 16.0
 
             val expectedPageCount = 1
@@ -272,7 +277,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(auctionSearchUrl)
+                get(auctionsSearchUrl)
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
@@ -302,7 +307,7 @@ class AuctionControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(auctionSearchUrl)
+                get(auctionsSearchUrl)
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("radius", selectedRadius.toString())
@@ -322,14 +327,14 @@ class AuctionControllerTest {
 
             val selectedPage = 0
             val selectedPageSize = 10
-            val selectedCityId: String = cities[0].id!!
+            val selectedCityId: String = cities.first().id
             val selectedRadius = 55.0
 
             val expectedErrorMessage = "Search radius is out of bounds"
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get(auctionSearchUrl)
+                get(auctionsSearchUrl)
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("cityId", selectedCityId)
@@ -348,13 +353,13 @@ class AuctionControllerTest {
     @Nested
     inner class AuctionsGettersTests {
         private val singleAuctionBaseUrl: String = "/auction-service/auctions"
-        private val userAuctionsBaseUrl: String = "/auction-service/users/auctioneer-id/auctions"
+        private val userAuctionsBaseUrl: String = "/auction-service/users/$AUCTIONEER_ID_UNDER_TEST/auctions"
 
         @Test
         fun `should return specific auction`() {
             // given
             val auction: Auction = thereIsAuction()
-            val auctionId: String? = auction.id
+            val auctionId: String = auction.id
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -386,7 +391,7 @@ class AuctionControllerTest {
         @Test
         fun `should return list of auctions belonging to the user`() {
             // given
-            val expectedNumberOfAuctions: Int = thereAreAuctions()
+            val expectedNumberOfAuctions: Int = thereAreAuctions().first.size
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -417,8 +422,9 @@ class AuctionControllerTest {
             val expectedNumberOfAuctions = 0
 
             // when
+            val nonexistentUserId = "nonExistingUserId"
             val result: MvcResult = mockMvc.perform(
-                get("/auction-service/users/nonExistingUserId/auctions")
+                get("/auction-service/users/$nonexistentUserId/auctions")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
@@ -445,8 +451,9 @@ class AuctionControllerTest {
             val expectedErrorMessage = "Accessed auction does not exist"
 
             // when
+            val nonexistentAuctionId = "nonExistingAuctionId"
             val result: MvcResult = mockMvc.perform(
-                get("$singleAuctionBaseUrl/nonExistingAuctionId")
+                get("$singleAuctionBaseUrl/$nonexistentAuctionId")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
@@ -476,8 +483,10 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 description = "Best headphones you can have",
                 price = 1.23,
-                cityId = cityId,
-                productCondition = Condition.NEW
+                productCondition = Condition.NEW,
+                cityName = city.name,
+                cityId = city.id,
+                location = location
             )
 
             // when
@@ -516,7 +525,7 @@ class AuctionControllerTest {
                 price = 1.23,
                 categoryId = category.id,
                 productCondition = Condition.NEW,
-                cityId = city.id!!,
+                cityId = city.id,
                 cityName = city.name,
                 location = location
             )
@@ -551,7 +560,9 @@ class AuctionControllerTest {
                     categoryId = category.id,
                     description = "Headphones",
                     price = 1.23,
-                    cityId = cityId,
+                    cityId = city.id,
+                    cityName = city.name,
+                    location = location,
                     productCondition = Condition.USED
             )
 
@@ -586,7 +597,7 @@ class AuctionControllerTest {
                 price = 1.23,
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
-                cityId = city.id!!,
+                cityId = city.id,
                 cityName = city.name,
                 location = location
             )
@@ -622,7 +633,7 @@ class AuctionControllerTest {
                 price = -13.0,
                 categoryId = category.id,
                 productCondition = Condition.USED,
-                cityId = city.id!!,
+                cityId = city.id,
                 cityName = city.name,
                 location = location
             )
@@ -658,7 +669,7 @@ class AuctionControllerTest {
                 price = 13.0,
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
-                cityId = city.id!!,
+                cityId = city.id,
                 cityName = city.name,
                 location = location
             )
@@ -694,8 +705,8 @@ class AuctionControllerTest {
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = expectedAuctionName,
-                description = oldAuction.description!!,
-                price = oldAuction.price!!,
+                description = oldAuction.description,
+                price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
                 cityName = oldAuction.cityName,
@@ -735,7 +746,7 @@ class AuctionControllerTest {
             val expectedAuctionPrice = 123.45
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                name = oldAuction.name!!,
+                name = oldAuction.name,
                 description = expectedAuctionDescription,
                 price = expectedAuctionPrice,
                 productCondition = oldAuction.productCondition,
@@ -778,16 +789,18 @@ class AuctionControllerTest {
             val cities: List<City> = thereAreCities()
             val oldAuction: Auction = thereIsAuction()
 
-            val expectedCityId: String = cities[1].id.toString()
-            val expectedCityName: String = cities[1].name
-            val expectedLocation = GeoJsonPoint(cities[1].latitude, cities[1].longitude)
+            val expectedCityId: String = cities.first().id
+            val expectedCityName: String = cities.first().name
+            val expectedLocation = GeoJsonPoint(cities.first().latitude, cities.first().longitude)
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                    name = oldAuction.name!!,
-                    description = oldAuction.description!!,
-                    price = oldAuction.price!!,
+                    name = oldAuction.name,
+                    description = oldAuction.description,
+                    price = oldAuction.price,
                     productCondition = oldAuction.productCondition,
-                    cityId = expectedCityId
+                    cityId = expectedCityId,
+                    cityName = expectedCityName,
+                    location = expectedLocation
             )
 
             // when
@@ -826,9 +839,9 @@ class AuctionControllerTest {
             val expectedProductCondition: Condition = Condition.USED
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                name = oldAuction.name!!,
-                description = oldAuction.description!!,
-                price = oldAuction.price!!,
+                name = oldAuction.name,
+                description = oldAuction.description,
+                price = oldAuction.price,
                 productCondition = expectedProductCondition,
                 cityId = oldAuction.cityId,
                 cityName = oldAuction.cityName,
@@ -866,13 +879,13 @@ class AuctionControllerTest {
         fun `should not update auction because of negative new price`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val oldAuctionId: String? = oldAuction.id
+            val oldAuctionId: String = oldAuction.id
 
             val newPrice = -15.45387
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                name = oldAuction.name!!,
-                description = oldAuction.description!!,
+                name = oldAuction.name,
+                description = oldAuction.description,
                 price = newPrice,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
@@ -903,15 +916,15 @@ class AuctionControllerTest {
         fun `should not update auction because of too short new name`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val auctionId: String? = oldAuction.id
+            val auctionId: String = oldAuction.id
 
             val newName = "Bike"
 
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = newName,
-                description = oldAuction.description!!,
-                price = oldAuction.price!!,
+                description = oldAuction.description,
+                price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
                 cityName = oldAuction.cityName,
@@ -940,15 +953,15 @@ class AuctionControllerTest {
         fun `should not update auction because of too long description`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val oldAuctionId: String? = oldAuction.id
+            val oldAuctionId: String = oldAuction.id
 
             // this description has 525 chars
             val newDescription = "a".repeat(525)
 
             val updateAuctionRequest = UpdateAuctionRequest(
-                name = oldAuction.name!!,
+                name = oldAuction.name,
                 description = newDescription,
-                price = oldAuction.price!!,
+                price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
                 cityName = oldAuction.cityName,
@@ -977,14 +990,14 @@ class AuctionControllerTest {
         fun `should not update auction because of invalid new name syntax`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val oldAuctionId: String? = oldAuction.id
+            val oldAuctionId: String = oldAuction.id
 
             val newName = "Headphones?"
 
             val newAuction = UpdateAuctionRequest(
                 name = newName,
-                description = oldAuction.description!!,
-                price = oldAuction.price!!,
+                description = oldAuction.description,
+                price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
                 cityName = oldAuction.cityName,
@@ -1020,7 +1033,7 @@ class AuctionControllerTest {
                 description = "Best headphones you can have",
                 price = 1.23,
                 productCondition = Condition.USED,
-                cityId = city.id!!,
+                cityId = city.id,
                 cityName = city.name,
                 location = location
             )
@@ -1051,7 +1064,7 @@ class AuctionControllerTest {
         @Test
         fun `should delete auction`() {
             // given
-            val auctionId: String = thereIsAuction().id!!
+            val auctionId: String = thereIsAuction().id
 
             // when
             mockMvc.perform(
@@ -1102,14 +1115,15 @@ class AuctionControllerTest {
             name = "Wireless Samsung headphones",
             description = "Best headphones you can have",
             price = 1.23,
-            auctioneerId = "user-id",
+            auctioneerId = AUCTIONEER_ID_UNDER_TEST,
             category = wirelessHeadphones,
             categoryPath = categoryPath,
             productCondition = Condition.NEW,
-            cityId = city.id!!,
+            cityId = city.id,
             cityName = city.name,
             location = GeoJsonPoint(city.latitude, city.longitude),
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+            thumbnail = byteArrayOf()
         )
 
         return auctionRepository.save(auction)
@@ -1157,53 +1171,57 @@ class AuctionControllerTest {
                 name = "Wireless Samsung headphones",
                 description = "Best headphones you can have",
                 price = 1.23,
-                auctioneerId = "user-id",
+                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
                 category = clothing,
                 categoryPath = tShirtsCategoryPath,
                 productCondition = Condition.NEW,
-                cityId = cities[0].id!!,
+                cityId = cities[0].id,
                 cityName = cities[0].name,
                 location = GeoJsonPoint(cities[0].latitude, cities[0].longitude),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+                thumbnail = byteArrayOf()
             ),
             Auction(
                 name = "Wireless JBL headphones",
                 description = "Worst headphones you can have",
                 price = 4.56,
-                auctioneerId = "user-id",
+                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
                 category = wirelessHeadphones,
                 categoryPath = wirelessHeadphonesCategoryPath,
                 productCondition = Condition.USED,
-                cityId = cities[1].id!!,
+                cityId = cities[1].id,
                 cityName = cities[1].name,
                 location = GeoJsonPoint(cities[1].latitude, cities[1].longitude),
                 expiresAt = defaultExpiration(),
+                thumbnail = byteArrayOf()
             ),
             Auction(
                 name = "Wireless Sony headphones",
                 description = "Best sony headphones you can have",
                 price = 78.9,
-                auctioneerId = "user-id",
+                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
                 category = headphones,
                 categoryPath = speakersCategoryPath,
                 productCondition = Condition.USED,
-                cityId = cities[2].id!!,
+                cityId = cities[2].id,
                 cityName = cities[2].name,
                 location = GeoJsonPoint(cities[2].latitude, cities[2].longitude),
                 expiresAt = defaultExpiration(),
+                thumbnail = byteArrayOf()
             ),
             Auction(
                 name = "Wireless Jbl headphones",
                 description = "Worst jbl headphones you can have",
                 price = 159.43,
-                auctioneerId = "user-id",
+                auctioneerId = AUCTIONEER_ID_UNDER_TEST,
                 category = electronics,
                 categoryPath = wirelessHeadphonesCategoryPath,
                 productCondition = Condition.NOT_APPLICABLE,
-                cityId = cities[3].id!!,
+                cityId = cities[3].id,
                 cityName = cities[3].name,
                 location = GeoJsonPoint(cities[3].latitude, cities[3].longitude),
                 expiresAt = defaultExpiration(),
+                thumbnail = byteArrayOf()
             )
         )
 

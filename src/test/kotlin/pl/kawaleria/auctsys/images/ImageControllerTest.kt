@@ -33,8 +33,6 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-private const val baseUrl = "/auction-service/auctions"
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @AutoConfigureMockMvc
@@ -325,7 +323,7 @@ class ImageControllerTest {
             pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
         )
 
-        val cityId: String = thereIsCity()
+        val city: City = thereIsCity()
 
         val auction = Auction(
             name = "Wireless Samsung headphones",
@@ -335,11 +333,13 @@ class ImageControllerTest {
             price = 1.23,
             auctioneerId = "user-id",
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
-            cityId = cityId,
-            productCondition = Condition.`NOT_APPLICABLE`
+            cityId = city.id,
+            productCondition = Condition.`NOT_APPLICABLE`,
+            cityName= city.name,
+            location = GeoJsonPoint(city.latitude, city.longitude)
         )
 
-        return auctionRepository.save(auction).id!!
+        return auctionRepository.save(auction).id
     }
 
     private fun thereIsCity(): City {

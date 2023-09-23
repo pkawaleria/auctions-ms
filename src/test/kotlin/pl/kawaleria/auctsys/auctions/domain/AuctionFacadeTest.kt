@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.security.core.Authentication
 import pl.kawaleria.auctsys.TestAuctioneerAuthentication
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
@@ -206,8 +207,11 @@ class AuctionFacadeTest {
             description = "Breathable sports shoes",
             price = 145.2,
             cityId = "przykladoweID",
-            productCondition = Condition.USED
+            productCondition = Condition.USED,
+            cityName = "ads",
+            location = GeoJsonPoint(123.23, 12.23)
         )
+
         val auctionId: String =
             auctionFacade.create(createRequest = auction, auctioneerId = getDefaultAuthContext().toAuctioneerId()).id!!
         action(auctionId)

@@ -20,7 +20,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    @GetMapping("/auctions")
+    @GetMapping("/auctions/search")
     fun searchAuctions(
             @RequestParam(required = false, defaultValue = "0") page: Int,
             @RequestParam(required = false, defaultValue = "10") pageSize: Int,

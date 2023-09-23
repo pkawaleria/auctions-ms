@@ -79,14 +79,6 @@ class InMemoryAuctionRepository : AuctionRepository {
         map.remove(auction.id)
     }
 
-    override fun deleteAll() {
-        map.clear()
-    }
-
-    override fun <S : Auction?> saveAll(entities: MutableIterable<S>): List<Auction> {
-        return entities.map { save(it!!) }
-    }
-
     override fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = map.values
                 .filter { it.status == AuctionStatus.REJECTED }

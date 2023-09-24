@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.AUCTIONEER_ID_UNDER_TEST
+import pl.kawaleria.auctsys.MongoTestContainer
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -42,9 +43,7 @@ private const val baseUrl: String = "/auction-service/auctions"
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuctionControllerTest {
 
-    private val mongo: MongoDBContainer = MongoDBContainer("mongo").apply {
-        start()
-    }
+    private val mongo: MongoDBContainer = MongoTestContainer.instance
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)

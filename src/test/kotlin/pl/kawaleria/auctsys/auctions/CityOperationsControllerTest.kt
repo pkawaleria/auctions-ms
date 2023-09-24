@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.dropCollection
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
@@ -22,6 +21,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import pl.kawaleria.auctsys.MongoTestContainer
 import pl.kawaleria.auctsys.auctions.domain.City
 import pl.kawaleria.auctsys.auctions.domain.CityFacade
 import pl.kawaleria.auctsys.auctions.domain.CityRepository
@@ -37,9 +37,7 @@ private const val baseUrl = "/cities"
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CityOperationsControllerTest {
 
-    private val mongo: MongoDBContainer = MongoDBContainer("mongo").apply {
-        start()
-    }
+    private val mongo: MongoDBContainer = MongoTestContainer.instance
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)

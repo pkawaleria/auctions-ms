@@ -1,16 +1,16 @@
 package pl.kawaleria.auctsys.auctions.domain
 
-import org.bson.types.ObjectId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Point
+import org.springframework.data.mongodb.core.query.Query
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class InMemoryAuctionRepository : AuctionRepository {
+class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
 
     val map: ConcurrentHashMap<String, Auction> = ConcurrentHashMap()
     override fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> {
@@ -37,7 +37,7 @@ class InMemoryAuctionRepository : AuctionRepository {
 
     override fun findByNameContainingIgnoreCase(searchPhrase: String, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = map.values
-            .filter { it.name?.contains(searchPhrase, ignoreCase = true) ?: false }
+            .filter { it.name.contains(searchPhrase, ignoreCase = true) }
             .toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
@@ -58,13 +58,7 @@ class InMemoryAuctionRepository : AuctionRepository {
 
 
     override fun save(auction: Auction): Auction {
-        if (auction.id == null) {
-            // If the auction doesn't have an ID, it's a new auction, generate a new ID.
-            val auctionId: String = ObjectId().toString()
-            auction.id = auctionId
-        }
-        // Save the auction with the generated ID or the existing ID (if it's an update).
-        map[auction.id!!] = auction
+        map[auction.id] = auction
         return auction
     }
 
@@ -135,5 +129,10 @@ class InMemoryAuctionRepository : AuctionRepository {
         val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
         return R * c
+    }
+
+    // this method is just mocked, it should not be used since search concept should be tested only in integration tests
+    override fun search(query: Query, pageable: Pageable): Page<Auction> {
+        return PageImpl(emptyList(), pageable, 0L)
     }
 }

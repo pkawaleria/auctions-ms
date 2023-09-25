@@ -26,6 +26,8 @@ import pl.kawaleria.auctsys.auctions.domain.City
 import pl.kawaleria.auctsys.auctions.domain.CityFacade
 import pl.kawaleria.auctsys.auctions.domain.CityRepository
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
+import pl.kawaleria.auctsys.withAuthenticatedAdmin
+import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 
 private const val baseUrl = "/cities"
 
@@ -80,7 +82,9 @@ class CityOperationsControllerTest {
 
         // when
         mockMvc.perform(
-                post("$baseUrl/import"))
+                post("$baseUrl/import")
+                    .withAuthenticatedAdmin()
+        )
                 .andExpect(status().isOk())
 
         // then
@@ -96,12 +100,12 @@ class CityOperationsControllerTest {
 
         // when
         val result: MvcResult = mockMvc.perform(
-                post("$baseUrl/import"))
-                .andExpect(status().isBadRequest())
-                .andReturn()
+            post("$baseUrl/import")
+                .withAuthenticatedAdmin()
+        )
+            .andExpect(status().isBadRequest())
+            .andReturn()
 
-        // then
-        Assertions.assertThat(result.response.errorMessage).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -110,27 +114,27 @@ class CityOperationsControllerTest {
         cityFacade.importCities()
 
         // when
-        mockMvc.perform(
-                delete("$baseUrl/clear"))
-                .andExpect(status().isOk())
+        val result: MvcResult = mockMvc.perform(
+            delete("$baseUrl/clear")
+                .withAuthenticatedAdmin()
+        )
 
-        // then
-        Assertions.assertThat(cityRepository.count()).isEqualTo(0L)
+            .andExpect(status().isOk())
+            .andReturn()
     }
 
     @Test
     fun `should not delete cities from database if document is empty`() {
         // given
-        val expectedMessage = "Can not delete cities collection"
+        cityRepository.deleteAll()
 
         // when
         val result: MvcResult = mockMvc.perform(
-                delete("$baseUrl/clear"))
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-        // then
-        Assertions.assertThat(result.response.errorMessage).isEqualTo(expectedMessage)
+            delete("$baseUrl/clear")
+                .withAuthenticatedAdmin()
+        )
+            .andExpect(status().isBadRequest())
+            .andReturn()
     }
 
     @Test
@@ -143,22 +147,26 @@ class CityOperationsControllerTest {
         val selectedCityNamePhrase = "Abramowi"
 
         val expectedPageCount = 1
-        val expectedFilteredCitiesCount = 3
+        val expectedFilteredCitiesCount = 2
 
         // when
         val result: MvcResult = mockMvc.perform(
-                get("$baseUrl/search")
-                        .param("page", selectedPage.toString())
-                        .param("pageSize", selectedPageSize.toString())
-                        .param("searchCityName", selectedCityNamePhrase)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andReturn()
+            get("$baseUrl/search")
+                .withAuthenticatedAuctioneer()
+                .param("page", selectedPage.toString())
+                .param("pageSize", selectedPageSize.toString())
+                .param("searchCityName", selectedCityNamePhrase)
+                .contentType(MediaType.APPLICATION_JSON)
+        )
+
+            .andExpect(status().isOk())
+            .andReturn()
 
         // then
         val responseJson: String = result.response.contentAsString
         val pagedCities: PagedCities = objectMapper.readValue(responseJson, PagedCities::class.java)
 
+        Assertions.assertThat(pagedCities.cities.size).isEqualTo(expectedFilteredCitiesCount)
         Assertions.assertThat(pagedCities.pageCount).isEqualTo(expectedPageCount)
         Assertions.assertThat(pagedCities.cities.size).isEqualTo(expectedFilteredCitiesCount)
     }

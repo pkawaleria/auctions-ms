@@ -62,6 +62,8 @@ open class ImageFacade(private val imageRepository: ImageRepository,
             auctionFacade.reject(auctionId)
             throw InappropriateImageException()
         } else {
+            // TODO: When exception is thrown into this scope and get the misleading message logged because
+            //  foundInappropriateContent is set to false by default, that should be handled differently
             logger.info("All auction images verified positively for auction id $auctionId")
             addThumbnailToAuction(auctionId, files[0])
             auctionFacade.accept(auctionId)

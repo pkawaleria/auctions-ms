@@ -6,6 +6,7 @@ enum class AuctionStatus(
         val statusName: String): AuctionStatusOperations {
 
     NEW(operation = NewAso(), operationName = "creating new auction", statusName = "newly created"),
+    AWAITING_VERIFICATION(operation = AwaitingVerificationAso(), operationName = "awaiting verification", statusName = "awaits verification" ),
     ACCEPTED(operation = AcceptedAso(), operationName = "acceptance", statusName = "accepted"),
     REJECTED(operation = RejectedAso(), operationName = "rejection", statusName = "rejected"),
     ARCHIVED(operation = ArchivedAso(), operationName = "archiving", statusName = "archived");

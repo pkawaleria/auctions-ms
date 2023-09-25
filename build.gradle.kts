@@ -21,17 +21,19 @@ repositories {
 val testcontainersVersion = "1.18.3"
 val assertJVersion = "3.24.2"
 
-
 dependencies {
-// 	implementation("org.springframework.boot:spring-boot-starter-security")
+ 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+
+	implementation("org.springframework.security:spring-security-oauth2-jose")
+	implementation("org.springframework.security:spring-security-oauth2-resource-server")
 //	implementation("org.springframework.boot:spring-boot-starter-batch")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("io.minio:minio:8.5.4")
-	implementation("org.springframework.kafka:spring-kafka")
+//	implementation("io.minio:minio:8.5.4")
+//	implementation("org.springframework.kafka:spring-kafka")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 

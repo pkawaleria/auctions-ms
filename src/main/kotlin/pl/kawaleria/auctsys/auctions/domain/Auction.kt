@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.auctions.domain
 
+import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
@@ -12,12 +13,12 @@ import java.time.Instant
 @Document(collection = "auctions")
 data class Auction(
     @Id
-    var id: String? = null,
-    var name: String? = null,
-    var description: String? = null,
-    var price: Double? = null,
-    var auctioneerId: String? = null,
-    var thumbnail: ByteArray? = null,
+    var id: String = ObjectId().toString(),
+    var name: String,
+    var description: String,
+    var price: Double,
+    var auctioneerId: String,
+    var thumbnail: ByteArray = byteArrayOf(),
     var category: Category,
     var categoryPath: CategoryPath,
     var productCondition: Condition,

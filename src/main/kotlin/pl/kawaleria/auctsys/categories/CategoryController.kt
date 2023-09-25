@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.categories
 
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
@@ -16,6 +17,7 @@ import java.util.*
 class CategoryController(private val categoryFacade: CategoryFacade) {
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     fun create(@RequestBody categoryRequest: CategoryCreateRequest): CategoryResponse = categoryFacade.create(request = categoryRequest)
 
     @GetMapping("/{categoryId}")
@@ -38,6 +40,7 @@ class CategoryController(private val categoryFacade: CategoryFacade) {
     fun getLowLevelCategories(): List<CategoryResponse> = categoryFacade.getFinalCategories()
 
     @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     fun delete(@PathVariable categoryId: String): ResponseEntity<Unit> {
         categoryFacade.delete(categoryId = categoryId)
         return ResponseEntity.noContent().build()

@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @JsonIgnoreProperties("Id")
 data class City(
         @Id
-        val id: String? = ObjectId().toString(),
+        val id: String = ObjectId().toString(),
 
         @JsonProperty("Name")
         val name: String,

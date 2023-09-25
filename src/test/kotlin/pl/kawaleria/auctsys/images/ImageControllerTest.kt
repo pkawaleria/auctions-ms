@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multi
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import pl.kawaleria.auctsys.*
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.images.domain.Image
 import pl.kawaleria.auctsys.images.domain.ImageRepository
@@ -31,8 +32,6 @@ import pl.kawaleria.auctsys.images.dto.responses.ImageDetailedResponse
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-
-private const val baseUrl = "/auction-service/auctions"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -89,17 +88,18 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    multipart("$baseUrl/$auctionId/images")
-                            .file(imagePart[0])
-                            .file(imagePart[1])
-                            .file(imagePart[2])
+                multipart("/auction-service/auctions/$auctionId/images")
+                    .file(imagePart[0])
+                    .file(imagePart[1])
+                    .file(imagePart[2])
+                    .withAuthenticatedAuctioneer()
             )
                     .andExpect(status().isOk())
                     .andReturn()
 
             // then
             val response: String = result.response.contentAsString
-//            logger.info("response = $response")
+            logger.info("response = $response")
             val mappedImages: List<ImageDetailedResponse> =
                     objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageDetailedResponse::class.java))
 
@@ -113,18 +113,21 @@ class ImageControllerTest {
 
             val txtContent = "This is sample txt file"
             val txtFile = MockMultipartFile(
-                    "files",
-                    "mock.txt",
-                    MediaType.TEXT_PLAIN_VALUE,
-                    txtContent.toByteArray())
+                "files",
+                "mock.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                txtContent.toByteArray()
+            )
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    multipart("$baseUrl/$auctionId/images")
-                            .file(txtFile))
-                    // then
-                    .andExpect(status().isBadRequest())
-                    .andReturn()
+                multipart("/auction-service/auctions/$auctionId/images")
+                    .file(txtFile)
+                    .withAuthenticatedAuctioneer()
+            )
+                // then
+                .andExpect(status().isBadRequest())
+                .andReturn()
 
             Assertions.assertThat(result.response.errorMessage).contains("Invalid file type")
         }
@@ -136,18 +139,21 @@ class ImageControllerTest {
 
             val txtContent = "This is sample txt file that pretends to be JPEG file"
             val txtFile = MockMultipartFile(
-                    "files",
-                    "car.jpg",
-                    MediaType.IMAGE_JPEG_VALUE,
-                    txtContent.toByteArray())
+                "files",
+                "car.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                txtContent.toByteArray()
+            )
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    multipart("$baseUrl/$auctionId/images")
-                            .file(txtFile))
-                    // then
-                    .andExpect(status().isBadRequest())
-                    .andReturn()
+                multipart("/auction-service/auctions/$auctionId/images")
+                    .file(txtFile)
+                    .withAuthenticatedAuctioneer()
+            )
+                // then
+                .andExpect(status().isBadRequest())
+                .andReturn()
 
             Assertions.assertThat(result.response.errorMessage).contains("Invalid file type")
         }
@@ -161,11 +167,13 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    multipart("$baseUrl/$auctionId/images")
-                            .file(file))
-                    // then
-                    .andExpect(status().isBadRequest())
-                    .andReturn()
+                multipart("/auction-service/auctions/$auctionId/images")
+                    .file(file)
+                    .withAuthenticatedAuctioneer()
+            )
+                // then
+                .andExpect(status().isBadRequest())
+                .andReturn()
 
             Assertions.assertThat(result.response.errorMessage).contains("Invalid content type")
         }
@@ -173,7 +181,6 @@ class ImageControllerTest {
 
     @Nested
     inner class ImageRetrievalTest {
-
         @Test
         fun `should get information about auction images`() {
             // given
@@ -182,14 +189,17 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    MockMvcRequestBuilders.get("$baseUrl/$auctionId/images")
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andReturn()
+                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .withAuthenticatedAuctioneer()
+            )
+                .andExpect(status().isOk())
+                .andReturn()
 
             // then
             val responseJson: String = result.response.contentAsString
-            val imagesResponse: AuctionImagesResponse = objectMapper.readValue(responseJson, AuctionImagesResponse::class.java)
+            val imagesResponse: AuctionImagesResponse =
+                objectMapper.readValue(responseJson, AuctionImagesResponse::class.java)
 
             Assertions.assertThat(imagesResponse.imagesCount).isEqualTo(images.size)
             Assertions.assertThat(imagesResponse.imageIDs).containsExactlyInAnyOrderElementsOf(images.map { it.id })
@@ -202,14 +212,17 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    MockMvcRequestBuilders.get("$baseUrl/$auctionId/images")
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andReturn()
+                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .withAuthenticatedAuctioneer()
+            )
+                .andExpect(status().isOk())
+                .andReturn()
 
             // then
             val responseJson: String = result.response.contentAsString
-            val imagesResponse: AuctionImagesResponse = objectMapper.readValue(responseJson, AuctionImagesResponse::class.java)
+            val imagesResponse: AuctionImagesResponse =
+                objectMapper.readValue(responseJson, AuctionImagesResponse::class.java)
 
             Assertions.assertThat(imagesResponse.imagesCount).isZero()
             Assertions.assertThat(imagesResponse.imageIDs).isEmpty()
@@ -226,10 +239,12 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    MockMvcRequestBuilders.get("$baseUrl/$auctionId/images/$selectedImageId")
-                            .contentType(MediaType.IMAGE_JPEG_VALUE))
-                    .andExpect(status().isOk())
-                    .andReturn()
+                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images/$selectedImageId")
+                    .contentType(MediaType.IMAGE_JPEG_VALUE)
+                    .withAuthenticatedAuctioneer()
+            )
+                .andExpect(status().isOk())
+                .andReturn()
 
             // then
             val responseByteArray: ByteArray = result.response.contentAsByteArray
@@ -245,10 +260,12 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    MockMvcRequestBuilders.get("$baseUrl/$auctionId/images/$nonExistingImageId")
-                            .contentType(MediaType.IMAGE_JPEG_VALUE))
-                    .andExpect(status().isNotFound)
-                    .andReturn()
+                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images/$nonExistingImageId")
+                    .contentType(MediaType.IMAGE_JPEG_VALUE)
+                    .withAuthenticatedAuctioneer()
+            )
+                .andExpect(status().isNotFound)
+                .andReturn()
             // then
             Assertions.assertThat(result.response.errorMessage).contains("Image does not exists")
         }
@@ -268,9 +285,11 @@ class ImageControllerTest {
 
             // when
             mockMvc.perform(
-                    MockMvcRequestBuilders.delete("$baseUrl/$auctionId/images/$selectedImageId")
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNoContent)
+                MockMvcRequestBuilders.delete("/auction-service/auctions/$auctionId/images/$selectedImageId")
+                    .withAuthenticatedAuctioneer()
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isNoContent)
 
             // then
             val existsAfterDelete: Boolean? = selectedImageId?.let { imageRepository.existsById(it) }
@@ -285,10 +304,12 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                    MockMvcRequestBuilders.delete("$baseUrl/$auctionId/images/$nonExistingImageId")
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNotFound)
-                    .andReturn()
+                MockMvcRequestBuilders.delete("/auction-service/auctions/$auctionId/images/$nonExistingImageId")
+                    .withAuthenticatedAuctioneer()
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isNotFound)
+                .andReturn()
             // then
             Assertions.assertThat(result.response.errorMessage).contains("Image does not exists")
         }
@@ -306,19 +327,19 @@ class ImageControllerTest {
 
         val auction = Auction(
             name = "Wireless Samsung headphones",
+            category = wirelessHeadphones,
+            categoryPath = categoryPath,
             description = "Best headphones you can have",
             price = 1.23,
             auctioneerId = "user-id",
-            category = wirelessHeadphones,
-            categoryPath = categoryPath,
-            productCondition = Condition.NEW,
-            cityId = city.id!!,
-            cityName = city.name,
-            location = GeoJsonPoint(city.latitude, city.longitude),
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+            cityId = city.id,
+            productCondition = Condition.`NOT_APPLICABLE`,
+            cityName= city.name,
+            location = GeoJsonPoint(city.latitude, city.longitude)
         )
 
-        return auctionRepository.save(auction).id!!
+        return auctionRepository.save(auction).id
     }
 
     private fun thereIsCity(): City {
@@ -342,13 +363,13 @@ class ImageControllerTest {
         val images: List<Image> = imageFiles.map { fileName ->
             val resource = ClassPathResource("test_images/$fileName")
             val contentType: String = MediaType.IMAGE_JPEG_VALUE
-            val content: ByteArray= resource.inputStream.readAllBytes()
+            val content: ByteArray = resource.inputStream.readAllBytes()
 
             val image = Image(
-                    type = contentType,
-                    size = content.size.toLong(),
-                    binaryData = content,
-                    auctionId = auctionId
+                type = contentType,
+                size = content.size.toLong(),
+                binaryData = content,
+                auctionId = auctionId
             )
             imageRepository.save(image)
         }

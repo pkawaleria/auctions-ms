@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.security.core.Authentication
 import pl.kawaleria.auctsys.TestAuctioneerAuthentication
@@ -15,6 +16,7 @@ import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
 import pl.kawaleria.auctsys.configs.toAuctioneerId
 
 class AuctionFacadeTest {
+
 
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
 

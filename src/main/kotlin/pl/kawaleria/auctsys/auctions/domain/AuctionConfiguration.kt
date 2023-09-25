@@ -3,6 +3,7 @@ package pl.kawaleria.auctsys.auctions.domain
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.mongodb.core.MongoTemplate
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.citys.domain.InMemoryCityRepository
 import pl.kawaleria.auctsys.configs.SecurityHelper
@@ -26,7 +27,8 @@ class AuctionConfiguration {
         clock: Clock,
         categoryFacade: CategoryFacade,
         contentVerificationClient: ContentVerificationClient,
-        securityHelper: SecurityHelper
+        securityHelper: SecurityHelper,
+        mongoTemplate: MongoTemplate
     ): AuctionFacade =
 
         AuctionFacade(
@@ -38,7 +40,8 @@ class AuctionConfiguration {
             auctionCategoryDeleter = AuctionCategoryDeleter(repository),
             categoryFacade = categoryFacade,
             contentVerificationClient = contentVerificationClient,
-            securityHelper = securityHelper
+            securityHelper = securityHelper,
+            auctionSearchRepository = MongoAuctionSearchRepository(mongoTemplate)
         )
 
     fun auctionFacadeWithInMemoryRepo(categoryFacade: CategoryFacade): AuctionFacade {
@@ -54,7 +57,8 @@ class AuctionConfiguration {
             auctionCategoryDeleter = AuctionCategoryDeleter(auctionRepository),
             categoryFacade = categoryFacade,
             contentVerificationClient = InMemoryContentVerificationClient(),
-            securityHelper = SecurityHelper()
+            securityHelper = SecurityHelper(),
+            auctionSearchRepository = auctionRepository
         )
     }
 }

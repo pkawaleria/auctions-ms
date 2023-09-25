@@ -2,10 +2,7 @@ package pl.kawaleria.auctsys.auctions
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +18,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.AUCTIONEER_ID_UNDER_TEST
+import pl.kawaleria.auctsys.MongoTestContainer
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -30,6 +28,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
+import pl.kawaleria.auctsys.withAnonymousUser
 import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 import java.time.Duration
 import java.time.Instant
@@ -44,9 +43,7 @@ private const val baseUrl: String = "/auction-service/auctions"
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuctionControllerTest {
 
-    private val mongo: MongoDBContainer = MongoDBContainer("mongo").apply {
-        start()
-    }
+    private val mongo: MongoDBContainer = MongoTestContainer.instance
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
@@ -168,7 +165,7 @@ class AuctionControllerTest {
             // when
             val result: MvcResult = mockMvc.perform(
                 get(auctionsSearchUrl)
-                    .withAuthenticatedAuctioneer()
+                    .withAnonymousUser()
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("searchPhrase", selectedSearchPhrase)
@@ -305,7 +302,7 @@ class AuctionControllerTest {
             val selectedPageSize = 10
             val selectedRadius = 16.0
 
-            val expectedError = "Cannot found auctions with radius only"
+            val expectedError = "City for search request is not specified or cannot be found"
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -550,6 +547,33 @@ class AuctionControllerTest {
             val responseErrorMessage: String? = result.response.errorMessage
 
             Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+        }
+        @Test
+        fun `should not authorize anonymous user to create auction`() {
+            // given
+            val category: CategoryResponse = thereIsSampleCategoryTree()
+            val city: City = thereIsCity()
+            val location = GeoJsonPoint(city.latitude, city.longitude)
+
+            val auctionRequestData = CreateAuctionRequest(
+                name = "That is just excelent name",
+                description = "Headphones".repeat(4),
+                price = 1.23,
+                categoryId = category.id,
+                productCondition = Condition.NEW,
+                cityId = city.id,
+                cityName = city.name,
+                location = location
+            )
+
+            // when
+            mockMvc.perform(
+                post(baseUrl)
+                    .withAnonymousUser()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(auctionRequestData))
+            )
+                .andExpect(status().isForbidden)
         }
 
         @Test

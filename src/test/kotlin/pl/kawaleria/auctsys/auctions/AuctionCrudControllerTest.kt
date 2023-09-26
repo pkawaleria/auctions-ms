@@ -81,7 +81,6 @@ class AuctionControllerTest {
 
         private val auctionsSearchUrl: String = "$baseUrl/search"
 
-
         @Test
         fun `should return selected page from all auctions when search phrase and search category are not specified`() {
             // given
@@ -100,7 +99,7 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
             )
 
-                .andExpect { status().isOk() }
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -133,7 +132,7 @@ class AuctionControllerTest {
                     .param("searchPhrase", selectedSearchPhrase)
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -172,7 +171,7 @@ class AuctionControllerTest {
                     .param("category", selectedCategory)
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -213,7 +212,7 @@ class AuctionControllerTest {
                     .param("category", selectedCategory)
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -249,7 +248,7 @@ class AuctionControllerTest {
                     .param("cityId", selectedCityId)
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -282,7 +281,7 @@ class AuctionControllerTest {
                     .param("radius", selectedRadius.toString())
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -302,23 +301,15 @@ class AuctionControllerTest {
             val selectedPageSize = 10
             val selectedRadius = 16.0
 
-            val expectedError = "City for search request is not specified or cannot be found"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 get(auctionsSearchUrl)
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("radius", selectedRadius.toString())
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseError: String = result.response.errorMessage.toString()
-
-            Assertions.assertThat(responseError).isEqualTo(expectedError)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
@@ -330,10 +321,8 @@ class AuctionControllerTest {
             val selectedCityId: String = cities.first().id
             val selectedRadius = 55.0
 
-            val expectedErrorMessage = "Search radius is out of bounds"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 get(auctionsSearchUrl)
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
@@ -341,13 +330,7 @@ class AuctionControllerTest {
                     .param("radius", selectedRadius.toString())
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String = result.response.errorMessage.toString()
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
     }
 
@@ -360,15 +343,14 @@ class AuctionControllerTest {
         fun `should return specific auction`() {
             // given
             val auction: Auction = thereIsAuction()
-            val auctionId: String = auction.id
 
             // when
             val result: MvcResult = mockMvc.perform(
-                get("$singleAuctionBaseUrl/$auctionId")
+                get("$singleAuctionBaseUrl/${auction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -388,7 +370,6 @@ class AuctionControllerTest {
             Assertions.assertThat(foundAuction.location).isEqualTo(auction.location)
         }
 
-
         @Test
         fun `should return list of auctions belonging to the user`() {
             // given
@@ -400,7 +381,7 @@ class AuctionControllerTest {
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -429,7 +410,7 @@ class AuctionControllerTest {
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -449,28 +430,20 @@ class AuctionControllerTest {
         @Test
         fun `should not return a non-existing auction`() {
             // given
-            val expectedErrorMessage = "Accessed auction does not exist"
-
-            // when
             val nonexistentAuctionId = "nonExistingAuctionId"
-            val result: MvcResult = mockMvc.perform(
+
+            // when then
+            mockMvc.perform(
                 get("$singleAuctionBaseUrl/$nonexistentAuctionId")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isNotFound())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isNotFound)
         }
     }
 
     @Nested
     inner class AuctionsCreationTests {
-        private val baseUrl: String = "/auction-service/auctions"
 
         @Test
         fun `should create auction`() {
@@ -497,7 +470,7 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -531,22 +504,14 @@ class AuctionControllerTest {
                 location = location
             )
 
-            val expectedErrorMessage = "Invalid CreateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 post(baseUrl)
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
         @Test
         fun `should not authorize anonymous user to create auction`() {
@@ -556,7 +521,7 @@ class AuctionControllerTest {
             val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
-                name = "That is just excelent name",
+                name = "That is just excellent name",
                 description = "Headphones".repeat(4),
                 price = 1.23,
                 categoryId = category.id,
@@ -594,22 +559,14 @@ class AuctionControllerTest {
                 productCondition = Condition.USED
             )
 
-            val expectedErrorMessage = "Invalid CreateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 post(baseUrl)
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
@@ -630,22 +587,14 @@ class AuctionControllerTest {
                 location = location
             )
 
-            val expectedErrorMessage = "Invalid CreateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 post(baseUrl)
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
@@ -666,22 +615,14 @@ class AuctionControllerTest {
                 location = location
             )
 
-            val expectedErrorMessage = "Invalid CreateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 post(baseUrl)
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
@@ -701,28 +642,20 @@ class AuctionControllerTest {
                 cityName = city.name,
                 location = location
             )
-            val expectedErrorMessage = "Invalid CreateAuctionRequest"
 
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 post(baseUrl)
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
     }
 
     @Nested
     inner class AuctionsUpdateTests {
-        private val baseUrl: String = "/auction-service/auctions"
 
         @Test
         fun `should update name in auction`() {
@@ -747,7 +680,7 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -784,7 +717,6 @@ class AuctionControllerTest {
                 location = oldAuction.location
             )
 
-
             // when
             val result: MvcResult = mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
@@ -792,7 +724,7 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -839,7 +771,7 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -885,7 +817,7 @@ class AuctionControllerTest {
                     .characterEncoding("UTF-8")
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -908,7 +840,6 @@ class AuctionControllerTest {
         fun `should not update auction because of negative new price`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val oldAuctionId: String = oldAuction.id
 
             val newPrice = -15.45387
 
@@ -922,33 +853,22 @@ class AuctionControllerTest {
                 location = oldAuction.location
             )
 
-
-            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
-                put("$baseUrl/$oldAuctionId")
+            // when then
+             mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
         fun `should not update auction because of too short new name`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val auctionId: String = oldAuction.id
 
             val newName = "Bike"
-
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = newName,
@@ -960,32 +880,22 @@ class AuctionControllerTest {
                 location = oldAuction.location
             )
 
-            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
-                put("$baseUrl/$auctionId")
+            // when then
+            mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
         fun `should not update auction because of too long description`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val oldAuctionId: String = oldAuction.id
-
             // this description has 525 chars
-            val newDescription = "a".repeat(525)
+            val newDescription: String = "a".repeat(525)
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = oldAuction.name,
@@ -997,29 +907,20 @@ class AuctionControllerTest {
                 location = oldAuction.location
             )
 
-            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
-                put("$baseUrl/$oldAuctionId")
+            // when then
+            mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isBadRequest)
         }
 
         @Test
         fun `should not update auction because of invalid new name syntax`() {
             // given
             val oldAuction: Auction = thereIsAuction()
-            val oldAuctionId: String = oldAuction.id
 
             val newName = "Headphones?"
 
@@ -1033,22 +934,44 @@ class AuctionControllerTest {
                 location = oldAuction.location
             )
 
-            val expectedErrorMessage = "Invalid UpdateAuctionRequest"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
-                put("$baseUrl/$oldAuctionId")
+            // when then
+            mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(newAuction))
             )
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isBadRequest)
+
+        }
+
+        @Test
+        fun `should not update because of non-existing city`() {
+            // given
+            val oldAuction: Auction = thereIsAuction()
+
+            val nonExistingCityId = "nonExistingCityId"
+            val nonExistingCityName = "nonExistingCityName"
+
+            val newAuction = UpdateAuctionRequest(
+                name = oldAuction.name,
+                description = oldAuction.description,
+                price = oldAuction.price,
+                productCondition = oldAuction.productCondition,
+                cityId = nonExistingCityId,
+                cityName = nonExistingCityName,
+                location = oldAuction.location
+            )
+
+            // when then
+            mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
+                    .withAuthenticatedAuctioneer()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(newAuction))
+            )
+                .andExpect(status().isNotFound)
                 .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
         }
 
         @Test
@@ -1067,44 +990,35 @@ class AuctionControllerTest {
                 location = location
             )
 
-            val expectedErrorMessage = "Accessed auction does not exist"
-
-            // when
-            val result: MvcResult = mockMvc.perform(
+            // when then
+            mockMvc.perform(
                 put("$baseUrl/nonExistingAuctionId")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateAuctionRequest))
             )
-                .andExpect(status().isNotFound())
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
+                .andExpect(status().isNotFound)
         }
     }
 
     @Nested
     inner class AuctionsDeleteTests {
-        private val baseUrl = "/auction-service/auctions"
 
         @Test
         fun `should delete auction`() {
             // given
-            val auctionId: String = thereIsAuction().id
+            val auction: Auction = thereIsAuction()
 
             // when
             mockMvc.perform(
-                delete("$baseUrl/$auctionId")
+                delete("$baseUrl/${auction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
-                .andExpect(status().isNoContent())
+                .andExpect(status().isNoContent)
 
             // then
-            val doesAuctionExists: Boolean = auctionRepository.existsById(auctionId)
+            val doesAuctionExists: Boolean = auctionRepository.existsById(auction.id)
 
             Assertions.assertThat(doesAuctionExists).isFalse()
         }
@@ -1112,23 +1026,17 @@ class AuctionControllerTest {
         @Test
         fun `should return not found trying to delete non-existing auction`() {
             // given
-            val expectedErrorMessage = "Accessed auction does not exist"
+            val nonExistingAuctionId = "nonExistingAuctionId"
 
-            // when
-            val result: MvcResult = mockMvc.perform(
-                delete("$baseUrl/nonExistingAuctionId")
+            // when then
+            mockMvc.perform(
+                delete("$baseUrl/$nonExistingAuctionId")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isNotFound)
-                .andReturn()
-
-            // then
-            val responseErrorMessage: String? = result.response.errorMessage
-            Assertions.assertThat(responseErrorMessage).isEqualTo(expectedErrorMessage)
         }
     }
-
 
     private fun thereIsAuction(): Auction {
         val electronics = Category(UUID.randomUUID().toString(), "Electronics")

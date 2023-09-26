@@ -52,5 +52,4 @@ class LoggedInAuctioneerController(private val auctionFacade: AuctionFacade) {
         return auctionFacade.findAwaitingAcceptanceAuctions(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
     }
 
-
 }

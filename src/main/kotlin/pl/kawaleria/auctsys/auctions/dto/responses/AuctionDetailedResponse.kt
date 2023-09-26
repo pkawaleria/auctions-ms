@@ -6,17 +6,17 @@ import pl.kawaleria.auctsys.auctions.domain.Category
 import pl.kawaleria.auctsys.auctions.domain.Condition
 
 data class AuctionDetailedResponse(
-        val id: String?,
-        val name: String?,
-        val description: String?,
-        val price: Double?,
-        val auctioneerId: String?,
-        val thumbnail: ByteArray?,
-        val category: Category?,
-        val productCondition: Condition?,
-        val cityId: String?,
-        val cityName: String?,
-        val location: GeoJsonPoint?
+        val id: String,
+        val name: String,
+        val description: String,
+        val price: Double,
+        val auctioneerId: String,
+        val thumbnail: ByteArray,
+        val category: Category,
+        val productCondition: Condition,
+        val cityId: String,
+        val cityName: String,
+        val location: GeoJsonPoint
 )
 
 fun Auction.toDetailedResponse(): AuctionDetailedResponse = AuctionDetailedResponse(id, name, description, price, auctioneerId, thumbnail, category, productCondition, cityId, cityName, location)

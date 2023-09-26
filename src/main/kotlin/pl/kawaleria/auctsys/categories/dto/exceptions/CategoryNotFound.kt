@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.auctions.dto.exceptions
+package pl.kawaleria.auctsys.categories.dto.exceptions
 
 import org.springframework.http.HttpStatus
 

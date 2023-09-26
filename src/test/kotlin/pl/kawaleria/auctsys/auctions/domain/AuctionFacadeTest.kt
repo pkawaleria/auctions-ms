@@ -2,10 +2,12 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
-import org.springframework.data.mongodb.core.MongoTemplate
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.security.core.Authentication
 import pl.kawaleria.auctsys.TestAuctioneerAuthentication
+import pl.kawaleria.auctsys.auctions.AuctionControllerTest
 import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.UnsupportedOperationOnAuctionException
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -17,11 +19,14 @@ import pl.kawaleria.auctsys.configs.toAuctioneerId
 
 class AuctionFacadeTest {
 
-
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
 
     private val auctionFacade: AuctionFacade =
         AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade)
+
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(AuctionControllerTest::class.java)
+    }
 
     @Test
     fun `should accept newly created auction`() {
@@ -158,6 +163,7 @@ class AuctionFacadeTest {
     fun `should not allow to archive already archived auction`() {
         // given
         val auctionId: String = thereIsArchivedAuction()
+        logger.info(auctionFacade.findAuctionById(auctionId).toString())
 
         // when then
         Assertions.assertThatThrownBy { auctionFacade.archive(auctionId, getDefaultAuthContext()) }
@@ -203,20 +209,24 @@ class AuctionFacadeTest {
     private fun thereIsAuctionAfterOperationOf(action: (String) -> Unit = {}): String {
         val finalCategory: CategoryResponse = thereIsSampleCategoryTree()
 
+        val city: City = thereIsCity()
+
         val auction = CreateAuctionRequest(
             name = "Adidas shoes",
-            categoryId = finalCategory.id,
             description = "Breathable sports shoes",
             price = 145.2,
-            cityId = "przykladoweID",
+            categoryId = finalCategory.id,
             productCondition = Condition.USED,
-            cityName = "ads",
+            cityId = city.id,
+            cityName = city.name,
             location = GeoJsonPoint(123.23, 12.23)
         )
 
         val auctionId: String =
-            auctionFacade.create(createRequest = auction, auctioneerId = getDefaultAuthContext().toAuctioneerId()).id!!
+            auctionFacade.create(createRequest = auction, auctioneerId = getDefaultAuthContext().toAuctioneerId()).id
+
         action(auctionId)
+
         return auctionId
     }
 
@@ -241,7 +251,7 @@ class AuctionFacadeTest {
             )
         )
 
-        val adidasSneakersCategory: CategoryResponse = categoryFacade.create(
+        return categoryFacade.create(
             request = CategoryCreateRequest(
                 name = "Adidas sneakers",
                 description = "Nice adidas sneakers",
@@ -250,8 +260,20 @@ class AuctionFacadeTest {
                 isFinalNode = true
             )
         )
+    }
 
-        return adidasSneakersCategory
+    private fun thereIsCity(): City {
+        return auctionFacade.saveCity(
+            City(
+                name = "Lublin testowy",
+                type = "village",
+                province = "Wojewodztwo pierwsze",
+                district = "Powiat pierwszy",
+                commune = "Gmina pierwsza",
+                latitude = 51.25,
+                longitude = 22.5666
+            )
+        )
     }
 
 }

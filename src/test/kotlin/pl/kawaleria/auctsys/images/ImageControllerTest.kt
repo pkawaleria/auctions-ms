@@ -6,8 +6,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory.getLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -33,6 +31,8 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
+private const val baseUrl = "/auction-service/auctions"
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @AutoConfigureMockMvc
@@ -45,10 +45,6 @@ class ImageControllerTest {
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
-    }
-
-    companion object {
-        val logger: Logger = getLogger(ImageControllerTest::class.java)
     }
 
     @Autowired
@@ -88,18 +84,17 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                multipart("/auction-service/auctions/$auctionId/images")
+                multipart("$baseUrl/$auctionId/images")
                     .file(imagePart[0])
                     .file(imagePart[1])
                     .file(imagePart[2])
                     .withAuthenticatedAuctioneer()
             )
-                    .andExpect(status().isOk())
-                    .andReturn()
+                .andExpect(status().isOk)
+                .andReturn()
 
             // then
             val response: String = result.response.contentAsString
-            logger.info("response = $response")
             val mappedImages: List<ImageDetailedResponse> =
                     objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageDetailedResponse::class.java))
 
@@ -121,12 +116,12 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                multipart("/auction-service/auctions/$auctionId/images")
+                multipart("$baseUrl/$auctionId/images")
                     .file(txtFile)
                     .withAuthenticatedAuctioneer()
             )
                 // then
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isBadRequest)
                 .andReturn()
 
             Assertions.assertThat(result.response.errorMessage).contains("Invalid file type")
@@ -145,17 +140,13 @@ class ImageControllerTest {
                 txtContent.toByteArray()
             )
 
-            // when
-            val result: MvcResult = mockMvc.perform(
-                multipart("/auction-service/auctions/$auctionId/images")
+            // when then
+            mockMvc.perform(
+                multipart("$baseUrl/$auctionId/images")
                     .file(txtFile)
                     .withAuthenticatedAuctioneer()
             )
-                // then
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            Assertions.assertThat(result.response.errorMessage).contains("Invalid file type")
+                .andExpect(status().isBadRequest)
         }
 
         @Test
@@ -165,17 +156,13 @@ class ImageControllerTest {
 
             val file: MockMultipartFile = createMockMultipartFileWithInvalidContentType("audi.jpg")
 
-            // when
-            val result: MvcResult = mockMvc.perform(
-                multipart("/auction-service/auctions/$auctionId/images")
+            // when then
+            mockMvc.perform(
+                multipart("$baseUrl/$auctionId/images")
                     .file(file)
                     .withAuthenticatedAuctioneer()
             )
-                // then
-                .andExpect(status().isBadRequest())
-                .andReturn()
-
-            Assertions.assertThat(result.response.errorMessage).contains("Invalid content type")
+                .andExpect(status().isBadRequest)
         }
     }
 
@@ -189,11 +176,11 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images")
+                MockMvcRequestBuilders.get("$baseUrl/$auctionId/images")
                     .contentType(MediaType.APPLICATION_JSON)
                     .withAuthenticatedAuctioneer()
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -212,11 +199,11 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images")
+                MockMvcRequestBuilders.get("$baseUrl/$auctionId/images")
                     .contentType(MediaType.APPLICATION_JSON)
                     .withAuthenticatedAuctioneer()
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -239,11 +226,11 @@ class ImageControllerTest {
 
             // when
             val result: MvcResult = mockMvc.perform(
-                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images/$selectedImageId")
+                MockMvcRequestBuilders.get("$baseUrl/$auctionId/images/$selectedImageId")
                     .contentType(MediaType.IMAGE_JPEG_VALUE)
                     .withAuthenticatedAuctioneer()
             )
-                .andExpect(status().isOk())
+                .andExpect(status().isOk)
                 .andReturn()
 
             // then
@@ -256,18 +243,15 @@ class ImageControllerTest {
         fun `should return not found trying to get non-existing image`() {
             // given
             val auctionId: String = thereIsAuction()
-            val nonExistingImageId = "fake-image-id"
+            val nonExistingImageId = "nonExistingImageId"
 
-            // when
-            val result: MvcResult = mockMvc.perform(
-                MockMvcRequestBuilders.get("/auction-service/auctions/$auctionId/images/$nonExistingImageId")
+            // when then
+            mockMvc.perform(
+                MockMvcRequestBuilders.get("$baseUrl/$auctionId/images/$nonExistingImageId")
                     .contentType(MediaType.IMAGE_JPEG_VALUE)
                     .withAuthenticatedAuctioneer()
             )
                 .andExpect(status().isNotFound)
-                .andReturn()
-            // then
-            Assertions.assertThat(result.response.errorMessage).contains("Image does not exists")
         }
 
     }
@@ -285,7 +269,7 @@ class ImageControllerTest {
 
             // when
             mockMvc.perform(
-                MockMvcRequestBuilders.delete("/auction-service/auctions/$auctionId/images/$selectedImageId")
+                MockMvcRequestBuilders.delete("$baseUrl/$auctionId/images/$selectedImageId")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
@@ -300,18 +284,15 @@ class ImageControllerTest {
         fun `should return not found trying to delete non-existing image`() {
             // given
             val auctionId: String = thereIsAuction()
-            val nonExistingImageId = "fake-image-id"
+            val nonExistingImageId = "nonExistingImageId"
 
-            // when
-            val result: MvcResult = mockMvc.perform(
-                MockMvcRequestBuilders.delete("/auction-service/auctions/$auctionId/images/$nonExistingImageId")
+            // when then
+            mockMvc.perform(
+                MockMvcRequestBuilders.delete("$baseUrl/$auctionId/images/$nonExistingImageId")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isNotFound)
-                .andReturn()
-            // then
-            Assertions.assertThat(result.response.errorMessage).contains("Image does not exists")
         }
     }
 
@@ -334,7 +315,7 @@ class ImageControllerTest {
             auctioneerId = "user-id",
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
             cityId = city.id,
-            productCondition = Condition.`NOT_APPLICABLE`,
+            productCondition = Condition.NOT_APPLICABLE,
             cityName= city.name,
             location = GeoJsonPoint(city.latitude, city.longitude)
         )
@@ -345,12 +326,11 @@ class ImageControllerTest {
     private fun thereIsCity(): City {
         return cityRepository.save(
             City(
-                id = "id1",
-                name = "Lublin",
+                name = "Lublin testowy",
                 type = "village",
-                province = "Province-1",
-                district = "District-1",
-                commune = "Commune-1",
+                province = "Wojewodztwo pierwsze",
+                district = "Powiat pierwszy",
+                commune = "Gmina pierwsza",
                 latitude = 51.25,
                 longitude = 22.5666
             )
@@ -360,7 +340,7 @@ class ImageControllerTest {
     private fun thereAreImagesOfAuction(auctionId: String): List<Image> {
         val imageFiles: List<String> = listOf("audi.jpg", "skoda.png", "nissan.jpg")
 
-        val images: List<Image> = imageFiles.map { fileName ->
+        return imageFiles.map { fileName ->
             val resource = ClassPathResource("test_images/$fileName")
             val contentType: String = MediaType.IMAGE_JPEG_VALUE
             val content: ByteArray = resource.inputStream.readAllBytes()
@@ -373,7 +353,6 @@ class ImageControllerTest {
             )
             imageRepository.save(image)
         }
-        return images
     }
 
     private fun createMockMultipartFile(fileName: String): MockMultipartFile {

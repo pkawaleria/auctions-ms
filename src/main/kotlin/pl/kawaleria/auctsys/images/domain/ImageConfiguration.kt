@@ -5,7 +5,6 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
-import pl.kawaleria.auctsys.configs.ThumbnailRules
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 
 @Configuration

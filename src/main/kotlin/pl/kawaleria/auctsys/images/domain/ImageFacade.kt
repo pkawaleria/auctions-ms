@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
-import pl.kawaleria.auctsys.configs.ThumbnailRules
 import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
 import pl.kawaleria.auctsys.images.dto.exceptions.InappropriateImageException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse

@@ -44,26 +44,13 @@ class AuctionFacade(
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> =
-        auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
-
-    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
-
-    fun changeCategory(auctionId: String, categoryId: String, authContext: Authentication): AuctionDetailedResponse {
-        val auction: Auction = findAuctionById(auctionId)
-        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
-        val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
-        val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
-        auction.assignPath(path)
-
-        return auctionRepository.save(auction).toDetailedResponse()
-    }
-
     fun create(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
         if (!validateCreateAuctionRequest(createRequest)) throw InvalidAuctionCreationRequestException()
         verifyAuctionContent(createRequest.name, createRequest.description)
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
+
+        cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
 
         val auction = Auction(
             name = createRequest.name,
@@ -83,6 +70,28 @@ class AuctionFacade(
         return auctionRepository.save(auction)
     }
 
+    private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
+        val validatedName: Boolean = validateName(payload.name)
+        val validatedDescription: Boolean = validateDescription(payload.description)
+        val validatedPrice: Boolean = validatePrice(payload.price)
+
+        return (validatedName && validatedDescription && validatedPrice)
+    }
+
+    private fun validateName(name: String): Boolean {
+        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
+
+        return name.isNotEmpty() && name.length in 5..100 && regex.matches(name)
+    }
+
+    private fun validateDescription(description: String): Boolean {
+        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
+
+        return description.isNotEmpty() && description.length in 20..500 && regex.matches(description)
+    }
+
+    private fun validatePrice(price: Double): Boolean = price > 0
+
     private fun verifyAuctionContent(name: String, description: String) {
         var foundInappropriateContent = false
         val textToVerify = TextRequest("$name $description")
@@ -101,43 +110,22 @@ class AuctionFacade(
         }
     }
 
-    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): Auction {
-        if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
+    fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> =
+        auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
 
-        val auction: Auction = findAuctionById(id)
-        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
-
-        auction.name = payload.name
-        auction.price = payload.price
-        auction.description = payload.description
-        auction.productCondition = payload.productCondition
-        auction.cityId = payload.cityId
-        auction.cityName = payload.cityName
-        auction.location = payload.location
-
-        return auctionRepository.save(auction)
-    }
-
-    fun delete(auctionId: String, authContext: Authentication) {
-        val auctionToDelete = findAuctionById(auctionId)
-        securityHelper.assertUserIsAuthorizedForResource(authContext, auctionToDelete.auctioneerId)
-        auctionRepository.delete(auctionToDelete)
-    }
-
-    fun eraseCategoryFromAuctions(categoryName: String): Unit =
-        auctionCategoryDeleter.eraseCategoryFromAuctions(categoryName)
-
-    fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
-        val auction: Auction = findAuctionById(auctionId)
-        auction.thumbnail = byteArray
-        auctionRepository.save(auction)
-    }
-
+    fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
         validateGeolocationFiltersIfExist(searchRequest.radius, searchRequest.cityId)
-        val query = buildSearchQuery(searchRequest, pageRequest)
+        val query: Query = buildSearchQuery(searchRequest, pageRequest)
         return auctionSearchRepository.search(query, pageRequest).toPagedAuctions()
+    }
+
+    private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
+        if (radius == null) return
+
+        if (radius !in radiusRules.min..radiusRules.max) throw SearchRadiusOutOfBoundsException()
+        if (cityId == null) throw SearchRadiusWithoutCityException()
     }
 
     private fun buildSearchQuery(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): Query {
@@ -165,11 +153,56 @@ class AuctionFacade(
         return query
     }
 
-    private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
-        if (radius == null) return
+    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): Auction {
+        if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
 
-        if (radius !in radiusRules.min..radiusRules.max) throw SearchRadiusOutOfBoundsException()
-        if (cityId == null) throw SearchRadiusWithoutCityException()
+        val auction: Auction = findAuctionById(id)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
+
+        cityRepository.findById(payload.cityId).orElseThrow { CityNotFoundException() }
+
+        auction.name = payload.name
+        auction.price = payload.price
+        auction.description = payload.description
+        auction.productCondition = payload.productCondition
+        auction.cityId = payload.cityId
+        auction.cityName = payload.cityName
+        auction.location = payload.location
+
+        return auctionRepository.save(auction)
+    }
+
+    private fun validateUpdateAuctionRequest(payload: UpdateAuctionRequest): Boolean {
+        val validatedName: Boolean = validateName(payload.name)
+        val validatedDescription: Boolean = validateDescription(payload.description)
+        val validatedPrice: Boolean = validatePrice(payload.price)
+
+        return (validatedName && validatedDescription && validatedPrice)
+    }
+
+    fun delete(auctionId: String, authContext: Authentication) {
+        val auctionToDelete: Auction = findAuctionById(auctionId)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auctionToDelete.auctioneerId)
+        auctionRepository.delete(auctionToDelete)
+    }
+
+    fun changeCategory(auctionId: String, categoryId: String, authContext: Authentication): AuctionDetailedResponse {
+        val auction: Auction = findAuctionById(auctionId)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
+        val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
+        val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
+        auction.assignPath(path)
+
+        return auctionRepository.save(auction).toDetailedResponse()
+    }
+
+    fun eraseCategoryFromAuctions(categoryName: String): Unit =
+        auctionCategoryDeleter.eraseCategoryFromAuctions(categoryName)
+
+    fun saveThumbnail(auctionId: String, byteArray: ByteArray) {
+        val auction: Auction = findAuctionById(auctionId)
+        auction.thumbnail = byteArray
+        auctionRepository.save(auction)
     }
 
     fun accept(auctionId: String) {
@@ -191,19 +224,19 @@ class AuctionFacade(
         auctionRepository.save(auction)
     }
 
-    fun findRejectedAuctions(auctioneerId: String, pageable: Pageable) =
+    fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findRejectedAuctions(auctioneerId, pageable).toPagedAuctions()
 
-    fun findActiveAuctions(auctioneerId: String, pageable: Pageable) =
+    fun findActiveAuctions(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findAcceptedAuctions(auctioneerId, pageable).toPagedAuctions()
 
-    fun findExpiredAuctions(auctioneerId: String, pageable: Pageable) =
+    fun findExpiredAuctions(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findExpiredAuctions(Instant.now(clock), auctioneerId, pageable).toPagedAuctions()
 
-    fun findArchivedAuctions(auctioneerId: String, pageable: Pageable) =
+    fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findArchivedAuctions(auctioneerId, pageable).toPagedAuctions()
 
-    fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable) =
+    fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findAwaitingAcceptanceAuctions(auctioneerId, pageable).toPagedAuctions()
 
     private fun newExpirationInstant(): Instant {
@@ -211,35 +244,10 @@ class AuctionFacade(
         return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
     }
 
-    private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
-        val validatedName: Boolean = validateName(payload.name)
-        val validatedDescription: Boolean = validateDescription(payload.description)
-        val validatedPrice: Boolean = validatePrice(payload.price)
-
-        return (validatedName && validatedDescription && validatedPrice)
+    // for tests
+    fun saveCity(city: City): City {
+        return cityRepository.save(city)
     }
-
-    private fun validateUpdateAuctionRequest(payload: UpdateAuctionRequest): Boolean {
-        val validatedName: Boolean = validateName(payload.name)
-        val validatedDescription: Boolean = validateDescription(payload.description)
-        val validatedPrice: Boolean = validatePrice(payload.price)
-
-        return (validatedName && validatedDescription && validatedPrice)
-    }
-
-    private fun validateName(name: String): Boolean {
-        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
-
-        return name.isNotEmpty() && name.length in 5..100 && regex.matches(name)
-    }
-
-    private fun validateDescription(description: String): Boolean {
-        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
-
-        return description.isNotEmpty() && description.length in 20..500 && regex.matches(description)
-    }
-
-    private fun validatePrice(price: Double): Boolean = price > 0
 }
 
 private fun CategoryPathResponse.toAuctionCategoryPathModel(): CategoryPath {

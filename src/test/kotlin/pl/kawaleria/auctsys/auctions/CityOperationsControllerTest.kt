@@ -7,8 +7,6 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -41,10 +39,6 @@ class CityOperationsControllerTest {
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
-    }
-
-    companion object {
-        val logger: Logger = LoggerFactory.getLogger(AuctionControllerTest::class.java)
     }
 
     @Autowired
@@ -80,10 +74,10 @@ class CityOperationsControllerTest {
 
         // when
         mockMvc.perform(
-                post("$baseUrl/import")
-                    .withAuthenticatedAdmin()
+            post("$baseUrl/import")
+                .withAuthenticatedAdmin()
         )
-                .andExpect(status().isOk())
+            .andExpect(status().isOk)
 
         // then
         Assertions.assertThat(cityRepository.count()).isEqualTo(citiesSize)
@@ -94,16 +88,12 @@ class CityOperationsControllerTest {
         // given
         cityFacade.importCities()
 
-        val expectedMessage = "Can not import cities"
-
-        // when
-        val result: MvcResult = mockMvc.perform(
+        // when then
+        mockMvc.perform(
             post("$baseUrl/import")
                 .withAuthenticatedAdmin()
         )
-            .andExpect(status().isBadRequest())
-            .andReturn()
-
+            .andExpect(status().isBadRequest)
     }
 
     @Test
@@ -111,14 +101,12 @@ class CityOperationsControllerTest {
         // given
         cityFacade.importCities()
 
-        // when
-        val result: MvcResult = mockMvc.perform(
+        // when then
+        mockMvc.perform(
             delete("$baseUrl/clear")
                 .withAuthenticatedAdmin()
         )
-
-            .andExpect(status().isOk())
-            .andReturn()
+            .andExpect(status().isOk)
     }
 
     @Test
@@ -126,13 +114,12 @@ class CityOperationsControllerTest {
         // given
         cityRepository.deleteAll()
 
-        // when
-        val result: MvcResult = mockMvc.perform(
+        // when then
+        mockMvc.perform(
             delete("$baseUrl/clear")
                 .withAuthenticatedAdmin()
         )
-            .andExpect(status().isBadRequest())
-            .andReturn()
+            .andExpect(status().isBadRequest)
     }
 
     @Test
@@ -156,8 +143,7 @@ class CityOperationsControllerTest {
                 .param("searchCityName", selectedCityNamePhrase)
                 .contentType(MediaType.APPLICATION_JSON)
         )
-
-            .andExpect(status().isOk())
+            .andExpect(status().isOk)
             .andReturn()
 
         // then

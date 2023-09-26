@@ -7,8 +7,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -43,10 +41,6 @@ class LoggedInAuctioneerControllerTest {
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
-    }
-
-    companion object {
-        val logger: Logger = LoggerFactory.getLogger(AuctionControllerTest::class.java)
     }
 
     @Autowired
@@ -89,7 +83,7 @@ class LoggedInAuctioneerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
         )
 
-            .andExpect { MockMvcResultMatchers.status().isOk() }
+            .andExpect { MockMvcResultMatchers.status().isOk }
             .andReturn()
 
         // then
@@ -124,7 +118,7 @@ class LoggedInAuctioneerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
         )
 
-            .andExpect { MockMvcResultMatchers.status().isOk() }
+            .andExpect { MockMvcResultMatchers.status().isOk }
             .andReturn()
 
         // then
@@ -160,7 +154,7 @@ class LoggedInAuctioneerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
         )
 
-            .andExpect { MockMvcResultMatchers.status().isOk() }
+            .andExpect { MockMvcResultMatchers.status().isOk }
             .andReturn()
 
         // then
@@ -196,7 +190,7 @@ class LoggedInAuctioneerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
         )
 
-            .andExpect { MockMvcResultMatchers.status().isOk() }
+            .andExpect { MockMvcResultMatchers.status().isOk }
             .andReturn()
 
         // then
@@ -213,7 +207,7 @@ class LoggedInAuctioneerControllerTest {
     fun `should get logged in auctioneer expired auctions`() {
         // given
         thereIsAcceptedButExpiredAuction()
-        thereIsAcceptedAndNonexpiredAuction()
+        thereIsAcceptedAndNonExpiredAuction()
 
         val selectedPage = 0
         val selectedPageSize = 10
@@ -229,7 +223,7 @@ class LoggedInAuctioneerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
         )
 
-            .andExpect { MockMvcResultMatchers.status().isOk() }
+            .andExpect { MockMvcResultMatchers.status().isOk }
             .andReturn()
 
         // then
@@ -263,7 +257,7 @@ class LoggedInAuctioneerControllerTest {
         )
     }
 
-    private fun thereIsAcceptedAndNonexpiredAuction(): Auction {
+    private fun thereIsAcceptedAndNonExpiredAuction(): Auction {
         return auctionRepository.save(
             Auction(
                 name = "Wireless Samsung headphones",

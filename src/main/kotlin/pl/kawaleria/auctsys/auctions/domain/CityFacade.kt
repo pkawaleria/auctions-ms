@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.mongodb.core.MongoTemplate
 import pl.kawaleria.auctsys.auctions.dto.exceptions.CanNotDeleteCitiesCollectionException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.CanNotImportCitiesException
 import pl.kawaleria.auctsys.auctions.dto.requests.CitiesSearchRequest
@@ -13,7 +12,6 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
 import pl.kawaleria.auctsys.auctions.dto.responses.toPagedCities
 
 class CityFacade(private val cityRepository: CityRepository,
-                 private val mongoTemplate: MongoTemplate,
                  private val objectMapper: ObjectMapper) {
 
 
@@ -29,13 +27,6 @@ class CityFacade(private val cityRepository: CityRepository,
         cityRepository.saveAll(cities.toMutableList())
     }
 
-    fun deleteCities() {
-        if (cityRepository.count() <= 0) throw CanNotDeleteCitiesCollectionException()
-
-        cityRepository.deleteAll()
-        mongoTemplate.dropCollection("cities") // ? Why twice
-    }
-
     fun searchCities(searchRequest: CitiesSearchRequest, pageRequest: PageRequest): PagedCities {
         val searchCityName: String? = searchRequest.searchCityName
 
@@ -45,4 +36,14 @@ class CityFacade(private val cityRepository: CityRepository,
             else -> cityRepository.findAll(pageRequest)
         }.toPagedCities()
     }
+
+    fun deleteCities() {
+        if (cityRepository.count() <= 0) throw CanNotDeleteCitiesCollectionException()
+
+        cityRepository.deleteAll()
+    }
+
+    // for tests
+    fun save(city: City): City = cityRepository.save(city)
+
 }

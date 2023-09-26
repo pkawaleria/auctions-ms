@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
-import pl.kawaleria.auctsys.citys.domain.InMemoryCityRepository
 import pl.kawaleria.auctsys.configs.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.InMemoryContentVerificationClient
@@ -45,7 +44,6 @@ class AuctionConfiguration {
         )
 
     fun auctionFacadeWithInMemoryRepo(categoryFacade: CategoryFacade): AuctionFacade {
-
         val auctionRepository = InMemoryAuctionRepository()
 
         return AuctionFacade(

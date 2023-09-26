@@ -50,7 +50,7 @@ class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
 
     override fun findByLocationNear(location: Point, distance: Distance, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = map.values.filter { auction ->
-            val calculatedDistance = haversineDistance(firstLocation = location, secondLocation = auction.location)
+            val calculatedDistance: Double = haversineDistance(firstLocation = location, secondLocation = auction.location)
             calculatedDistance <= distance.value
         }.toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
@@ -118,15 +118,15 @@ class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
 
     private fun haversineDistance(firstLocation: Point, secondLocation: Point): Double {
         val R = 6371e3  // radius of Earth in meters
-        val φ1 = Math.toRadians(firstLocation.x)
-        val φ2 = Math.toRadians(secondLocation.x)
-        val Δφ = Math.toRadians(secondLocation.x - firstLocation.x)
-        val Δλ = Math.toRadians(secondLocation.y - firstLocation.y)
+        val φ1: Double = Math.toRadians(firstLocation.x)
+        val φ2: Double = Math.toRadians(secondLocation.x)
+        val Δφ: Double = Math.toRadians(secondLocation.x - firstLocation.x)
+        val Δλ: Double = Math.toRadians(secondLocation.y - firstLocation.y)
 
-        val a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        val a: Double = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
                 Math.cos(φ1) * Math.cos(φ2) *
                 Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        val c: Double = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
         return R * c
     }

@@ -9,6 +9,6 @@ data class Image(
         var id: String? = null,
         var type: String,
         var size: Long,
-        var binaryData: ByteArray,
+        var binaryData: ByteArray = byteArrayOf(),
         var auctionId: String
 )

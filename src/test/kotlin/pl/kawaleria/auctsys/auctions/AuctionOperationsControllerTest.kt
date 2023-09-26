@@ -87,7 +87,7 @@ class AuctionOperationsControllerTest {
             .andExpect { MockMvcResultMatchers.status().isAccepted }
 
         // then
-        val auctionAfterAcceptance: Auction? = auction.id?.let { auctionRepository.findById(it).orElseThrow() }
+        val auctionAfterAcceptance: Auction? = auction.id.let { auctionRepository.findById(it).orElseThrow() }
         val isRejected: Boolean = auctionAfterAcceptance?.isRejected() ?: false
         Assertions.assertThat(isRejected).isTrue()
     }
@@ -142,12 +142,11 @@ class AuctionOperationsControllerTest {
     private fun thereIsCity(): City {
         return cityRepository.save(
             City(
-                id = "id1",
-                name = "Lublin",
+                name = "Lublin testowy",
                 type = "village",
-                province = "Province-1",
-                district = "District-1",
-                commune = "Commune-1",
+                province = "Wojewodztwo pierwsze",
+                district = "Powiat pierwszy",
+                commune = "Gmina pierwsza",
                 latitude = 51.25,
                 longitude = 22.5666
             )

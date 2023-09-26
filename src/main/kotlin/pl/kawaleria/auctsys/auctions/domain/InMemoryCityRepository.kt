@@ -1,10 +1,8 @@
-package pl.kawaleria.auctsys.citys.domain
+package pl.kawaleria.auctsys.auctions.domain
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import pl.kawaleria.auctsys.auctions.domain.City
-import pl.kawaleria.auctsys.auctions.domain.CityRepository
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -31,7 +29,6 @@ class InMemoryCityRepository : CityRepository {
         map[city.id] = city
         return city
     }
-
 
     override fun deleteAll() {
         map.clear()

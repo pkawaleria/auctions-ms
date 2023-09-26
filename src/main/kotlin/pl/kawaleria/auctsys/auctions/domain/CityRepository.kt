@@ -13,4 +13,5 @@ interface CityRepository {
     fun findAll(pageable: Pageable): Page<City>
     fun findById(cityId: String): Optional<City>
     fun save(city: City): City
+
 }

@@ -20,7 +20,6 @@ class InMemoryCategoryRepository : CategoryRepository {
 
     override fun findAllByNameContainingIgnoreCase(phrase: String): List<Category> {
         return map.values.filter { it.name.contains(phrase, ignoreCase = true) }
-
     }
 
     override fun delete(category: Category) {

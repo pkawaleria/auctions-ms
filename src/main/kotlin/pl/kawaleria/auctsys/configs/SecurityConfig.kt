@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
@@ -47,7 +48,8 @@ class SecurityConfig {
         "/api/public/**",
         "/api/public/authenticate",
         "/actuator/*",
-        "/swagger-ui/**"
+        "/swagger-ui/**",
+        "/swagger-ui"
     )
 
     private val PUBLIC_ENDPOINTS = arrayOf(
@@ -62,6 +64,17 @@ class SecurityConfig {
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
+        // State-less session (state in access-token only)
+        http.sessionManagement { sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+
+        // Disable CSRF because of state-less session-management
+        http.csrf { csrf -> csrf.disable() };
+
+        // Enable and configure CORS
+        http.cors { cors ->
+            cors.configurationSource(corsConfigurationSource())
+        }
+
         http.authorizeHttpRequests { authorize ->
             AUTH_WHITELIST.forEach { path ->
                 authorize.requestMatchers(path).permitAll()
@@ -82,19 +95,21 @@ class SecurityConfig {
     }
 
 
-
     @Bean
     fun jwtDecoder(): JwtDecoder {
         val originalKey: SecretKey = SecretKeySpec(jwtSigningKey.toByteArray(), JWT_SIGNING_ALGORITHM)
         return NimbusJwtDecoder.withSecretKey(originalKey).build()
     }
 
-    @Bean
+    // TODO: limit this to only dev profile, create separate config for prod
+//    @Bean
+//    @Profile("dev")
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://localhost:3000", "http://localhost:8080")
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
-        configuration.allowedHeaders = listOf("authorization", "content-type")
+        configuration.allowedOrigins = listOf("*")
+        configuration.allowedMethods = listOf("*")
+        configuration.allowedHeaders = listOf("*")
+        configuration.exposedHeaders = listOf("*")
         configuration.allowCredentials = true
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)

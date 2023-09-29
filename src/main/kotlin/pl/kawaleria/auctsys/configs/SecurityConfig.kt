@@ -20,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.filter.CorsFilter
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
@@ -102,18 +103,23 @@ class SecurityConfig {
     }
 
     // TODO: limit this to only dev profile, create separate config for prod
-//    @Bean
-//    @Profile("dev")
+    @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("*")
+        configuration.allowedOrigins = listOf("http://localhost:3000")
         configuration.allowedMethods = listOf("*")
         configuration.allowedHeaders = listOf("*")
         configuration.exposedHeaders = listOf("*")
         configuration.allowCredentials = true
+
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
+    }
+
+    @Bean
+    fun corsFilter(): CorsFilter {
+        return CorsFilter(corsConfigurationSource())
     }
 
     internal class CustomAuthenticationConverter : Converter<Jwt, JwtAuthenticationToken> {

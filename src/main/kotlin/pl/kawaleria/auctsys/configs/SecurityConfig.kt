@@ -50,7 +50,9 @@ class SecurityConfig {
         "/api/public/authenticate",
         "/actuator/*",
         "/swagger-ui/**",
-        "/swagger-ui"
+        "/swagger-ui",
+        "/swagger-ui/*",
+        "/v3/api-docs"
     )
 
     private val PUBLIC_ENDPOINTS = arrayOf(
@@ -94,6 +96,7 @@ class SecurityConfig {
         }
         return http.build()
     }
+
 
 
     @Bean

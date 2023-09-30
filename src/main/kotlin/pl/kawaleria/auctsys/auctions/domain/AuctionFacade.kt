@@ -7,6 +7,7 @@ import org.springframework.data.geo.Circle
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Metrics
 import org.springframework.data.geo.Point
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -50,7 +51,7 @@ class AuctionFacade(
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
 
-        cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
+        val city = cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
 
         val auction = Auction(
             name = createRequest.name,
@@ -63,8 +64,8 @@ class AuctionFacade(
             category = categoryPath.lastCategory(),
             categoryPath = categoryPath,
             productCondition = createRequest.productCondition,
-            cityName = createRequest.cityName,
-            location = createRequest.location,
+            cityName = city.name,
+            location = GeoJsonPoint(city.latitude, city.longitude)
         )
 
         return auctionRepository.save(auction)

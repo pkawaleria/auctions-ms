@@ -70,7 +70,6 @@ class AuctionControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
-
     @AfterEach
     fun cleanUp() {
         mongoTemplate.dropCollection("auctions")
@@ -367,7 +366,9 @@ class AuctionControllerTest {
             Assertions.assertThat(foundAuction.productCondition).isEqualTo(auction.productCondition)
             Assertions.assertThat(foundAuction.cityId).isEqualTo(auction.cityId)
             Assertions.assertThat(foundAuction.cityName).isEqualTo(auction.cityName)
-            Assertions.assertThat(foundAuction.location).isEqualTo(auction.location)
+            Assertions.assertThat(foundAuction.latitude).isEqualTo(auction.location.y)
+            Assertions.assertThat(foundAuction.longitude).isEqualTo(auction.location.x)
+            Assertions.assertThat(foundAuction.status).isEqualTo(auction.status.name)
         }
 
         @Test
@@ -450,7 +451,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
@@ -458,9 +458,7 @@ class AuctionControllerTest {
                 description = "Best headphones you can have",
                 price = 1.23,
                 productCondition = Condition.NEW,
-                cityName = city.name,
                 cityId = city.id,
-                location = location
             )
 
             // when
@@ -491,7 +489,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "",
@@ -500,8 +497,6 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NEW,
                 cityId = city.id,
-                cityName = city.name,
-                location = location
             )
 
             // when then
@@ -518,7 +513,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "That is just excellent name",
@@ -527,8 +521,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NEW,
                 cityId = city.id,
-                cityName = city.name,
-                location = location
+                
             )
 
             // when
@@ -538,7 +531,7 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(auctionRequestData))
             )
-                .andExpect(status().isForbidden)
+                .andExpect(status().isUnauthorized)
         }
 
         @Test
@@ -546,7 +539,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
@@ -554,8 +546,6 @@ class AuctionControllerTest {
                 description = "Headphones",
                 price = 1.23,
                 cityId = city.id,
-                cityName = city.name,
-                location = location,
                 productCondition = Condition.USED
             )
 
@@ -574,7 +564,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Extra Ultra Mega Best Giga Fastest Smoothest Cleanest Cheapest Samsung headphones with Bluetooth",
@@ -583,8 +572,6 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
-                cityName = city.name,
-                location = location
             )
 
             // when then
@@ -602,7 +589,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
@@ -611,8 +597,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.USED,
                 cityId = city.id,
-                cityName = city.name,
-                location = location
+                
             )
 
             // when then
@@ -630,7 +615,6 @@ class AuctionControllerTest {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
@@ -639,8 +623,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
-                cityName = city.name,
-                location = location
+                
             )
 
             // when then
@@ -670,8 +653,7 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
             // when
             val result: MvcResult = mockMvc.perform(
@@ -696,7 +678,8 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
-            Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
+            Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
+            Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
         }
 
         @Test
@@ -713,8 +696,7 @@ class AuctionControllerTest {
                 price = expectedAuctionPrice,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
 
             // when
@@ -741,7 +723,8 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
-            Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
+            Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
+            Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
         }
 
         @Test
@@ -752,16 +735,15 @@ class AuctionControllerTest {
 
             val expectedCityId: String = cities.first().id
             val expectedCityName: String = cities.first().name
-            val expectedLocation = GeoJsonPoint(cities.first().latitude, cities.first().longitude)
+            val expectedLongitude = cities.first().longitude
+            val expectedLatitude = cities.first().latitude
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = oldAuction.name,
                 description = oldAuction.description,
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
-                cityId = expectedCityId,
-                cityName = expectedCityName,
-                location = expectedLocation
+                cityId = expectedCityId
             )
 
             // when
@@ -788,7 +770,8 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(expectedCityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(expectedCityName)
-            Assertions.assertThat(updatedAuction.location).isEqualTo(expectedLocation)
+            Assertions.assertThat(updatedAuction.latitude).isEqualTo(expectedLatitude)
+            Assertions.assertThat(updatedAuction.longitude).isEqualTo(expectedLongitude)
         }
 
         @Test
@@ -805,8 +788,7 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = expectedProductCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
 
             // when
@@ -833,7 +815,8 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.productCondition).isEqualTo(expectedProductCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
-            Assertions.assertThat(updatedAuction.location).isEqualTo(oldAuction.location)
+            Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
+            Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
         }
 
         @Test
@@ -849,8 +832,7 @@ class AuctionControllerTest {
                 price = newPrice,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
 
             // when then
@@ -876,8 +858,7 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
 
             // when then
@@ -903,8 +884,7 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
 
             // when then
@@ -930,8 +910,7 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-                cityName = oldAuction.cityName,
-                location = oldAuction.location
+
             )
 
             // when then
@@ -959,8 +938,6 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = nonExistingCityId,
-                cityName = nonExistingCityName,
-                location = oldAuction.location
             )
 
             // when then
@@ -978,7 +955,6 @@ class AuctionControllerTest {
         fun `should not update non-existing auction`() {
             // given
             val city: City = thereIsCity()
-            val location = GeoJsonPoint(city.latitude, city.longitude)
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = "Wireless Samsung headphones",
@@ -986,8 +962,6 @@ class AuctionControllerTest {
                 price = 1.23,
                 productCondition = Condition.USED,
                 cityId = city.id,
-                cityName = city.name,
-                location = location
             )
 
             // when then
@@ -1058,7 +1032,7 @@ class AuctionControllerTest {
             productCondition = Condition.NEW,
             cityId = city.id,
             cityName = city.name,
-            location = GeoJsonPoint(city.latitude, city.longitude),
+            location = GeoJsonPoint(city.longitude, city.latitude),
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
             thumbnail = byteArrayOf()
         )
@@ -1114,7 +1088,7 @@ class AuctionControllerTest {
                 productCondition = Condition.NEW,
                 cityId = cities[0].id,
                 cityName = cities[0].name,
-                location = GeoJsonPoint(cities[0].latitude, cities[0].longitude),
+                location = GeoJsonPoint(cities[0].longitude, cities[0].latitude),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 thumbnail = byteArrayOf()
             ),
@@ -1128,7 +1102,7 @@ class AuctionControllerTest {
                 productCondition = Condition.USED,
                 cityId = cities[1].id,
                 cityName = cities[1].name,
-                location = GeoJsonPoint(cities[1].latitude, cities[1].longitude),
+                location = GeoJsonPoint(cities[1].longitude, cities[1].latitude),
                 expiresAt = defaultExpiration(),
                 thumbnail = byteArrayOf()
             ),
@@ -1142,7 +1116,7 @@ class AuctionControllerTest {
                 productCondition = Condition.USED,
                 cityId = cities[2].id,
                 cityName = cities[2].name,
-                location = GeoJsonPoint(cities[2].latitude, cities[2].longitude),
+                location = GeoJsonPoint(cities[2].longitude, cities[2].latitude),
                 expiresAt = defaultExpiration(),
                 thumbnail = byteArrayOf()
             ),
@@ -1156,7 +1130,7 @@ class AuctionControllerTest {
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = cities[3].id,
                 cityName = cities[3].name,
-                location = GeoJsonPoint(cities[3].latitude, cities[3].longitude),
+                location = GeoJsonPoint(cities[3].longitude, cities[3].latitude),
                 expiresAt = defaultExpiration(),
                 thumbnail = byteArrayOf()
             )

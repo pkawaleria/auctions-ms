@@ -47,6 +47,7 @@ class AuctionControllerTest {
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
+        System.setProperty("auction.text.verification.enabled", "false")
     }
 
     companion object {

@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import pl.kawaleria.auctsys.MongoTestContainer
 import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
 import pl.kawaleria.auctsys.images.ImageControllerTest
 
@@ -18,9 +19,7 @@ import pl.kawaleria.auctsys.images.ImageControllerTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CategoryFacadeTest {
 
-    private val mongo: MongoDBContainer = MongoDBContainer("mongo").apply {
-        start()
-    }
+    private val mongo: MongoDBContainer = MongoTestContainer.instance
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)

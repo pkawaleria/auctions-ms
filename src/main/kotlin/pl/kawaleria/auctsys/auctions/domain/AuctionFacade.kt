@@ -37,7 +37,8 @@ class AuctionFacade(
     private val contentVerificationClient: ContentVerificationClient,
     private val categoryFacade: CategoryFacade,
     private val auctionRules: AuctionRules,
-    private val radiusRules: RadiusRules,
+    private val auctionSearchingRules: AuctionSearchingRules,
+    private val auctionVerificationRules: AuctionVerificationRules,
     private val auctionCategoryDeleter: AuctionCategoryDeleter,
     private val securityHelper: SecurityHelper,
     private val clock: Clock
@@ -94,6 +95,11 @@ class AuctionFacade(
     private fun validatePrice(price: Double): Boolean = price > 0
 
     private fun verifyAuctionContent(name: String, description: String) {
+        if (!auctionVerificationRules.enabled) {
+            logger.debug("Auction text properties verification is switched off and will be omitted")
+            return
+        }
+
         val textToVerify = TextRequest("$name $description")
         val foundInappropriateContent = contentVerificationClient.verifyText(textToVerify).isInappropriate
         if (foundInappropriateContent) {
@@ -120,7 +126,7 @@ class AuctionFacade(
     private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
         if (radius == null) return
 
-        if (radius !in radiusRules.min..radiusRules.max) throw SearchRadiusOutOfBoundsException()
+        if (radius !in auctionSearchingRules.min..auctionSearchingRules.max) throw SearchRadiusOutOfBoundsException()
         if (cityId == null) throw SearchRadiusWithoutCityException()
     }
 

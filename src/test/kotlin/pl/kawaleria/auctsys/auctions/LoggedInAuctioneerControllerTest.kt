@@ -62,6 +62,41 @@ class LoggedInAuctioneerControllerTest {
     }
 
     @Test
+    fun `should get all auctions of logged in auctioneer`() {
+        // given
+        thereAreAuctionsOfStatusPostedByAuctioneer(AuctionStatus.ARCHIVED)
+        thereAreAuctionsOfStatusPostedByAuctioneer(AuctionStatus.NEW)
+        thereAreAuctionsOfStatusPostedByAuctioneer(AuctionStatus.ACCEPTED)
+        thereAreAuctionsOfStatusPostedByAuctioneer(AuctionStatus.REJECTED)
+
+        val selectedPage = 0
+        val selectedPageSize = 20
+        val expectedPageCount = 1
+        val expectedSearchedAuctionsCount = 12
+
+        // when
+        val result: MvcResult = mockMvc.perform(
+            MockMvcRequestBuilders.get("$baseUrl/auctions")
+                .withAuthenticatedAuctioneer()
+                .param("page", selectedPage.toString())
+                .param("pageSize", selectedPageSize.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+        )
+
+            .andExpect { MockMvcResultMatchers.status().isOk }
+            .andReturn()
+
+        // then
+        val responseJson: String = result.response.contentAsString
+        val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+        AuctionControllerTest.logger.info("Received response from rest controller: {}", responseJson)
+
+        Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedSearchedAuctionsCount)
+        Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+        Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
+    }
+
+    @Test
     fun `should get logged in auctioneer accepted auctions`() {
         // given
         thereAreAuctionsOfStatusPostedByAuctioneer(AuctionStatus.ARCHIVED)

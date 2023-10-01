@@ -36,7 +36,7 @@ class AuctionFacade(
     private val auctionSearchRepository: AuctionSearchRepository,
     private val contentVerificationClient: ContentVerificationClient,
     private val categoryFacade: CategoryFacade,
-    private val auctionRules: AuctionRules,
+    private val auctionCreationRules: AuctionCreationRules,
     private val auctionSearchingRules: AuctionSearchingRules,
     private val auctionVerificationRules: AuctionVerificationRules,
     private val auctionCategoryDeleter: AuctionCategoryDeleter,
@@ -242,7 +242,7 @@ class AuctionFacade(
         auctionRepository.findAwaitingAcceptanceAuctions(auctioneerId, pageable).toPagedAuctions()
 
     private fun newExpirationInstant(): Instant {
-        val daysToExpire: Long = auctionRules.days.toLong()
+        val daysToExpire: Long = auctionCreationRules.days.toLong()
         return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
     }
 

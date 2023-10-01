@@ -10,13 +10,6 @@ interface MongoAuctionRepository : AuctionRepository, MongoRepository<Auction, S
     @Query("{ 'categoryPath.pathElements.name': ?0 }")
     override fun findAuctionsWithCategoryInPath(categoryName: String, pageable: Pageable): Page<Auction>
 
-    @Query("{ 'name': { \$regex: ?0, \$options: 'i' }, 'categoryPath.pathElements.name': ?1 }")
-    override fun findByNameContainingIgnoreCaseAndCategoryPathContaining(
-        name: String,
-        categoryName: String,
-        pageable: Pageable
-    ): Page<Auction>
-
     @Query("{'status': 'REJECTED', 'auctioneerId' : ?0}")
     override fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
 

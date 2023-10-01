@@ -12,44 +12,61 @@ import pl.kawaleria.auctsys.configs.toAuctioneerId
 @RequestMapping("/auction-service/active-auctioneer")
 class LoggedInAuctioneerController(private val auctionFacade: AuctionFacade) {
 
+    @GetMapping("/auctions")
+    fun getAll(
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): PagedAuctions {
+        return auctionFacade.findAuctionsByAuctioneer(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
+    }
+
     @GetMapping("/rejected-auctions")
     fun getRejectedAuctions(
-            @RequestParam(required = false, defaultValue = "0") page: Int,
-            @RequestParam(required = false, defaultValue = "10") pageSize: Int,
-            @CurrentSecurityContext(expression = "authentication") authContext: Authentication): PagedAuctions {
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): PagedAuctions {
         return auctionFacade.findRejectedAuctions(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
     }
 
     @GetMapping("/active-auctions")
     fun getActiveAuctions(
-            @RequestParam(required = false, defaultValue = "0") page: Int,
-            @RequestParam(required = false, defaultValue = "10") pageSize: Int,
-            @CurrentSecurityContext(expression = "authentication") authContext: Authentication): PagedAuctions {
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): PagedAuctions {
         return auctionFacade.findActiveAuctions(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
     }
 
     @GetMapping("/expired-auctions")
     fun getExpiredAuctions(
-            @RequestParam(required = false, defaultValue = "0") page: Int,
-            @RequestParam(required = false, defaultValue = "10") pageSize: Int,
-            @CurrentSecurityContext(expression = "authentication") authContext: Authentication): PagedAuctions {
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): PagedAuctions {
         return auctionFacade.findExpiredAuctions(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
     }
 
     @GetMapping("/archived-auctions")
     fun getArchivedAuctions(
-            @RequestParam(required = false, defaultValue = "0") page: Int,
-            @RequestParam(required = false, defaultValue = "10") pageSize: Int,
-            @CurrentSecurityContext(expression = "authentication") authContext: Authentication): PagedAuctions {
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): PagedAuctions {
         return auctionFacade.findArchivedAuctions(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
     }
 
     @GetMapping("/awaiting-auctions")
     fun getAwaitingAuctions(
-            @RequestParam(required = false, defaultValue = "0") page: Int,
-            @RequestParam(required = false, defaultValue = "10") pageSize: Int,
-            @CurrentSecurityContext(expression = "authentication") authContext: Authentication): PagedAuctions {
-        return auctionFacade.findAwaitingAcceptanceAuctions(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): PagedAuctions {
+        return auctionFacade.findAwaitingAcceptanceAuctions(
+            authContext.toAuctioneerId(),
+            PageRequest.of(page, pageSize)
+        )
     }
 
 }

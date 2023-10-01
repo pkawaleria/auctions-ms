@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.security.core.Authentication
 import pl.kawaleria.auctsys.TestAuctioneerAuthentication
 import pl.kawaleria.auctsys.auctions.AuctionControllerTest
@@ -20,9 +19,7 @@ import pl.kawaleria.auctsys.configs.toAuctioneerId
 class AuctionFacadeTest {
 
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
-
-    private val auctionFacade: AuctionFacade =
-        AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade)
+    private val auctionFacade: AuctionFacade = AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade)
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(AuctionControllerTest::class.java)
@@ -218,8 +215,6 @@ class AuctionFacadeTest {
             categoryId = finalCategory.id,
             productCondition = Condition.USED,
             cityId = city.id,
-            cityName = city.name,
-            location = GeoJsonPoint(123.23, 12.23)
         )
 
         val auctionId: String =

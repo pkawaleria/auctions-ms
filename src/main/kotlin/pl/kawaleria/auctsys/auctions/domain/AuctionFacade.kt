@@ -36,8 +36,9 @@ class AuctionFacade(
     private val auctionSearchRepository: AuctionSearchRepository,
     private val contentVerificationClient: ContentVerificationClient,
     private val categoryFacade: CategoryFacade,
-    private val auctionRules: AuctionRules,
-    private val radiusRules: RadiusRules,
+    private val auctionCreationRules: AuctionCreationRules,
+    private val auctionSearchingRules: AuctionSearchingRules,
+    private val auctionVerificationRules: AuctionVerificationRules,
     private val auctionCategoryDeleter: AuctionCategoryDeleter,
     private val securityHelper: SecurityHelper,
     private val clock: Clock
@@ -65,7 +66,7 @@ class AuctionFacade(
             categoryPath = categoryPath,
             productCondition = createRequest.productCondition,
             cityName = city.name,
-            location = GeoJsonPoint(city.latitude, city.longitude)
+            location = GeoJsonPoint(city.longitude, city.latitude)
         )
 
         return auctionRepository.save(auction)
@@ -94,15 +95,13 @@ class AuctionFacade(
     private fun validatePrice(price: Double): Boolean = price > 0
 
     private fun verifyAuctionContent(name: String, description: String) {
-        var foundInappropriateContent = false
-        val textToVerify = TextRequest("$name $description")
-
-        try {
-            foundInappropriateContent = contentVerificationClient.verifyText(textToVerify).isInappropriate
-        } catch (e: Exception) {
-            logger.error("Error during name and description verification", e)
+        if (!auctionVerificationRules.enabled) {
+            logger.debug("Auction text properties verification is switched off and will be omitted")
+            return
         }
 
+        val textToVerify = TextRequest("$name $description")
+        val foundInappropriateContent = contentVerificationClient.verifyText(textToVerify).isInappropriate
         if (foundInappropriateContent) {
             logger.info("Found explicit content")
             throw InappropriateContentException()
@@ -113,6 +112,8 @@ class AuctionFacade(
 
     fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> =
         auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
+    fun findAuctionsByAuctioneer(auctioneerId: String, pageable: Pageable): PagedAuctions =
+        auctionRepository.findAuctionsByAuctioneerId(auctioneerId, pageable).toPagedAuctions()
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
@@ -125,7 +126,7 @@ class AuctionFacade(
     private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
         if (radius == null) return
 
-        if (radius !in radiusRules.min..radiusRules.max) throw SearchRadiusOutOfBoundsException()
+        if (radius !in auctionSearchingRules.min..auctionSearchingRules.max) throw SearchRadiusOutOfBoundsException()
         if (cityId == null) throw SearchRadiusWithoutCityException()
     }
 
@@ -141,7 +142,7 @@ class AuctionFacade(
             val city: City = cityRepository.findById(cityId).orElseThrow { SearchRadiusWithoutCityException() }
 
             if (searchRequest.radius != null && searchRequest.radius > 0) {
-                val point = Point(city.latitude, city.longitude)
+                val point = Point(city.longitude, city.latitude)
                 val distance = Distance(searchRequest.radius, Metrics.KILOMETERS)
                 val circle = Circle(point, distance)
                 query.addCriteria(Criteria.where("location").withinSphere(circle))
@@ -160,15 +161,15 @@ class AuctionFacade(
         val auction: Auction = findAuctionById(id)
         securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
 
-        cityRepository.findById(payload.cityId).orElseThrow { CityNotFoundException() }
+        val newAuctionCity = cityRepository.findById(payload.cityId).orElseThrow { CityNotFoundException() }
 
         auction.name = payload.name
         auction.price = payload.price
         auction.description = payload.description
         auction.productCondition = payload.productCondition
-        auction.cityId = payload.cityId
-        auction.cityName = payload.cityName
-        auction.location = payload.location
+        auction.cityId = newAuctionCity.id
+        auction.cityName = newAuctionCity.name
+        auction.location = GeoJsonPoint(newAuctionCity.longitude, newAuctionCity.latitude)
 
         return auctionRepository.save(auction)
     }
@@ -241,7 +242,7 @@ class AuctionFacade(
         auctionRepository.findAwaitingAcceptanceAuctions(auctioneerId, pageable).toPagedAuctions()
 
     private fun newExpirationInstant(): Instant {
-        val daysToExpire: Long = auctionRules.days.toLong()
+        val daysToExpire: Long = auctionCreationRules.days.toLong()
         return Instant.now(clock).plusSeconds(Duration.ofDays(daysToExpire).toSeconds())
     }
 

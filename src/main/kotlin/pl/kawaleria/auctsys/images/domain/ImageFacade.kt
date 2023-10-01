@@ -1,7 +1,6 @@
 package pl.kawaleria.auctsys.images.domain
 
 import org.slf4j.LoggerFactory
-import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
@@ -12,16 +11,18 @@ import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import java.util.*
 import javax.imageio.ImageIO
 
-@EnableConfigurationProperties(ThumbnailRules::class)
-open class ImageFacade(private val imageRepository: ImageRepository,
-                       private val thumbnailRules: ThumbnailRules,
-                       private val auctionFacade: AuctionFacade,
-                       private val imageValidator: ImageValidator,
-                       private val eventPublisher: ApplicationEventPublisher,
-                       private val contentVerificationClient: ContentVerificationClient) {
+
+open class ImageFacade(
+    private val imageRepository: ImageRepository,
+    private val thumbnailRules: ThumbnailRules,
+    private val imageVerificationRules: ImageVerificationRules,
+    private val auctionFacade: AuctionFacade,
+    private val imageValidator: ImageValidator,
+    private val eventPublisher: ApplicationEventPublisher,
+    private val contentVerificationClient: ContentVerificationClient
+) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
@@ -31,22 +32,34 @@ open class ImageFacade(private val imageRepository: ImageRepository,
         val images: List<Image> = imageRepository.findImagesByAuctionId(auctionId)
         val imageIDs: List<String> = images.mapNotNull { it.id }
         return AuctionImagesResponse(
-                imagesCount = images.size,
-                imageIDs = imageIDs
+            imagesCount = images.size,
+            imageIDs = imageIDs
         )
     }
 
     fun createImages(auctionId: String, files: List<MultipartFile>): List<Image> {
         imageValidator.validateMultipartFiles(files)
         val images: List<Image> = saveImages(auctionId, files)
-
-        eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
-        //verifyImages(auctionId, files)
-
+        publishImageVerification(files, auctionId)
         return images
     }
 
+    private fun publishImageVerification(
+        files: List<MultipartFile>,
+        auctionId: String
+    ) {
+        if (imageVerificationRules.enabled) {
+            eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
+        } else {
+            logger.debug("Image verification switched off and omitted for auction of id $auctionId")
+        }
+    }
+
     private fun verifyImages(auctionId: String, files: List<MultipartFile>) {
+        if (!imageVerificationRules.enabled) {
+            logger.debug("Image verification turned off and omitted for auction of id $auctionId")
+            return
+        }
         var foundInappropriateImage = false
 
         try {
@@ -69,7 +82,8 @@ open class ImageFacade(private val imageRepository: ImageRepository,
         }
     }
 
-    private fun addThumbnailToAuction(auctionId: String, image: MultipartFile): Unit = auctionFacade.saveThumbnail(auctionId, resizeImageToThumbnailFormat(image))
+    private fun addThumbnailToAuction(auctionId: String, image: MultipartFile): Unit =
+        auctionFacade.saveThumbnail(auctionId, resizeImageToThumbnailFormat(image))
 
     private fun resizeImageToThumbnailFormat(image: MultipartFile): ByteArray {
         val originalImage: BufferedImage = ImageIO.read(image.inputStream)
@@ -89,7 +103,7 @@ open class ImageFacade(private val imageRepository: ImageRepository,
     private fun saveImages(auctionId: String, images: List<MultipartFile>): List<Image> {
         return images.map { file ->
             file.toImage(auctionId)
-                    .also { imageRepository.save(it) }
+                .also { imageRepository.save(it) }
         }
     }
 
@@ -97,10 +111,10 @@ open class ImageFacade(private val imageRepository: ImageRepository,
 
     private fun MultipartFile.toImage(auctionId: String): Image {
         return Image(
-                type = this.contentType.toString(),
-                size = this.size,
-                binaryData = this.bytes,
-                auctionId = auctionId
+            type = this.contentType.toString(),
+            size = this.size,
+            binaryData = this.bytes,
+            auctionId = auctionId
         )
     }
 

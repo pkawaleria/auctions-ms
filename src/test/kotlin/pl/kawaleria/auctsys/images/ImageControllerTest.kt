@@ -45,6 +45,7 @@ class ImageControllerTest {
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
+        System.setProperty("image.verification.enabled", "false")
     }
 
     @Autowired

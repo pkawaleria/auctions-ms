@@ -11,7 +11,7 @@ import pl.kawaleria.auctsys.verifications.InMemoryContentVerificationClient
 import java.time.Clock
 
 @Configuration
-@EnableConfigurationProperties(AuctionRules::class, RadiusRules::class)
+@EnableConfigurationProperties(AuctionCreationRules::class, AuctionSearchingRules::class, AuctionVerificationRules::class)
 class AuctionConfiguration {
 
     @Bean
@@ -21,8 +21,9 @@ class AuctionConfiguration {
     fun auctionFacade(
         repository: MongoAuctionRepository,
         cityRepository: CityRepository,
-        auctionRules: AuctionRules,
-        radiusRules: RadiusRules,
+        auctionCreationRules: AuctionCreationRules,
+        auctionVerificationRules: AuctionVerificationRules,
+        auctionSearchingRules: AuctionSearchingRules,
         clock: Clock,
         categoryFacade: CategoryFacade,
         contentVerificationClient: ContentVerificationClient,
@@ -33,8 +34,9 @@ class AuctionConfiguration {
         AuctionFacade(
             auctionRepository = repository,
             cityRepository = cityRepository,
-            auctionRules = auctionRules,
-            radiusRules = radiusRules,
+            auctionCreationRules = auctionCreationRules,
+            auctionSearchingRules = auctionSearchingRules,
+            auctionVerificationRules = auctionVerificationRules,
             clock = clock,
             auctionCategoryDeleter = AuctionCategoryDeleter(repository),
             categoryFacade = categoryFacade,
@@ -49,8 +51,9 @@ class AuctionConfiguration {
         return AuctionFacade(
             auctionRepository = auctionRepository,
             cityRepository = InMemoryCityRepository(),
-            auctionRules = AuctionRules(days = 10),
-            radiusRules = RadiusRules(min = 1.0, max = 50.0),
+            auctionCreationRules = AuctionCreationRules(days = 10),
+            auctionSearchingRules = AuctionSearchingRules(min = 1.0, max = 50.0),
+            auctionVerificationRules = AuctionVerificationRules(enabled = true),
             clock = Clock.systemUTC(),
             auctionCategoryDeleter = AuctionCategoryDeleter(auctionRepository),
             categoryFacade = categoryFacade,

@@ -21,11 +21,12 @@ data class AuctionDetailedResponse(
     val longitude: Double,
     val latitude: Double,
     val expirationTimestamp: Instant,
-    val status: String
+    val status: String,
+    val viewCount: Long
 
 )
 
-fun Auction.toDetailedResponse(): AuctionDetailedResponse = AuctionDetailedResponse(
+fun Auction.toDetailedResponse(viewCount: Long): AuctionDetailedResponse = AuctionDetailedResponse(
     id, name, description, price, auctioneerId, thumbnail, category, categoryPath, productCondition,
-    cityId, cityName, location.x, location.y, expiresAt, status.name
+    cityId, cityName, location.x, location.y, expiresAt, status.name, viewCount
 )

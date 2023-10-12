@@ -57,7 +57,7 @@ class SecurityConfig {
 
     private val PUBLIC_ENDPOINTS = arrayOf(
         Endpoint(HttpMethod.GET, "/auction-service/auctions"),
-        Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}"),
+        Endpoint(HttpMethod.GET, "/auction-service/auctions/**"),
         Endpoint(HttpMethod.GET, "/auction-service/auctions/search"),
         Endpoint(HttpMethod.GET, "/cities/search"),
         Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images/{imageId}"),

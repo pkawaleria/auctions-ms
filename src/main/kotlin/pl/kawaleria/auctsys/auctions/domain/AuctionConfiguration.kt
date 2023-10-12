@@ -1,17 +1,25 @@
 package pl.kawaleria.auctsys.auctions.domain
 
+import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
+import pl.kawaleria.auctsys.auctions.dto.events.AuctionViewedEvent
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
-import pl.kawaleria.auctsys.configs.SecurityHelper
+import pl.kawaleria.auctsys.commons.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.InMemoryContentVerificationClient
+import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 import java.time.Clock
 
 @Configuration
-@EnableConfigurationProperties(AuctionCreationRules::class, AuctionSearchingRules::class, AuctionVerificationRules::class)
+@EnableConfigurationProperties(
+    AuctionCreationRules::class,
+    AuctionSearchingRules::class,
+    AuctionVerificationRules::class
+)
 class AuctionConfiguration {
 
     @Bean
@@ -26,9 +34,11 @@ class AuctionConfiguration {
         auctionSearchingRules: AuctionSearchingRules,
         clock: Clock,
         categoryFacade: CategoryFacade,
+        auctionViewsQueryFacade: AuctionViewsQueryFacade,
         contentVerificationClient: ContentVerificationClient,
         securityHelper: SecurityHelper,
-        mongoTemplate: MongoTemplate
+        mongoTemplate: MongoTemplate,
+        applicationEventPublisher: ApplicationEventPublisher
     ): AuctionFacade =
 
         AuctionFacade(
@@ -42,10 +52,15 @@ class AuctionConfiguration {
             categoryFacade = categoryFacade,
             contentVerificationClient = contentVerificationClient,
             securityHelper = securityHelper,
-            auctionSearchRepository = MongoAuctionSearchRepository(mongoTemplate)
+            auctionSearchRepository = MongoAuctionSearchRepository(mongoTemplate),
+            auctionViewsQueryFacade = auctionViewsQueryFacade,
+            auctionEventPublisher = SpringAuctionEventPublisher(applicationEventPublisher)
         )
 
-    fun auctionFacadeWithInMemoryRepo(categoryFacade: CategoryFacade): AuctionFacade {
+    fun auctionFacadeWithInMemoryRepo(
+        categoryFacade: CategoryFacade,
+        auctionViewsQueryFacade: AuctionViewsQueryFacade
+    ): AuctionFacade {
         val auctionRepository = InMemoryAuctionRepository()
 
         return AuctionFacade(
@@ -59,7 +74,20 @@ class AuctionConfiguration {
             categoryFacade = categoryFacade,
             contentVerificationClient = InMemoryContentVerificationClient(),
             securityHelper = SecurityHelper(),
-            auctionSearchRepository = auctionRepository
+            auctionSearchRepository = auctionRepository,
+            auctionViewsQueryFacade = auctionViewsQueryFacade,
+            auctionEventPublisher = TestAuctionEventPublisher()
         )
+    }
+
+    internal class TestAuctionEventPublisher : AuctionDomainEventPublisher {
+        private val logger = LoggerFactory.getLogger(this.javaClass)
+
+
+        override fun publishAuctionView(auctionViewedEvent: AuctionViewedEvent) {
+            // we do not need the event to be actually sent since that test config is only for testing the auction facade in isolation
+            logger.info("Test auction event publisher received auction viewed event $auctionViewedEvent")
+        }
+
     }
 }

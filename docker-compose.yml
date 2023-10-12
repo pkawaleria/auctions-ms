@@ -5,3 +5,15 @@ services:
     container_name: auctions-mongodb
     ports:
       - "27017:27017"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  redis-data:

@@ -8,17 +8,17 @@ import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 
 @RestController
-@RequestMapping("/auction-service")
+@RequestMapping("/auction-service/auctions")
 class AuctionOperationsController(private val auctionFacade: AuctionFacade) {
 
-    @PostMapping("/auctions/{auctionId}/operations/accept")
+    @PostMapping("/{auctionId}/operations/accept")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     fun accept(@PathVariable auctionId: String): ResponseEntity<Unit> {
         auctionFacade.accept(auctionId)
         return ResponseEntity.accepted().build()
     }
 
-    @PostMapping("/auctions/{auctionId}/operations/archive")
+    @PostMapping("/{auctionId}/operations/archive")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     fun archive(@PathVariable auctionId: String,
                 @CurrentSecurityContext(expression = "authentication") authContext: Authentication): ResponseEntity<Unit> {
@@ -26,7 +26,7 @@ class AuctionOperationsController(private val auctionFacade: AuctionFacade) {
         return ResponseEntity.accepted().build()
     }
 
-    @PostMapping("/auctions/{auctionId}/operations/reject")
+    @PostMapping("/{auctionId}/operations/reject")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     fun reject(@PathVariable auctionId: String): ResponseEntity<Unit> {
         auctionFacade.reject(auctionId)

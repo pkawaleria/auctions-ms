@@ -14,12 +14,15 @@ import pl.kawaleria.auctsys.categories.domain.CategoryConfiguration
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
-import pl.kawaleria.auctsys.configs.toAuctioneerId
+import pl.kawaleria.auctsys.commons.toAuctioneerId
+import pl.kawaleria.auctsys.views.domain.AuctionViewsConfiguration
+import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 
 class AuctionFacadeTest {
 
+    private val auctionViewsQueryFacade: AuctionViewsQueryFacade = AuctionViewsConfiguration().auctionViewsQueryFacadeWithInMemoryRepositories()
     private val categoryFacade: CategoryFacade = CategoryConfiguration().categoryFacadeWithInMemoryRepository()
-    private val auctionFacade: AuctionFacade = AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade)
+    private val auctionFacade: AuctionFacade = AuctionConfiguration().auctionFacadeWithInMemoryRepo(categoryFacade, auctionViewsQueryFacade)
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(AuctionControllerTest::class.java)

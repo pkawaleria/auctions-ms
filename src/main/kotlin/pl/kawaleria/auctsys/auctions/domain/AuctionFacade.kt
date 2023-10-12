@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.security.core.Authentication
+import pl.kawaleria.auctsys.auctions.dto.events.AuctionViewedEvent
 import pl.kawaleria.auctsys.auctions.dto.exceptions.*
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -23,9 +24,10 @@ import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
-import pl.kawaleria.auctsys.configs.SecurityHelper
+import pl.kawaleria.auctsys.commons.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.TextRequest
+import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -40,14 +42,18 @@ class AuctionFacade(
     private val auctionSearchingRules: AuctionSearchingRules,
     private val auctionVerificationRules: AuctionVerificationRules,
     private val auctionCategoryDeleter: AuctionCategoryDeleter,
+    private val auctionEventPublisher: AuctionDomainEventPublisher,
+    private val auctionViewsQueryFacade: AuctionViewsQueryFacade,
     private val securityHelper: SecurityHelper,
     private val clock: Clock
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    fun create(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
-        if (!validateCreateAuctionRequest(createRequest)) throw InvalidAuctionCreationRequestException()
+    fun create(createRequest: CreateAuctionRequest, auctioneerId: String): AuctionDetailedResponse {
+        if (!validateCreateAuctionRequest(createRequest)) {
+            throw InvalidAuctionCreationRequestException()
+        }
         verifyAuctionContent(createRequest.name, createRequest.description)
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
@@ -69,7 +75,7 @@ class AuctionFacade(
             location = GeoJsonPoint(city.longitude, city.latitude)
         )
 
-        return auctionRepository.save(auction)
+        return auctionRepository.save(auction).toDetailedResponse(viewCount = 0L)
     }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
@@ -115,6 +121,13 @@ class AuctionFacade(
     fun findAuctionsByAuctioneer(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findAuctionsByAuctioneerId(auctioneerId, pageable).toPagedAuctions()
 
+    fun getAuctionDetails(id: String, ipAddress : String): AuctionDetailedResponse {
+        auctionEventPublisher.publishAuctionView(auctionViewedEvent = AuctionViewedEvent(ipAddress, id))
+        val auction = findAuctionById(id)
+        val views = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
+        return auction.toDetailedResponse(viewCount = views)
+    }
+
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
@@ -155,7 +168,7 @@ class AuctionFacade(
         return query
     }
 
-    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): Auction {
+    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): AuctionDetailedResponse {
         if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
 
         val auction: Auction = findAuctionById(id)
@@ -171,7 +184,8 @@ class AuctionFacade(
         auction.cityName = newAuctionCity.name
         auction.location = GeoJsonPoint(newAuctionCity.longitude, newAuctionCity.latitude)
 
-        return auctionRepository.save(auction)
+        val auctionViews = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
+        return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 
     private fun validateUpdateAuctionRequest(payload: UpdateAuctionRequest): Boolean {
@@ -194,8 +208,8 @@ class AuctionFacade(
         val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
         val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
-
-        return auctionRepository.save(auction).toDetailedResponse()
+        val auctionViews = auctionViewsQueryFacade.getAuctionViews(auctionId = auctionId)
+        return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 
     fun eraseCategoryFromAuctions(categoryName: String): Unit =

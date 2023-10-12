@@ -6,7 +6,7 @@ import org.springframework.security.core.annotation.CurrentSecurityContext
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.auctions.dto.responses.*
-import pl.kawaleria.auctsys.configs.toAuctioneerId
+import pl.kawaleria.auctsys.commons.toAuctioneerId
 
 @RestController
 @RequestMapping("/auction-service/active-auctioneer")

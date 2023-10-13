@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.configs
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
@@ -12,13 +13,19 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @Configuration
 @EnableRedisRepositories
-class RedisConfig {
+class RedisConfig(
+    @Value("\${spring.data.redis.host}") val redisHost: String,
+    @Value("\${spring.data.redis.port}") val redisPort: Int
+) {
 
     @Bean
-    fun connectionFactory(): RedisConnectionFactory = LettuceConnectionFactory()
+    fun connectionFactory(): RedisConnectionFactory = LettuceConnectionFactory(redisHost, redisPort)
 
     @Bean
-    fun redisTemplate(redisConnectionFactory: RedisConnectionFactory, objectMapper: ObjectMapper): RedisTemplate<String, String> {
+    fun redisTemplate(
+        redisConnectionFactory: RedisConnectionFactory,
+        objectMapper: ObjectMapper
+    ): RedisTemplate<String, String> {
         val template = RedisTemplate<String, String>()
         template.connectionFactory = redisConnectionFactory
 

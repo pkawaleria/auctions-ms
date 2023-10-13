@@ -43,6 +43,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.kafka:spring-kafka-test")
 	testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
+	implementation("com.redis.testcontainers:testcontainers-redis:1.6.4")
 	testImplementation("org.testcontainers:mongodb:$testcontainersVersion")
 	testImplementation("org.assertj:assertj-core:$assertJVersion")
 }

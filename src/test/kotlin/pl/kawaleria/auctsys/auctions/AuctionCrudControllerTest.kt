@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.auctions
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.redis.testcontainers.RedisContainer
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.*
 import org.slf4j.Logger
@@ -16,9 +17,10 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
+import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import pl.kawaleria.auctsys.AUCTIONEER_ID_UNDER_TEST
-import pl.kawaleria.auctsys.MongoTestContainer
+import org.testcontainers.utility.DockerImageName
+import pl.kawaleria.auctsys.*
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -28,8 +30,6 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
-import pl.kawaleria.auctsys.withAnonymousUser
-import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -44,15 +44,21 @@ private const val baseUrl: String = "/auction-service/auctions"
 class AuctionControllerTest {
 
     private val mongo: MongoDBContainer = MongoTestContainer.instance
+    private val redis: RedisContainer = RedisTestContainer.instance
+
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
         System.setProperty("auction.text.verification.enabled", "false")
+        System.setProperty("spring.data.redis.host", redis.host)
+        System.setProperty("spring.data.redis.port", redis.firstMappedPort?.toString() ?: "6379")
     }
 
     companion object {
         val logger: Logger = getLogger(AuctionControllerTest::class.java)
     }
+
+
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -1010,6 +1016,44 @@ class AuctionControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isNotFound)
+        }
+    }
+    @Nested
+    inner class AuctionViewsCounterTest {
+        private val singleAuctionBaseUrl: String = "/auction-service/auctions"
+
+        @Test
+        fun `should count auction views`() {
+            // given
+            val auction: Auction = thereIsAuction()
+            val firstIpAddress = "123.123.123.123"
+            val secondIpAddress = "122.123.123.123"
+
+            // when
+            mockMvc.perform(
+                get("$singleAuctionBaseUrl/${auction.id}")
+                    .withAuthenticatedAuctioneer()
+                    .header("X-Real-IP", firstIpAddress)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            val result = mockMvc.perform(
+                get("$singleAuctionBaseUrl/${auction.id}")
+                    .withAuthenticatedAuctioneer()
+                    .header("X-Real-IP", secondIpAddress)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            val responseJson: String = result.response.contentAsString
+            val foundAuction: AuctionDetailedResponse =
+                objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
+
+            // then
+            Assertions.assertThat(foundAuction.viewCount).isEqualTo(2)
         }
     }
 

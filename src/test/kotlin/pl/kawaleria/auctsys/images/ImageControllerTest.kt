@@ -39,9 +39,7 @@ private const val baseUrl = "/auction-service/auctions"
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ImageControllerTest {
 
-    private val mongo: MongoDBContainer = MongoDBContainer("mongo").apply {
-        start()
-    }
+    private val mongo: MongoDBContainer = MongoTestContainer.instance
 
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)

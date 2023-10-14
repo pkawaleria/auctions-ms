@@ -57,7 +57,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade, private va
 
     @GetMapping("/users/{userId}/auctions")
     fun getAuctions(@PathVariable userId: String): List<AuctionSimplifiedResponse> {
-        return auctionFacade.findAuctionsByAuctioneer(userId).map { auction -> auction.toSimplifiedResponse() }
+        return auctionFacade.findAuctionsByAuctioneer(userId)
     }
 
     @PostMapping("/auctions")

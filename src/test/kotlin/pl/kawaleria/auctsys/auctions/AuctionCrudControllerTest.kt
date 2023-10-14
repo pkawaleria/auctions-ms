@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.redis.testcontainers.RedisContainer
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,9 +19,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.utility.DockerImageName
 import pl.kawaleria.auctsys.*
 import pl.kawaleria.auctsys.auctions.domain.*
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
@@ -27,6 +27,7 @@ import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.toDetailedResponse
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
@@ -43,8 +44,8 @@ private const val baseUrl: String = "/auction-service/auctions"
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuctionControllerTest {
 
-    private val mongo: MongoDBContainer = MongoTestContainer.instance
     private val redis: RedisContainer = RedisTestContainer.instance
+    private val mongo: MongoDBContainer = MongoTestContainer.instance
 
 
     init {
@@ -77,6 +78,7 @@ class AuctionControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
     @AfterEach
     fun cleanUp() {
         mongoTemplate.dropCollection("auctions")
@@ -364,18 +366,22 @@ class AuctionControllerTest {
             val foundAuction: AuctionDetailedResponse =
                 objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
-            Assertions.assertThat(foundAuction.id).isEqualTo(auction.id)
-            Assertions.assertThat(foundAuction.name).isEqualTo(auction.name)
-            Assertions.assertThat(foundAuction.description).isEqualTo(auction.description)
-            Assertions.assertThat(foundAuction.price).isEqualTo(auction.price)
-            Assertions.assertThat(foundAuction.auctioneerId).isEqualTo(auction.auctioneerId)
-            Assertions.assertThat(foundAuction.category).isEqualTo(auction.category)
-            Assertions.assertThat(foundAuction.productCondition).isEqualTo(auction.productCondition)
-            Assertions.assertThat(foundAuction.cityId).isEqualTo(auction.cityId)
-            Assertions.assertThat(foundAuction.cityName).isEqualTo(auction.cityName)
-            Assertions.assertThat(foundAuction.latitude).isEqualTo(auction.location.y)
-            Assertions.assertThat(foundAuction.longitude).isEqualTo(auction.location.x)
-            Assertions.assertThat(foundAuction.status).isEqualTo(auction.status.name)
+            Assertions.assertThat(foundAuction).isEqualTo(auction.toDetailedResponse(viewCount = 1L))
+        }
+
+        @ParameterizedTest
+        @EnumSource(AuctionStatus::class, mode = EnumSource.Mode.EXCLUDE, names = ["ACCEPTED"])
+        fun `should return not found trying to get auction with status other than accepted`(status: AuctionStatus) {
+            // given
+            val auction: Auction = thereIsAuction(status)
+
+            // when
+            mockMvc.perform(
+                get("$singleAuctionBaseUrl/${auction.id}")
+                    .withAuthenticatedAuctioneer()
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isNotFound)
         }
 
         @Test
@@ -1057,7 +1063,7 @@ class AuctionControllerTest {
         }
     }
 
-    private fun thereIsAuction(): Auction {
+    private fun thereIsAuction(status: AuctionStatus = AuctionStatus.ACCEPTED): Auction {
         val electronics = Category(UUID.randomUUID().toString(), "Electronics")
         val headphones = Category(UUID.randomUUID().toString(), "Headphones")
         val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
@@ -1078,7 +1084,8 @@ class AuctionControllerTest {
             cityId = city.id,
             cityName = city.name,
             location = GeoJsonPoint(city.longitude, city.latitude),
-            expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+            expiresAt = defaultExpiration(),
+            status = status,
             thumbnail = byteArrayOf()
         )
 
@@ -1100,7 +1107,7 @@ class AuctionControllerTest {
         )
     }
 
-    private fun thereAreAuctions(): Pair<List<Auction>, List<City>> {
+    private fun thereAreAuctions(status: AuctionStatus = AuctionStatus.ACCEPTED): Pair<List<Auction>, List<City>> {
         val electronics = Category(UUID.randomUUID().toString(), "Electronics")
         val headphones = Category(UUID.randomUUID().toString(), "Headphones")
         val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
@@ -1134,7 +1141,8 @@ class AuctionControllerTest {
                 cityId = cities[0].id,
                 cityName = cities[0].name,
                 location = GeoJsonPoint(cities[0].longitude, cities[0].latitude),
-                expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
+                expiresAt = defaultExpiration(),
+                status = status,
                 thumbnail = byteArrayOf()
             ),
             Auction(
@@ -1149,6 +1157,7 @@ class AuctionControllerTest {
                 cityName = cities[1].name,
                 location = GeoJsonPoint(cities[1].longitude, cities[1].latitude),
                 expiresAt = defaultExpiration(),
+                status = status,
                 thumbnail = byteArrayOf()
             ),
             Auction(
@@ -1163,6 +1172,7 @@ class AuctionControllerTest {
                 cityName = cities[2].name,
                 location = GeoJsonPoint(cities[2].longitude, cities[2].latitude),
                 expiresAt = defaultExpiration(),
+                status = status,
                 thumbnail = byteArrayOf()
             ),
             Auction(
@@ -1177,6 +1187,7 @@ class AuctionControllerTest {
                 cityName = cities[3].name,
                 location = GeoJsonPoint(cities[3].longitude, cities[3].latitude),
                 expiresAt = defaultExpiration(),
+                status = status,
                 thumbnail = byteArrayOf()
             )
         )
@@ -1227,7 +1238,7 @@ class AuctionControllerTest {
         )
     }
 
-    private fun defaultExpiration(): Instant = Instant.now().plusSeconds(Duration.ofDays(10).toSeconds())
+    private fun defaultExpiration(): Instant = Instant.now().plus(Duration.ofDays(10))
 
     private fun thereIsSampleCategoryTree(): CategoryResponse {
         val topLevelCategory: CategoryResponse = categoryFacade.create(

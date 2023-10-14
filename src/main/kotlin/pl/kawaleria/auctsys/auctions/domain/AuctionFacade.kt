@@ -17,10 +17,7 @@ import pl.kawaleria.auctsys.auctions.dto.exceptions.*
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
-import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
-import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
-import pl.kawaleria.auctsys.auctions.dto.responses.toDetailedResponse
-import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.*
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
@@ -75,7 +72,7 @@ class AuctionFacade(
             location = GeoJsonPoint(city.longitude, city.latitude)
         )
 
-        return auctionRepository.save(auction).toDetailedResponse(viewCount = 0L)
+        return auctionRepository.save(auction).toDetailedResponse()
     }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
@@ -116,17 +113,20 @@ class AuctionFacade(
         }
     }
 
-    fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> =
-        auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
+    fun findAuctionsByAuctioneer(auctioneerId: String): List<AuctionSimplifiedResponse> =
+        auctionRepository.findActiveAuctionsByAuctioneerId(auctioneerId, Instant.now(clock)).map{ it.toSimplifiedResponse() }
     fun findAuctionsByAuctioneer(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findAuctionsByAuctioneerId(auctioneerId, pageable).toPagedAuctions()
 
     fun getAuctionDetails(id: String, ipAddress : String): AuctionDetailedResponse {
+        val auction = findActiveAuctionById(id)
         auctionEventPublisher.publishAuctionView(auctionViewedEvent = AuctionViewedEvent(ipAddress, id))
-        val auction = findAuctionById(id)
         val views = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
         return auction.toDetailedResponse(viewCount = views)
     }
+
+    private fun findActiveAuctionById(id: String): Auction = auctionRepository.findActiveAuction(id, Instant.now(clock))
+        .orElseThrow{ AuctionNotFoundException() }
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
@@ -145,6 +145,8 @@ class AuctionFacade(
 
     private fun buildSearchQuery(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): Query {
         val query = Query()
+        addPredicatesForActiveAuctions(query)
+
         searchRequest.searchPhrase?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("name").regex(it, "i"))
         }
@@ -166,6 +168,11 @@ class AuctionFacade(
 
         query.with(pageRequest)
         return query
+    }
+
+    private fun addPredicatesForActiveAuctions(query: Query) {
+        query.addCriteria(Criteria.where("expiresAt").gte(Instant.now(clock)))
+        query.addCriteria(Criteria.where("status").isEqualTo(AuctionStatus.ACCEPTED))
     }
 
     fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): AuctionDetailedResponse {

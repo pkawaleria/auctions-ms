@@ -26,7 +26,7 @@ data class AuctionDetailedResponse(
 
 )
 
-fun Auction.toDetailedResponse(viewCount: Long): AuctionDetailedResponse = AuctionDetailedResponse(
+fun Auction.toDetailedResponse(viewCount: Long = 0L): AuctionDetailedResponse = AuctionDetailedResponse(
     id, name, description, price, auctioneerId, thumbnail, category, categoryPath, productCondition,
     cityId, cityName, location.x, location.y, expiresAt, status.name, viewCount
 )

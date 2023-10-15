@@ -11,8 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
 
     val map: ConcurrentHashMap<String, Auction> = ConcurrentHashMap()
-    override fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction> {
-        return map.values.filter { it.auctioneerId == auctioneerId }.toMutableList()
+    override fun findActiveAuctionsByAuctioneerId(auctioneerId: String, now: Instant): MutableList<Auction> {
+        return map.values.filter { it.auctioneerId == auctioneerId && it.isActive(now) }.toMutableList()
     }
 
     override fun findAuctionsByAuctioneerId(auctioneerId: String, pageable: Pageable): Page<Auction> {
@@ -57,6 +57,10 @@ class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
             .filter { it.status == AuctionStatus.NEW }
             .toMutableList()
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
+    }
+
+    override fun findActiveAuction(id: String, now: Instant): Optional<Auction> {
+        return Optional.ofNullable(map[id]).filter { it.isActive(now) }
     }
 
     override fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {

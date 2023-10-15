@@ -30,6 +30,7 @@ dependencies {
 	implementation("org.springframework.security:spring-security-oauth2-resource-server")
 //	implementation("org.springframework.boot:spring-boot-starter-batch")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 //	implementation("io.minio:minio:8.5.4")
@@ -42,6 +43,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.kafka:spring-kafka-test")
 	testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
+	implementation("com.redis.testcontainers:testcontainers-redis:1.6.4")
 	testImplementation("org.testcontainers:mongodb:$testcontainersVersion")
 	testImplementation("org.assertj:assertj-core:$assertJVersion")
 }

@@ -51,6 +51,7 @@ data class Auction(
 
     fun archive(): Unit = updateStatus(status.archive(auction = this))
 
+    private fun isExpired(now: Instant): Boolean = expiresAt.isBefore(now)
     private fun isExpired(): Boolean = expiresAt.isBefore(Instant.now())
 
     private fun updateStatus(status: AuctionStatus) {
@@ -71,4 +72,5 @@ data class Auction(
     fun isAccepted(): Boolean = this.status == AuctionStatus.ACCEPTED
     fun isRejected(): Boolean = this.status == AuctionStatus.REJECTED
     fun isArchived(): Boolean = this.status == AuctionStatus.ARCHIVED
+    fun isActive(now: Instant): Boolean = !this.isExpired(now) && this.isAccepted()
 }

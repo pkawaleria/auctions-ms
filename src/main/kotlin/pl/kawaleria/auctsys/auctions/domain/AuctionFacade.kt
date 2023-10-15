@@ -12,20 +12,19 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.security.core.Authentication
+import pl.kawaleria.auctsys.auctions.dto.events.AuctionViewedEvent
 import pl.kawaleria.auctsys.auctions.dto.exceptions.*
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
-import pl.kawaleria.auctsys.auctions.dto.responses.AuctionDetailedResponse
-import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
-import pl.kawaleria.auctsys.auctions.dto.responses.toDetailedResponse
-import pl.kawaleria.auctsys.auctions.dto.responses.toPagedAuctions
+import pl.kawaleria.auctsys.auctions.dto.responses.*
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
-import pl.kawaleria.auctsys.configs.SecurityHelper
+import pl.kawaleria.auctsys.commons.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.TextRequest
+import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -40,14 +39,18 @@ class AuctionFacade(
     private val auctionSearchingRules: AuctionSearchingRules,
     private val auctionVerificationRules: AuctionVerificationRules,
     private val auctionCategoryDeleter: AuctionCategoryDeleter,
+    private val auctionEventPublisher: AuctionDomainEventPublisher,
+    private val auctionViewsQueryFacade: AuctionViewsQueryFacade,
     private val securityHelper: SecurityHelper,
     private val clock: Clock
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    fun create(createRequest: CreateAuctionRequest, auctioneerId: String): Auction {
-        if (!validateCreateAuctionRequest(createRequest)) throw InvalidAuctionCreationRequestException()
+    fun create(createRequest: CreateAuctionRequest, auctioneerId: String): AuctionDetailedResponse {
+        if (!validateCreateAuctionRequest(createRequest)) {
+            throw InvalidAuctionCreationRequestException()
+        }
         verifyAuctionContent(createRequest.name, createRequest.description)
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
@@ -69,7 +72,7 @@ class AuctionFacade(
             location = GeoJsonPoint(city.longitude, city.latitude)
         )
 
-        return auctionRepository.save(auction)
+        return auctionRepository.save(auction).toDetailedResponse()
     }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
@@ -110,10 +113,20 @@ class AuctionFacade(
         }
     }
 
-    fun findAuctionsByAuctioneer(auctioneerId: String): MutableList<Auction> =
-        auctionRepository.findAuctionsByAuctioneerId(auctioneerId)
+    fun findAuctionsByAuctioneer(auctioneerId: String): List<AuctionSimplifiedResponse> =
+        auctionRepository.findActiveAuctionsByAuctioneerId(auctioneerId, Instant.now(clock)).map{ it.toSimplifiedResponse() }
     fun findAuctionsByAuctioneer(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findAuctionsByAuctioneerId(auctioneerId, pageable).toPagedAuctions()
+
+    fun getAuctionDetails(id: String, ipAddress : String): AuctionDetailedResponse {
+        val auction = findActiveAuctionById(id)
+        auctionEventPublisher.publishAuctionView(auctionViewedEvent = AuctionViewedEvent(ipAddress, id))
+        val views = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
+        return auction.toDetailedResponse(viewCount = views)
+    }
+
+    private fun findActiveAuctionById(id: String): Auction = auctionRepository.findActiveAuction(id, Instant.now(clock))
+        .orElseThrow{ AuctionNotFoundException() }
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
@@ -132,6 +145,8 @@ class AuctionFacade(
 
     private fun buildSearchQuery(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): Query {
         val query = Query()
+        addPredicatesForActiveAuctions(query)
+
         searchRequest.searchPhrase?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("name").regex(it, "i"))
         }
@@ -155,7 +170,12 @@ class AuctionFacade(
         return query
     }
 
-    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): Auction {
+    private fun addPredicatesForActiveAuctions(query: Query) {
+        query.addCriteria(Criteria.where("expiresAt").gte(Instant.now(clock)))
+        query.addCriteria(Criteria.where("status").isEqualTo(AuctionStatus.ACCEPTED))
+    }
+
+    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): AuctionDetailedResponse {
         if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
 
         val auction: Auction = findAuctionById(id)
@@ -171,7 +191,8 @@ class AuctionFacade(
         auction.cityName = newAuctionCity.name
         auction.location = GeoJsonPoint(newAuctionCity.longitude, newAuctionCity.latitude)
 
-        return auctionRepository.save(auction)
+        val auctionViews = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
+        return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 
     private fun validateUpdateAuctionRequest(payload: UpdateAuctionRequest): Boolean {
@@ -194,8 +215,8 @@ class AuctionFacade(
         val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
         val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
-
-        return auctionRepository.save(auction).toDetailedResponse()
+        val auctionViews = auctionViewsQueryFacade.getAuctionViews(auctionId = auctionId)
+        return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 
     fun eraseCategoryFromAuctions(categoryName: String): Unit =

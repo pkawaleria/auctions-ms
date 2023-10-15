@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.auctions
 
+import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
@@ -12,11 +13,12 @@ import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.*
-import pl.kawaleria.auctsys.configs.toAuctioneerId
+import pl.kawaleria.auctsys.commons.IpAddressResolver
+import pl.kawaleria.auctsys.commons.toAuctioneerId
 
 @RestController
 @RequestMapping("/auction-service")
-class AuctionCrudController(private val auctionFacade: AuctionFacade) {
+class AuctionCrudController(private val auctionFacade: AuctionFacade, private val ipAddressResolver: IpAddressResolver) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
@@ -37,9 +39,10 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
 
     @GetMapping("/auctions/{auctionId}")
     fun getAuction(
-            @PathVariable auctionId: String
+            @PathVariable auctionId: String, request: HttpServletRequest
     ): AuctionDetailedResponse {
-        return auctionFacade.findAuctionById(auctionId).toDetailedResponse()
+        val ipAddress = ipAddressResolver.getIpAddress(request)
+        return auctionFacade.getAuctionDetails(auctionId, ipAddress)
     }
 
     @PutMapping("/auctions/{auctionId}/categories/{categoryId}")
@@ -54,7 +57,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
 
     @GetMapping("/users/{userId}/auctions")
     fun getAuctions(@PathVariable userId: String): List<AuctionSimplifiedResponse> {
-        return auctionFacade.findAuctionsByAuctioneer(userId).map { auction -> auction.toSimplifiedResponse() }
+        return auctionFacade.findAuctionsByAuctioneer(userId)
     }
 
     @PostMapping("/auctions")
@@ -64,7 +67,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
             @CurrentSecurityContext(expression = "authentication") authContext: Authentication,
     ): AuctionDetailedResponse {
         logger.info("Creating auction of request {$payload} for logged in auctioneer of id {${authContext.toAuctioneerId()}}")
-        return auctionFacade.create(payload, authContext.toAuctioneerId()).toDetailedResponse()
+        return auctionFacade.create(payload, authContext.toAuctioneerId())
     }
 
     @PutMapping("/auctions/{auctionId}")
@@ -74,7 +77,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade) {
             @RequestBody payload: UpdateAuctionRequest,
             @CurrentSecurityContext(expression = "authentication") authContext: Authentication
     ): AuctionDetailedResponse {
-        return auctionFacade.update(auctionId, payload, authContext).toDetailedResponse()
+        return auctionFacade.update(auctionId, payload, authContext)
     }
 
     @DeleteMapping("/auctions/{auctionId}")

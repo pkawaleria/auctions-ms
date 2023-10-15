@@ -6,7 +6,7 @@ import java.time.Instant
 import java.util.*
 
 interface AuctionRepository {
-    fun findAuctionsByAuctioneerId(auctioneerId: String): MutableList<Auction>
+    fun findActiveAuctionsByAuctioneerId(auctioneerId: String, now: Instant): List<Auction>
     fun findAuctionsByAuctioneerId(auctioneerId: String, pageable: Pageable): Page<Auction>
     fun findAuctionsWithCategoryInPath(categoryName: String, pageable: Pageable): Page<Auction>
     fun save(auction: Auction): Auction
@@ -19,4 +19,5 @@ interface AuctionRepository {
     fun findExpiredAuctions(now: Instant, auctioneerId: String, pageable: Pageable): Page<Auction>
     fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
     fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
+    fun findActiveAuction(id: String, now: Instant): Optional<Auction>
 }

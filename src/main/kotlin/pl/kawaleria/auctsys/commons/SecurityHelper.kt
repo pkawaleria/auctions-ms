@@ -1,9 +1,10 @@
-package pl.kawaleria.auctsys.configs
+package pl.kawaleria.auctsys.commons
 
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ResponseStatusException
+import pl.kawaleria.auctsys.configs.ROLE_PREFIX
 
 @Component
 class SecurityHelper {

@@ -12,6 +12,17 @@ class CategoryConfiguration {
                 categoryEventPublisher = TestCategoryEventPublisher())
     }
 
+    fun categoryModuleWithInMemoryRepository(): Pair<InMemoryCategoryRepository, CategoryFacade> {
+        val categoryRepository = InMemoryCategoryRepository()
+        return Pair(
+            categoryRepository,
+            CategoryFacade(
+                categoryRepository = categoryRepository,
+                categoryEventPublisher = TestCategoryEventPublisher()
+            )
+        )
+    }
+
     internal class TestCategoryEventPublisher : CategoryEventPublisher {
         override fun publish(categoryDeleted: CategoryDeletedEvent) {
         }

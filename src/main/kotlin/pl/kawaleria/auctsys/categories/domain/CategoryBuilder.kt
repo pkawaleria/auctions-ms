@@ -31,7 +31,7 @@ class CategoryBuilder(private val categoryRepository: CategoryRepository) {
     }
 
     fun save(): Category? {
-        val savedCategory = saveInternal()
+        val savedCategory: Category? = saveInternal()
         savedCategory?.let {
             subCategories.forEach { subCategoryBuilder ->
                 subCategoryBuilder.currentCategory?.parentCategoryId = savedCategory.id
@@ -43,7 +43,7 @@ class CategoryBuilder(private val categoryRepository: CategoryRepository) {
 
     private fun saveInternal(): Category? {
         currentCategory?.let {
-            val savedCategory = categoryRepository.save(it)
+            val savedCategory: Category = categoryRepository.save(it)
             currentCategory = savedCategory // updating the currentCategory with the saved one
             return savedCategory
         }

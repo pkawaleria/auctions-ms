@@ -30,7 +30,7 @@ class RedisConfig(
         template.connectionFactory = redisConnectionFactory
 
         // Configure serialization
-        val objectMapper = objectMapper.findAndRegisterModules()
+        val objectMapper: ObjectMapper = objectMapper.findAndRegisterModules()
         val serializer = GenericJackson2JsonRedisSerializer(objectMapper)
 
         template.keySerializer = StringRedisSerializer()

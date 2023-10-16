@@ -38,6 +38,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+//	mongo migrations
+	implementation("com.github.cloudyrock.mongock:mongock-bom:4.3.8")
+	implementation("com.github.cloudyrock.mongock:mongodb-springdata-v3-driver:4.3.8")
+	implementation("com.github.cloudyrock.mongock:mongock-spring-v5:4.3.8")
+
 //	tests
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")

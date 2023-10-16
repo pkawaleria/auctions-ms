@@ -5,9 +5,3 @@ import pl.kawaleria.auctsys.categories.dto.events.CategoryDeletedEvent
 interface CategoryEventPublisher {
     fun publish(categoryDeleted: CategoryDeletedEvent)
 }
-
-class TestCategoryEventPublisher : CategoryEventPublisher {
-    override fun publish(categoryDeleted: CategoryDeletedEvent) {
-    }
-
-}

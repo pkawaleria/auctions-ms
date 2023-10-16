@@ -5,8 +5,8 @@ import com.github.cloudyrock.mongock.ChangeSet
 import pl.kawaleria.auctsys.categories.domain.CategoryBuilder
 import pl.kawaleria.auctsys.categories.domain.CategoryRepository
 
-@ChangeLog
-class DatabaseChangeLog {
+@ChangeLog(order = "002")
+class CategoryDatabaseChangeLog {
 
     @ChangeSet(order = "001", id = "insertAntiquesCategoryWithSubcategories", author = "filip-kaminski")
     fun insertAntiquesCategoryWithSubcategories(categoryRepository: CategoryRepository) {

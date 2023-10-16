@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pl.kawaleria.auctsys.auctions.dto.exceptions.ExpiredAuctionException
 import pl.kawaleria.auctsys.auctions.dto.exceptions.InvalidAuctionCategoryPathException
@@ -17,11 +18,13 @@ data class Auction(
     var name: String,
     var description: String,
     var price: Double,
+    @Indexed
     var auctioneerId: String,
     var thumbnail: ByteArray = byteArrayOf(),
     var category: Category,
     var categoryPath: CategoryPath,
     var productCondition: Condition,
+    @Indexed
     var cityId: String,
     var cityName: String,
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)

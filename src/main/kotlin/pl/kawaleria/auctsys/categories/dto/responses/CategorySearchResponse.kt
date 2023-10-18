@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.categories.dto.response
+package pl.kawaleria.auctsys.categories.dto.responses
 
 data class CategorySearchResponse(
         val category: SimpleCategoryResponse,

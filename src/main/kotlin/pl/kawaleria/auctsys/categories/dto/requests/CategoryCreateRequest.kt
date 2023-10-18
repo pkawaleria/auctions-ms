@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.categories.dto.request
+package pl.kawaleria.auctsys.categories.dto.requests
 
 data class CategoryCreateRequest(
         val name: String,

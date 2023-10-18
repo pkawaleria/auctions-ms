@@ -3,8 +3,7 @@ package pl.kawaleria.auctsys.categories.domain
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
-import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import pl.kawaleria.auctsys.images.ImageControllerTest
 
 

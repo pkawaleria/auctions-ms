@@ -5,10 +5,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
-import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
-import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
-import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
-import pl.kawaleria.auctsys.categories.dto.response.CategorySearchResponse
+import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryPathResponse
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
+import pl.kawaleria.auctsys.categories.dto.responses.CategorySearchResponse
 import pl.kawaleria.auctsys.images.dto.responses.*
 import java.util.*
 

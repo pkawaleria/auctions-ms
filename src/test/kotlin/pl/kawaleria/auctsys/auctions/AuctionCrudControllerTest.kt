@@ -29,8 +29,8 @@ import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.auctions.dto.responses.toDetailedResponse
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
-import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
-import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
+import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -113,7 +113,7 @@ class AuctionControllerTest {
             // then
             val responseJson: String = result.response.contentAsString
             val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
-            logger.info("Received response from rest controller: {}", responseJson)
+            logger.info("Received responses from rest controller: {}", responseJson)
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(existingAuctionsCount)
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
@@ -146,7 +146,7 @@ class AuctionControllerTest {
             // then
             val responseJson: String = result.response.contentAsString
             val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
-            logger.info("Received response from rest controller: {}", responseJson)
+            logger.info("Received responses from rest controller: {}", responseJson)
 
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
@@ -185,7 +185,7 @@ class AuctionControllerTest {
             // then
             val responseJson: String = result.response.contentAsString
             val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
-            logger.info("Received response from rest controller: {}", responseJson)
+            logger.info("Received responses from rest controller: {}", responseJson)
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->
@@ -226,7 +226,7 @@ class AuctionControllerTest {
             // then
             val responseJson: String = result.response.contentAsString
             val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
-            logger.info("Received response from rest controller: {}", responseJson)
+            logger.info("Received responses from rest controller: {}", responseJson)
 
             Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
             Assertions.assertThat(pagedAuctions.auctions).allMatch { auction ->

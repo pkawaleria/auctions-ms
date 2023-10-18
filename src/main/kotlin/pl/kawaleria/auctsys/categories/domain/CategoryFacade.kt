@@ -5,8 +5,8 @@ import org.springframework.transaction.annotation.Transactional
 import pl.kawaleria.auctsys.categories.dto.exceptions.CategoryNotFound
 import pl.kawaleria.auctsys.categories.dto.exceptions.InvalidCategoryActionException
 import pl.kawaleria.auctsys.categories.dto.events.CategoryDeletedEvent
-import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
-import pl.kawaleria.auctsys.categories.dto.response.*
+import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
+import pl.kawaleria.auctsys.categories.dto.responses.*
 import java.time.Instant
 
 @Service

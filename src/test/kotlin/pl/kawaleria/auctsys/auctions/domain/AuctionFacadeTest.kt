@@ -12,8 +12,8 @@ import pl.kawaleria.auctsys.auctions.dto.exceptions.UnsupportedOperationOnAuctio
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.categories.domain.CategoryConfiguration
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
-import pl.kawaleria.auctsys.categories.dto.request.CategoryCreateRequest
-import pl.kawaleria.auctsys.categories.dto.response.CategoryResponse
+import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import pl.kawaleria.auctsys.commons.toAuctioneerId
 import pl.kawaleria.auctsys.views.domain.AuctionViewsConfiguration
 import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade

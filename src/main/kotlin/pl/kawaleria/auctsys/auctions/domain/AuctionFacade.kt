@@ -19,8 +19,8 @@ import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.*
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
-import pl.kawaleria.auctsys.categories.dto.response.CategoryNameResponse
-import pl.kawaleria.auctsys.categories.dto.response.CategoryPathResponse
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryNameResponse
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryPathResponse
 import pl.kawaleria.auctsys.commons.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.TextRequest

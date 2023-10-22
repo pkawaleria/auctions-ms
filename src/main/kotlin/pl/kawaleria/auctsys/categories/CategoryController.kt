@@ -9,6 +9,7 @@ import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryPathResponse
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import pl.kawaleria.auctsys.categories.dto.responses.CategorySearchResponse
+import pl.kawaleria.auctsys.categories.dto.responses.CategoryWithPathResponse
 import pl.kawaleria.auctsys.images.dto.responses.*
 import java.util.*
 
@@ -21,7 +22,10 @@ class CategoryController(private val categoryFacade: CategoryFacade) {
     fun create(@RequestBody categoryRequest: CategoryCreateRequest): CategoryResponse = categoryFacade.create(request = categoryRequest)
 
     @GetMapping("/{categoryId}")
-    fun get(@PathVariable categoryId: String): CategoryResponse = categoryFacade.get(categoryId = categoryId)
+    fun get(@PathVariable categoryId: String): CategoryWithPathResponse = categoryFacade.get(categoryId = categoryId)
+
+    @GetMapping("/{categoryId}/subcategories")
+    fun getSubcategories(@PathVariable categoryId: String): List<CategoryWithPathResponse> = categoryFacade.getSubcategories(categoryId = categoryId)
 
     @GetMapping("/{categoryId}/path")
     fun getPath(@PathVariable categoryId: String): CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId = categoryId)

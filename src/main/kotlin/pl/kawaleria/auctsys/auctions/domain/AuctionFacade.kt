@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.auctions.domain
 
+import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -152,6 +153,9 @@ class AuctionFacade(
         }
         searchRequest.categoryName?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("categoryPath.pathElements.name").regex(searchRequest.categoryName, "i"))
+        }
+        searchRequest.categoryId?.takeIf { it.isNotBlank() }?.let {
+            query.addCriteria(Criteria.where("categoryPath.pathElements.id").isEqualTo(ObjectId(searchRequest.categoryId)))
         }
         searchRequest.cityId?.takeIf{ it.isNotBlank() }?.let { cityId ->
             val city: City = cityRepository.findById(cityId).orElseThrow { SearchRadiusWithoutCityException() }

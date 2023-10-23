@@ -56,7 +56,7 @@ class AuctionFacade(
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
 
-        val city = cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
+        val city: City = cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
 
         val auction = Auction(
             name = createRequest.name,
@@ -105,7 +105,7 @@ class AuctionFacade(
         }
 
         val textToVerify = TextRequest("$name $description")
-        val foundInappropriateContent = contentVerificationClient.verifyText(textToVerify).isInappropriate
+        val foundInappropriateContent: Boolean = contentVerificationClient.verifyText(textToVerify).isInappropriate
         if (foundInappropriateContent) {
             logger.info("Found explicit content")
             throw InappropriateContentException()
@@ -120,9 +120,9 @@ class AuctionFacade(
         auctionRepository.findAuctionsByAuctioneerId(auctioneerId, pageable).toPagedAuctions()
 
     fun getAuctionDetails(id: String, ipAddress : String): AuctionDetailedResponse {
-        val auction = findActiveAuctionById(id)
+        val auction: Auction = findActiveAuctionById(id)
         auctionEventPublisher.publishAuctionView(auctionViewedEvent = AuctionViewedEvent(ipAddress, id))
-        val views = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
+        val views: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
         return auction.toDetailedResponse(viewCount = views)
     }
 
@@ -185,7 +185,7 @@ class AuctionFacade(
         val auction: Auction = findAuctionById(id)
         securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
 
-        val newAuctionCity = cityRepository.findById(payload.cityId).orElseThrow { CityNotFoundException() }
+        val newAuctionCity: City = cityRepository.findById(payload.cityId).orElseThrow { CityNotFoundException() }
 
         auction.name = payload.name
         auction.price = payload.price
@@ -195,7 +195,7 @@ class AuctionFacade(
         auction.cityName = newAuctionCity.name
         auction.location = GeoJsonPoint(newAuctionCity.longitude, newAuctionCity.latitude)
 
-        val auctionViews = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
+        val auctionViews: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
         return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 
@@ -219,7 +219,7 @@ class AuctionFacade(
         val pathDto: CategoryPathResponse = categoryFacade.getFullCategoryPath(categoryId)
         val path: CategoryPath = pathDto.toAuctionCategoryPathModel()
         auction.assignPath(path)
-        val auctionViews = auctionViewsQueryFacade.getAuctionViews(auctionId = auctionId)
+        val auctionViews: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = auctionId)
         return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 

@@ -1842,7 +1842,34 @@ class CategoryDatabaseChangeLog {
         CategoryBuilder(categoryRepository = categoryRepository)
             .name("Oddam za Darmo")
             .description("Darmowe rzeczy, przedmioty do oddania")
-            .finalNode()
+            .topLevel()
+            .subCategory(
+                CategoryBuilder(categoryRepository = categoryRepository)
+                    .name("Zwierzęta za darmo")
+                    .description("Zwierzęta do adopcji")
+                    .subCategory(
+                        CategoryBuilder(categoryRepository = categoryRepository)
+                            .name("Małe zwierzęta domowe za darmo")
+                            .description("Małe zwierzęta domowe do adopcji")
+                            .subCategory(
+                                CategoryBuilder(categoryRepository = categoryRepository)
+                                    .name("Psy i koty za darmo")
+                                    .description("Małe psy i koty do adopcji")
+                                    .subCategory(
+                                        CategoryBuilder(categoryRepository = categoryRepository)
+                                            .name("Psy do adopcji za darmo")
+                                            .description("Małe psy do adopcji")
+                                            .finalNode()
+                                    )
+                                    .subCategory(
+                                        CategoryBuilder(categoryRepository = categoryRepository)
+                                            .name("Koty do adopcji za darmo")
+                                            .description("Małe koty do adopcji")
+                                            .finalNode()
+                                    )
+                            )
+                    )
+            )
             .save()
     }
 

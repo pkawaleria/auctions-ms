@@ -1,6 +1,6 @@
 package pl.kawaleria.auctsys.categories.domain
 
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import pl.kawaleria.auctsys.categories.dto.events.CategoryDeletedEvent
 import pl.kawaleria.auctsys.categories.dto.exceptions.CategoryNotFound
@@ -9,7 +9,7 @@ import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.responses.*
 import java.time.Instant
 
-@Service
+@Component
 class CategoryFacade(
     private val categoryRepository: CategoryRepository,
     private val categoryEventPublisher: CategoryEventPublisher

@@ -6,6 +6,8 @@ import pl.kawaleria.auctsys.categories.dto.events.CategoryDeletedEvent
 @Configuration
 class CategoryConfiguration {
 
+    fun CategoryFacade(categoryRepository: CategoryRepository, categoryEventPublisher: CategoryEventPublisher): CategoryFacade =
+        CategoryFacade(categoryRepository = categoryRepository, categoryEventPublisher = categoryEventPublisher)
     fun categoryFacadeWithInMemoryRepository(): CategoryFacade {
         return CategoryFacade(
                 categoryRepository = InMemoryCategoryRepository(),

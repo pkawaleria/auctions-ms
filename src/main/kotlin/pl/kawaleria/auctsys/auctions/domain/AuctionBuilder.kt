@@ -81,7 +81,8 @@ class AuctionBuilder(
             categoryPath = categoryPath,
             productCondition = standardCreateAuctionRequest.productCondition,
             cityName = city.name,
-            location = GeoJsonPoint(city.longitude, city.latitude)
+            location = GeoJsonPoint(city.longitude, city.latitude),
+            status = AuctionStatus.ACCEPTED
         )
 
         return auctionRepository.save(auction)

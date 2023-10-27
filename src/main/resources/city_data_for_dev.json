@@ -1,0 +1,62 @@
+[
+  {
+    "Id": "1",
+    "Name": "Abramowice Kościelne",
+    "Type": "village",
+    "Province": "lubelskie",
+    "District": "lubelski",
+    "Commune": "Głusk-gmina wiejska",
+    "Latitude": 51.1914,
+    "Longitude": 22.6294
+  },
+  {
+    "Id": "2",
+    "Name": "Abramowice Prywatne",
+    "Type": "village",
+    "Province": "lubelskie",
+    "District": "lubelski",
+    "Commune": "Głusk-gmina wiejska",
+    "Latitude": 51.2047,
+    "Longitude": 22.6206
+  },
+  {
+    "Id": "3",
+    "Name": "Abramów",
+    "Type": "village",
+    "Province": "lubelskie",
+    "District": "lubartowski",
+    "Commune": "Abramów-gmina wiejska",
+    "Latitude": 51.4561,
+    "Longitude": 22.3158
+  },
+  {
+    "Id": "4",
+    "Name": "Abramów",
+    "Type": "village",
+    "Province": "lubelskie",
+    "District": "biłgorajski",
+    "Commune": "Goraj-gmina wiejska",
+    "Latitude": 50.6983,
+    "Longitude": 22.7003
+  },
+  {
+    "Id": "5",
+    "Name": "Abramy",
+    "Type": "village",
+    "Province": "mazowieckie",
+    "District": "miński",
+    "Commune": "Kałuszyn-gmina miejsko-wiejska",
+    "Latitude": 52.2542,
+    "Longitude": 21.7997
+  },
+  {
+    "Id": "6",
+    "Name": "Achrymowce",
+    "Type": "village",
+    "Province": "podlaskie",
+    "District": "sokólski",
+    "Commune": "Kuźnica-gmina wiejska",
+    "Latitude": 53.5128,
+    "Longitude": 23.5472
+  }
+]

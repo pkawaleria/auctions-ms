@@ -169,8 +169,6 @@ class AuctionFacade(
                 query.addCriteria(Criteria.where("cityId").isEqualTo(cityId))
             }
         }
-
-        query.with(pageRequest)
         return query
     }
 

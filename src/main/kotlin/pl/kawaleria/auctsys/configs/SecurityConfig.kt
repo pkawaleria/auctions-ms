@@ -71,7 +71,7 @@ class SecurityConfig {
         http.sessionManagement { sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
 
         // Disable CSRF because of state-less session-management
-        http.csrf { csrf -> csrf.disable() };
+        http.csrf { csrf -> csrf.disable() }
 
         // Enable and configure CORS
         http.cors { cors ->
@@ -96,7 +96,6 @@ class SecurityConfig {
         }
         return http.build()
     }
-
 
 
     @Bean

@@ -42,7 +42,7 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade, private va
     fun getAuction(
             @PathVariable auctionId: String, request: HttpServletRequest
     ): AuctionDetailedResponse {
-        val ipAddress = ipAddressResolver.getIpAddress(request)
+        val ipAddress: String = ipAddressResolver.getIpAddress(request)
         return auctionFacade.getAuctionDetails(auctionId, ipAddress)
     }
 

@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.auctions.domain
 
 import org.bson.types.ObjectId
+import org.springframework.core.io.ClassPathResource
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import pl.kawaleria.auctsys.auctions.dto.exceptions.CityNotFoundException
@@ -10,8 +11,12 @@ import pl.kawaleria.auctsys.categories.dto.exceptions.CategoryNotFound
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryPathResponse
 import pl.kawaleria.auctsys.categories.dto.responses.SimpleCategoryResponse
+import java.awt.Graphics2D
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.time.Instant
+import javax.imageio.ImageIO
 
 class AuctionBuilder(
     private val auctionRepository: AuctionRepository,
@@ -69,12 +74,15 @@ class AuctionBuilder(
         val city: City =
             cityRepository.findById(standardCreateAuctionRequest.cityId).orElseThrow { CityNotFoundException() }
 
+        val resource = ClassPathResource("/test_images/audi.jpg")
+        val resizedThumbnail: ByteArray = resizeImageToThumbnailFormat(resource)
+
         val auction = Auction(
             name = standardCreateAuctionRequest.name,
             description = standardCreateAuctionRequest.description,
             price = standardCreateAuctionRequest.price,
             auctioneerId = userId,
-            thumbnail = byteArrayOf(),
+            thumbnail = resizedThumbnail,
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(100).toSeconds()),
             cityId = standardCreateAuctionRequest.cityId,
             category = categoryPath.lastCategory(),
@@ -130,6 +138,21 @@ class AuctionBuilder(
             isFinalNode = this.isFinalNode,
             description = this.description,
         )
+
+    private fun resizeImageToThumbnailFormat(image: ClassPathResource): ByteArray {
+        val originalImage: BufferedImage = ImageIO.read(image.inputStream)
+
+        val scaledImage = BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB)
+
+        val g: Graphics2D = scaledImage.createGraphics()
+        g.drawImage(originalImage, 0, 0, 100, 100, null)
+        g.dispose()
+
+        val outputStream = ByteArrayOutputStream()
+        ImageIO.write(scaledImage, "jpg", outputStream)
+
+        return outputStream.toByteArray()
+    }
 
 }
 

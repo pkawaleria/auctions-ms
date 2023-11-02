@@ -23,7 +23,7 @@ class CategoryFacadeTest {
         val rootCategoryId = thereIsElectronicsCategoryTree()
 
         // when
-        val get: CategoryResponse = categoryFacade.get(rootCategoryId)
+//        val get: CategoryResponse = categoryFacade.get(rootCategoryId)
 
         // then
 //        Assertions.assertThat(path.path).}

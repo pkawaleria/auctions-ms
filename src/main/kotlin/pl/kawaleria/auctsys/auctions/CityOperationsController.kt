@@ -27,7 +27,6 @@ class CityOperationsController(private val cityFacade: CityFacade) {
     ): PagedCities {
         val pageRequest: PageRequest = PageRequest.of(page, pageSize)
         val searchRequest = CitiesSearchRequest(searchCityName)
-
         return cityFacade.searchCities(searchRequest, pageRequest)
     }
 }

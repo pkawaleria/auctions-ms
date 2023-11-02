@@ -33,6 +33,7 @@ import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 private const val baseUrl: String = "/auction-service/auctions"
@@ -58,7 +59,6 @@ class AuctionControllerTest {
     companion object {
         val logger: Logger = getLogger(AuctionControllerTest::class.java)
     }
-
 
 
     @Autowired
@@ -176,7 +176,7 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("searchPhrase", selectedSearchPhrase)
-                    .param("category", selectedCategory)
+                    .param("categoryNamePhrase", selectedCategory)
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isOk)
@@ -217,7 +217,7 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("searchPhrase", selectedSearchPhrase)
-                    .param("category", selectedCategory)
+                    .param("categoryNamePhrase", selectedCategory)
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isOk)
@@ -366,7 +366,15 @@ class AuctionControllerTest {
             val foundAuction: AuctionDetailedResponse =
                 objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
-            Assertions.assertThat(foundAuction).isEqualTo(auction.toDetailedResponse(viewCount = 1L))
+            // Custom comparator for OffsetDateTime to ignore microseconds
+            val offsetDateTimeComparator = Comparator<Instant> { a, b ->
+                a.truncatedTo(ChronoUnit.MILLIS).compareTo(b.truncatedTo(ChronoUnit.MILLIS))
+            }
+
+            Assertions.assertThat(foundAuction)
+                .usingRecursiveComparison()
+                .withComparatorForType(offsetDateTimeComparator, Instant::class.java)
+                .isEqualTo(auction.toDetailedResponse(viewCount = 1L))
         }
 
         @ParameterizedTest
@@ -521,6 +529,7 @@ class AuctionControllerTest {
             )
                 .andExpect(status().isBadRequest)
         }
+
         @Test
         fun `should not authorize anonymous user to create auction`() {
             // given
@@ -534,8 +543,8 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NEW,
                 cityId = city.id,
-                
-            )
+
+                )
 
             // when
             mockMvc.perform(
@@ -610,8 +619,8 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.USED,
                 cityId = city.id,
-                
-            )
+
+                )
 
             // when then
             mockMvc.perform(
@@ -636,8 +645,8 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
-                
-            )
+
+                )
 
             // when then
             mockMvc.perform(
@@ -667,7 +676,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
             // when
             val result: MvcResult = mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
@@ -710,7 +719,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -802,7 +811,7 @@ class AuctionControllerTest {
                 productCondition = expectedProductCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -846,10 +855,10 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
-             mockMvc.perform(
+            mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
@@ -872,7 +881,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
             mockMvc.perform(
@@ -898,7 +907,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
             mockMvc.perform(
@@ -924,7 +933,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
             mockMvc.perform(
@@ -1024,6 +1033,7 @@ class AuctionControllerTest {
                 .andExpect(status().isNotFound)
         }
     }
+
     @Nested
     inner class AuctionViewsCounterTest {
         private val singleAuctionBaseUrl: String = "/auction-service/auctions"

@@ -51,34 +51,8 @@ open class ImageFacade(
         if (imageVerificationRules.enabled) {
             eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
         } else {
+            addThumbnailToAuction(auctionId, files.first())
             logger.debug("Image verification switched off and omitted for auction of id $auctionId")
-        }
-    }
-
-    private fun verifyImages(auctionId: String, files: List<MultipartFile>) {
-        if (!imageVerificationRules.enabled) {
-            logger.debug("Image verification turned off and omitted for auction of id $auctionId")
-            return
-        }
-        var foundInappropriateImage = false
-
-        try {
-            foundInappropriateImage = files.any { contentVerificationClient.verifyImage(it.resource).isInappropriate }
-        } catch (e: Exception) {
-            logger.error("Error during image verification", e)
-            // Here should be some re-check logic, or setting auction status to -manual-check-required-
-        }
-        if (foundInappropriateImage) {
-            logger.info("Found explicit image, deleting all images for auction of id $auctionId")
-            imageRepository.deleteAllByAuctionId(auctionId)
-            auctionFacade.reject(auctionId)
-            throw InappropriateImageException()
-        } else {
-            // TODO: When exception is thrown into this scope and get the misleading message logged because
-            //  foundInappropriateContent is set to false by default, that should be handled differently
-            logger.info("All auction images verified positively for auction id $auctionId")
-            addThumbnailToAuction(auctionId, files[0])
-            auctionFacade.accept(auctionId)
         }
     }
 

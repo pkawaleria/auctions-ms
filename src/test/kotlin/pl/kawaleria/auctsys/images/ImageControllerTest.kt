@@ -314,9 +314,10 @@ class ImageControllerTest {
             auctioneerId = "user-id",
             expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
             cityId = city.id,
-            productCondition = Condition.NOT_APPLICABLE,
-            cityName= city.name,
-            location = GeoJsonPoint(city.latitude, city.longitude)
+            cityName = city.name,
+            province = city.province,
+            location = GeoJsonPoint(city.latitude, city.longitude),
+            productCondition = Condition.NOT_APPLICABLE
         )
 
         return auctionRepository.save(auction).id

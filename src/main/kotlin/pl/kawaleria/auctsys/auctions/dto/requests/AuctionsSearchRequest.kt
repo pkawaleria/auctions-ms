@@ -5,5 +5,6 @@ data class AuctionsSearchRequest(
         val categoryName: String?,
         val categoryId: String?,
         val cityId: String?,
-        val radius: Double?
+        val radius: Double?,
+        val province: String?
 )

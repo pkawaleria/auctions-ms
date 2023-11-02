@@ -70,6 +70,7 @@ class AuctionFacade(
             categoryPath = categoryPath,
             productCondition = createRequest.productCondition,
             cityName = city.name,
+            province = city.province,
             location = GeoJsonPoint(city.longitude, city.latitude)
         )
 
@@ -157,6 +158,9 @@ class AuctionFacade(
         searchRequest.categoryId?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("categoryPath.pathElements.id").isEqualTo(ObjectId(searchRequest.categoryId)))
         }
+        searchRequest.province?.takeIf { it.isNotBlank() }?.let {
+            query.addCriteria(Criteria.where("province").regex(it, "i"))
+        }
         searchRequest.cityId?.takeIf{ it.isNotBlank() }?.let { cityId ->
             val city: City = cityRepository.findById(cityId).orElseThrow { SearchRadiusWithoutCityException() }
 
@@ -194,6 +198,7 @@ class AuctionFacade(
         auction.cityId = newAuctionCity.id
         auction.cityName = newAuctionCity.name
         auction.location = GeoJsonPoint(newAuctionCity.longitude, newAuctionCity.latitude)
+        auction.province = newAuctionCity.province
 
         val auctionViews: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
         return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)

@@ -132,6 +132,7 @@ class AuctionOperationsControllerTest {
                 productCondition = Condition.NEW,
                 cityId = city.id,
                 cityName = city.name,
+                province = city.province,
                 location = GeoJsonPoint(city.latitude, city.longitude),
                 expiresAt = defaultExpiration(),
                 thumbnail = byteArrayOf()

@@ -30,10 +30,11 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade, private va
         @RequestParam(required = false) categoryNamePhrase: String?,
         @RequestParam(required = false) categoryId: String?,
         @RequestParam(required = false) cityId: String?,
-        @RequestParam(required = false) radius: Double?
+        @RequestParam(required = false) radius: Double?,
+        @RequestParam(required = false) province: String?
     ): PagedAuctions {
         val pageRequest: PageRequest = PageRequest.of(page, pageSize)
-        val searchRequest = AuctionsSearchRequest(searchPhrase, categoryNamePhrase, categoryId, cityId, radius)
+        val searchRequest = AuctionsSearchRequest(searchPhrase, categoryNamePhrase, categoryId, cityId, radius, province)
 
         return auctionFacade.searchAuctions(searchRequest, pageRequest)
     }

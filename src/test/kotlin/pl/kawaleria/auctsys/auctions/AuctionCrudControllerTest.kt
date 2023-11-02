@@ -47,7 +47,6 @@ class AuctionControllerTest {
     private val redis: RedisContainer = RedisTestContainer.instance
     private val mongo: MongoDBContainer = MongoTestContainer.instance
 
-
     init {
         System.setProperty("spring.data.mongodb.uri", mongo.replicaSetUrl)
         System.setProperty("auction.text.verification.enabled", "false")
@@ -58,8 +57,6 @@ class AuctionControllerTest {
     companion object {
         val logger: Logger = getLogger(AuctionControllerTest::class.java)
     }
-
-
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -301,6 +298,37 @@ class AuctionControllerTest {
         }
 
         @Test
+        fun `should search among auctions with selected province`() {
+            // given
+            val cities: List<City> = thereAreAuctions().second
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val selectedProvince: String = cities.first().province
+
+            val expectedPageCount = 1
+            val expectedFilteredAuctionsCount = 1
+            // when
+
+            val result: MvcResult = mockMvc.perform(
+                get(auctionsSearchUrl)
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("province", selectedProvince)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+        }
+
+        @Test
         fun `should not search among auctions with radius only`() {
             // given
             thereAreAuctions()
@@ -365,6 +393,9 @@ class AuctionControllerTest {
             val responseJson: String = result.response.contentAsString
             val foundAuction: AuctionDetailedResponse =
                 objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
+
+            logger.info(foundAuction.toString())
+            logger.info(auction.toDetailedResponse(viewCount = 1L).toString())
 
             Assertions.assertThat(foundAuction).isEqualTo(auction.toDetailedResponse(viewCount = 1L))
         }
@@ -521,6 +552,7 @@ class AuctionControllerTest {
             )
                 .andExpect(status().isBadRequest)
         }
+
         @Test
         fun `should not authorize anonymous user to create auction`() {
             // given
@@ -534,8 +566,8 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NEW,
                 cityId = city.id,
-                
-            )
+
+                )
 
             // when
             mockMvc.perform(
@@ -610,8 +642,8 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.USED,
                 cityId = city.id,
-                
-            )
+
+                )
 
             // when then
             mockMvc.perform(
@@ -636,8 +668,8 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
-                
-            )
+
+                )
 
             // when then
             mockMvc.perform(
@@ -667,7 +699,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
             // when
             val result: MvcResult = mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
@@ -710,7 +742,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -802,7 +834,7 @@ class AuctionControllerTest {
                 productCondition = expectedProductCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -846,10 +878,10 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
-             mockMvc.perform(
+            mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
                     .withAuthenticatedAuctioneer()
                     .contentType(MediaType.APPLICATION_JSON)
@@ -872,7 +904,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
             mockMvc.perform(
@@ -898,7 +930,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
             mockMvc.perform(
@@ -924,7 +956,7 @@ class AuctionControllerTest {
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
 
-            )
+                )
 
             // when then
             mockMvc.perform(
@@ -943,7 +975,6 @@ class AuctionControllerTest {
             val oldAuction: Auction = thereIsAuction()
 
             val nonExistingCityId = "nonExistingCityId"
-            val nonExistingCityName = "nonExistingCityName"
 
             val newAuction = UpdateAuctionRequest(
                 name = oldAuction.name,
@@ -1024,6 +1055,7 @@ class AuctionControllerTest {
                 .andExpect(status().isNotFound)
         }
     }
+
     @Nested
     inner class AuctionViewsCounterTest {
         private val singleAuctionBaseUrl: String = "/auction-service/auctions"
@@ -1083,6 +1115,7 @@ class AuctionControllerTest {
             productCondition = Condition.NEW,
             cityId = city.id,
             cityName = city.name,
+            province = city.province,
             location = GeoJsonPoint(city.longitude, city.latitude),
             expiresAt = defaultExpiration(),
             status = status,
@@ -1140,6 +1173,7 @@ class AuctionControllerTest {
                 productCondition = Condition.NEW,
                 cityId = cities[0].id,
                 cityName = cities[0].name,
+                province = cities[0].province,
                 location = GeoJsonPoint(cities[0].longitude, cities[0].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
@@ -1155,6 +1189,7 @@ class AuctionControllerTest {
                 productCondition = Condition.USED,
                 cityId = cities[1].id,
                 cityName = cities[1].name,
+                province = cities[1].province,
                 location = GeoJsonPoint(cities[1].longitude, cities[1].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
@@ -1170,6 +1205,7 @@ class AuctionControllerTest {
                 productCondition = Condition.USED,
                 cityId = cities[2].id,
                 cityName = cities[2].name,
+                province = cities[2].province,
                 location = GeoJsonPoint(cities[2].longitude, cities[2].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
@@ -1185,6 +1221,7 @@ class AuctionControllerTest {
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = cities[3].id,
                 cityName = cities[3].name,
+                province = cities[3].province,
                 location = GeoJsonPoint(cities[3].longitude, cities[3].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
@@ -1261,7 +1298,7 @@ class AuctionControllerTest {
             )
         )
 
-        val finalLevelCategory: CategoryResponse = categoryFacade.create(
+        return categoryFacade.create(
             request = CategoryCreateRequest(
                 name = "Final level category",
                 description = "Nice final level category",
@@ -1271,7 +1308,6 @@ class AuctionControllerTest {
             )
         )
 
-        return finalLevelCategory
     }
 
 }

@@ -29,6 +29,7 @@ data class Auction(
     var cityName: String,
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     var location: GeoJsonPoint,
+    var province: String,
     var status: AuctionStatus = AuctionStatus.NEW,
     var expiresAt: Instant
 ) {

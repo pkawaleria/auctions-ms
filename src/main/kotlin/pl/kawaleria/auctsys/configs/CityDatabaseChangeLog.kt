@@ -2,9 +2,11 @@ package pl.kawaleria.auctsys.configs
 
 import com.github.cloudyrock.mongock.ChangeLog
 import com.github.cloudyrock.mongock.ChangeSet
+import org.springframework.context.annotation.Profile
 import pl.kawaleria.auctsys.auctions.domain.City
 import pl.kawaleria.auctsys.auctions.domain.CityRepository
 
+@Profile("dev")
 @ChangeLog(order = "003")
 class CityDatabaseChangeLog {
 

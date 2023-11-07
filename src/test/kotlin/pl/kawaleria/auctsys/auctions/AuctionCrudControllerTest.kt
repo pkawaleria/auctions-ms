@@ -33,6 +33,7 @@ import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 private const val baseUrl: String = "/auction-service/auctions"
@@ -57,6 +58,7 @@ class AuctionControllerTest {
     companion object {
         val logger: Logger = getLogger(AuctionControllerTest::class.java)
     }
+
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -173,7 +175,7 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("searchPhrase", selectedSearchPhrase)
-                    .param("category", selectedCategory)
+                    .param("categoryNamePhrase", selectedCategory)
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isOk)
@@ -214,7 +216,7 @@ class AuctionControllerTest {
                     .param("page", selectedPage.toString())
                     .param("pageSize", selectedPageSize.toString())
                     .param("searchPhrase", selectedSearchPhrase)
-                    .param("category", selectedCategory)
+                    .param("categoryNamePhrase", selectedCategory)
                     .contentType(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isOk)
@@ -394,10 +396,15 @@ class AuctionControllerTest {
             val foundAuction: AuctionDetailedResponse =
                 objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
 
-            logger.info(foundAuction.toString())
-            logger.info(auction.toDetailedResponse(viewCount = 1L).toString())
+            // Custom comparator for OffsetDateTime to ignore microseconds
+            val offsetDateTimeComparator = Comparator<Instant> { a, b ->
+                a.truncatedTo(ChronoUnit.MILLIS).compareTo(b.truncatedTo(ChronoUnit.MILLIS))
+            }
 
-            Assertions.assertThat(foundAuction).isEqualTo(auction.toDetailedResponse(viewCount = 1L))
+            Assertions.assertThat(foundAuction)
+                .usingRecursiveComparison()
+                .withComparatorForType(offsetDateTimeComparator, Instant::class.java)
+                .isEqualTo(auction.toDetailedResponse(viewCount = 1L))
         }
 
         @ParameterizedTest

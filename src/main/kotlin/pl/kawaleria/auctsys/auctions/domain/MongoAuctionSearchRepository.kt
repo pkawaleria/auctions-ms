@@ -8,8 +8,9 @@ import org.springframework.data.mongodb.core.query.Query
 
 class MongoAuctionSearchRepository(private val mongoTemplate: MongoTemplate) : AuctionSearchRepository {
     override fun search(query: Query, pageable: Pageable): Page<Auction> {
-        val auctions: List<Auction> = mongoTemplate.find(query, Auction::class.java).toList()
         val count: Long = mongoTemplate.count(query, Auction::class.java)
+        query.with(pageable)
+        val auctions: List<Auction> = mongoTemplate.find(query, Auction::class.java).toList()
         return PageImpl(auctions, pageable, count)
     }
 }

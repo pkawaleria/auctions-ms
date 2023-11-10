@@ -17,17 +17,19 @@ class AuctionInserterChangeLog {
         cityRepository: CityRepository
     ) {
 
-        AuctionBuilder(
-            auctionRepository = auctionRepository,
-            categoryRepository = categoryRepository,
-            cityRepository = cityRepository
-        )
-            .name("Przykladowa aukcja")
-            .description("Przykladowy opis aukcji")
-            .price(123.5)
-            .categoryId()
-            .productCondition(Condition.NEW)
-            .cityId()
-            .save()
+        for (index: Int in 1 .. 150) {
+            AuctionBuilder(
+                auctionRepository = auctionRepository,
+                categoryRepository = categoryRepository,
+                cityRepository = cityRepository
+            )
+                .name("Aukcja numer $index")
+                .description("Opis aukcji number $index")
+                .price(150.5 * index)
+                .categoryId()
+                .productCondition(Condition.NEW)
+                .cityId()
+                .save()
+        }
     }
 }

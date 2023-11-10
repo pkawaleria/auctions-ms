@@ -18,15 +18,15 @@ data class AuctionDetailedResponse(
     val productCondition: Condition,
     val cityId: String,
     val cityName: String,
+    val province: String,
     val longitude: Double,
     val latitude: Double,
     val expirationTimestamp: Instant,
     val status: String,
     val viewCount: Long
-
 )
 
 fun Auction.toDetailedResponse(viewCount: Long = 0L): AuctionDetailedResponse = AuctionDetailedResponse(
     id, name, description, price, auctioneerId, thumbnail, category, categoryPath, productCondition,
-    cityId, cityName, location.x, location.y, expiresAt, status.name, viewCount
+    cityId, cityName, province, location.x, location.y, expiresAt, status.name, viewCount
 )

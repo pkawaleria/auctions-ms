@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.views.domain
 
 import pl.kawaleria.auctsys.views.dto.AuctionViewsFromIpResponse
+import pl.kawaleria.auctsys.views.dto.AuctionsViewsRespone
 
 class AuctionViewsQueryFacade(
     private val auctionViewsPerIpRepository: AuctionViewsPerIpRepository,
@@ -9,6 +10,13 @@ class AuctionViewsQueryFacade(
     fun getAuctionViews(auctionId: String): Long =
         auctionViewsRepository.findById(auctionId).map { it.viewCounter }.orElse(0L)
 
+
+    fun getAuctionsViews(auctionsIds: List<String>): AuctionsViewsRespone {
+        val auctionsViews = auctionsIds
+            .mapNotNull { auctionViewsRepository.findById(it).orElse(null) }
+            .associate { it.auctionId to it.viewCounter }
+        return AuctionsViewsRespone(auctionsViewsPerId = auctionsViews)
+    }
     fun getRecentViewsFromIpAddress(ipAddress: String): List<String> =
         auctionViewsPerIpRepository.findByIpAddressOrderByLastViewedDesc(ipAddress).map { it.auctionId }
 

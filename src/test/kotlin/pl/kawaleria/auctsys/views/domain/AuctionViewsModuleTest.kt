@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.views.domain
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.SoftAssertions
 import org.assertj.core.groups.Tuple
 import org.junit.jupiter.api.Test
 import pl.kawaleria.auctsys.auctions.dto.events.AuctionViewedEvent
@@ -187,6 +188,71 @@ class AuctionViewsModuleTest {
         // then
         Assertions.assertThat(auctionViewsQueryFacade.getAuctionViews(auctionViewedFromIp.auctionId)).isEqualTo(1)
     }
+
+
+    @Test
+    fun `should return view counter for multiple auctions`() {
+        // given
+        val ipAddress = "127.90.213.90"
+        val firstAuctionViewedFromIp = AuctionViewedEvent(
+            ipAddress = ipAddress,
+            auctionId = "auction-id-1"
+        )
+
+        val secondAuctionViewedFromIp = AuctionViewedEvent(
+            ipAddress = ipAddress,
+            auctionId = "auction-id-2"
+        )
+
+        val thirdAuctionViewedFromIp = AuctionViewedEvent(
+            ipAddress = ipAddress,
+            auctionId = "auction-id-3"
+        )
+
+        val secondsBetweenConsecutiveViews = 3600
+        val firstAuctionConsecutiveViews = 10
+        val secondAuctionConsecutiveViews = 20
+        val thirdAuctionConsecutiveViews = 30
+
+        auctionViewedNTimesWithIntervalOfSeconds(
+            auctionViewedFromIp = firstAuctionViewedFromIp,
+            n = firstAuctionConsecutiveViews,
+            seconds = secondsBetweenConsecutiveViews
+        )
+        auctionViewedNTimesWithIntervalOfSeconds(
+            auctionViewedFromIp = secondAuctionViewedFromIp,
+            n = secondAuctionConsecutiveViews,
+            seconds = secondsBetweenConsecutiveViews
+        )
+        auctionViewedNTimesWithIntervalOfSeconds(
+            auctionViewedFromIp = thirdAuctionViewedFromIp,
+            n = thirdAuctionConsecutiveViews,
+            seconds = secondsBetweenConsecutiveViews
+        )
+
+        // when
+
+        val auctionsViews = auctionViewsQueryFacade.getAuctionsViews(
+            listOf("auction-id-1", "auction-id-2", "auction-id-3"))
+
+        // then
+        SoftAssertions().apply {
+            assertThat(auctionsViews.getViewsOfAuction("auction-id-1"))
+                .`as`("Views for auction-id-1")
+                .isEqualTo(firstAuctionConsecutiveViews.toLong())
+
+            assertThat(auctionsViews.getViewsOfAuction("auction-id-2"))
+                .`as`("Views for auction-id-2")
+                .isEqualTo(secondAuctionConsecutiveViews.toLong())
+
+            assertThat(auctionsViews.getViewsOfAuction("auction-id-3"))
+                .`as`("Views for auction-id-3")
+                .isEqualTo(thirdAuctionConsecutiveViews.toLong())
+
+            assertAll()
+        }
+    }
+
 
     private fun auctionViewedNTimesWithIntervalOfSeconds(
         auctionViewedFromIp: AuctionViewedEvent,

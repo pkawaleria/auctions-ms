@@ -2,6 +2,7 @@ package pl.kawaleria.auctsys.auctions.domain
 
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.geo.Circle
@@ -134,8 +135,13 @@ class AuctionFacade(
 
     fun searchAuctions(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): PagedAuctions {
         validateGeolocationFiltersIfExist(searchRequest.radius, searchRequest.cityId)
-        val query: Query = buildSearchQuery(searchRequest, pageRequest)
-        return auctionSearchRepository.search(query, pageRequest).toPagedAuctions()
+        val query: Query = buildSearchQuery(searchRequest)
+
+        val searchedAuctions: Page<Auction> = auctionSearchRepository.search(query, pageRequest)
+        val searchedAuctionsIds = searchedAuctions.toList().map { it.id }
+
+        val auctionsViews = auctionViewsQueryFacade.getAuctionsViews(searchedAuctionsIds)
+        return searchedAuctions.toPagedAuctions(auctionsViews = auctionsViews)
     }
 
     private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
@@ -145,7 +151,7 @@ class AuctionFacade(
         if (cityId == null) throw SearchRadiusWithoutCityException()
     }
 
-    private fun buildSearchQuery(searchRequest: AuctionsSearchRequest, pageRequest: PageRequest): Query {
+    private fun buildSearchQuery(searchRequest: AuctionsSearchRequest): Query {
         val query = Query()
         addPredicatesForActiveAuctions(query)
 

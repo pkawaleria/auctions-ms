@@ -39,30 +39,31 @@ class SecurityConfig {
     private val jwtSigningKey: String = ""
 
     private val AUTH_WHITELIST = arrayOf(
-        "/swagger-resources",
-        "/swagger-resources/**",
-        "/configuration/ui",
-        "/configuration/security",
-        "/swagger-ui.html",
-        "/webjars/**",
-        "/v3/api-docs/**",
-        "/api/public/**",
-        "/api/public/authenticate",
-        "/actuator/*",
-        "/swagger-ui/**",
-        "/swagger-ui",
-        "/swagger-ui/*",
-        "/v3/api-docs"
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/v3/api-docs/**",
+            "/api/public/**",
+            "/api/public/authenticate",
+            "/actuator/*",
+            "/swagger-ui/**",
+            "/swagger-ui",
+            "/swagger-ui/*",
+            "/v3/api-docs"
     )
 
     private val PUBLIC_ENDPOINTS = arrayOf(
-        Endpoint(HttpMethod.GET, "/auction-service/auctions"),
-        Endpoint(HttpMethod.GET, "/auction-service/auctions/**"),
-        Endpoint(HttpMethod.GET, "/auction-service/auctions/search"),
-        Endpoint(HttpMethod.GET, "/cities/search"),
-        Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images/{imageId}"),
-        Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images"),
-        Endpoint(HttpMethod.GET, "/auction-service/categories/**"),
+            Endpoint(HttpMethod.GET, "/auction-service/auctions"),
+            Endpoint(HttpMethod.GET, "/auction-service/auctions/**"),
+            Endpoint(HttpMethod.GET, "/auction-service/auctions/search"),
+            Endpoint(HttpMethod.GET, "/cities/search"),
+            Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images/{imageId}"),
+            Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images"),
+            Endpoint(HttpMethod.GET, "/auction-service/categories/**"),
+            Endpoint(HttpMethod.GET, "/auction-service/users/{userId}/auctions"),
     )
 
     @Bean
@@ -91,7 +92,7 @@ class SecurityConfig {
         http.oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->
                 jwt.decoder(jwtDecoder())
-                    .jwtAuthenticationConverter(CustomAuthenticationConverter())
+                        .jwtAuthenticationConverter(CustomAuthenticationConverter())
             }
         }
         return http.build()
@@ -128,7 +129,7 @@ class SecurityConfig {
         override fun convert(jwt: Jwt): JwtAuthenticationToken {
             val userId: String = jwt.subject
             val roles: List<GrantedAuthority> = jwt.getClaimAsStringList(ROLES_KEY_IN_JWT)
-                .map { SimpleGrantedAuthority("$ROLE_PREFIX$it") }
+                    .map { SimpleGrantedAuthority("$ROLE_PREFIX$it") }
             return JwtAuthenticationToken(jwt, roles, userId)
         }
     }

@@ -218,6 +218,7 @@ class AuctionFacadeTest {
             categoryId = finalCategory.id,
             productCondition = Condition.USED,
             cityId = city.id,
+            phoneNumber = "123456780"
         )
 
         val auctionId: String =

@@ -135,7 +135,8 @@ class AuctionOperationsControllerTest {
                 province = city.province,
                 location = GeoJsonPoint(city.latitude, city.longitude),
                 expiresAt = defaultExpiration(),
-                thumbnail = byteArrayOf()
+                thumbnail = byteArrayOf(),
+                phoneNumber = "123456780"
             )
         )
     }

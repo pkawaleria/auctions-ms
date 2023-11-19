@@ -34,7 +34,8 @@ class AuctionBuilder(
             price = 0.0,
             categoryId = "",
             productCondition = Condition.NEW,
-            cityId = ""
+            cityId = "",
+            phoneNumber = ""
         )
 
         return this
@@ -65,6 +66,10 @@ class AuctionBuilder(
         currentCreateAuctionRequest?.cityId = cityRepository.findAll(pageRequest).first().id
         return this
     }
+    fun phoneNumber(phoneNumber: String): AuctionBuilder {
+        currentCreateAuctionRequest?.phoneNumber = phoneNumber
+        return this
+    }
 
     fun save(): Auction {
         val standardCreateAuctionRequest: CreateAuctionRequest? = currentCreateAuctionRequest?.toCreateAuctionRequest()
@@ -91,7 +96,8 @@ class AuctionBuilder(
             cityName = city.name,
             province = city.province,
             location = GeoJsonPoint(city.longitude, city.latitude),
-            status = AuctionStatus.ACCEPTED
+            status = AuctionStatus.ACCEPTED,
+            phoneNumber = standardCreateAuctionRequest.phoneNumber
         )
 
         return auctionRepository.save(auction)
@@ -163,7 +169,8 @@ data class CreateAuctionRequestForDev(
     var categoryId: String,
     var productCondition: Condition,
     var cityId: String,
+    var phoneNumber: String,
 )
 
 fun CreateAuctionRequestForDev.toCreateAuctionRequest(): CreateAuctionRequest =
-    CreateAuctionRequest(name, description, price, categoryId, productCondition, cityId)
+    CreateAuctionRequest(name, description, price, categoryId, productCondition, cityId, phoneNumber)

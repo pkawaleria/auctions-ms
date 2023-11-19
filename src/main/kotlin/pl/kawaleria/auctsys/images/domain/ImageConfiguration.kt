@@ -18,9 +18,8 @@ class ImageConfiguration {
         auctionFacade: AuctionFacade,
         imageVerifier: AsyncImageVerifier,
         imageValidator: ImageValidator,
-        contentVerificationClient: ContentVerificationClient,
         applicationEventPublisher: ApplicationEventPublisher
     ): ImageFacade {
-        return ImageFacade(repository, thumbnailRules, imageVerificationRules, auctionFacade, imageValidator, applicationEventPublisher, contentVerificationClient)
+        return ImageFacade(repository, thumbnailRules, imageVerificationRules, auctionFacade, imageValidator, applicationEventPublisher)
     }
 }

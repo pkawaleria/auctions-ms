@@ -24,8 +24,8 @@ class ImageController(private val imageFacade: ImageFacade) {
     fun addImages(
             @PathVariable auctionId: String,
             @RequestPart files: List<MultipartFile>
-    ): List<ImageDetailedResponse> {
-        return imageFacade.createImages(auctionId, files).map { image -> image.toImageDetailedResponse() }
+    ): List<ImageSimplifiedResponse> {
+        return imageFacade.createImages(auctionId, files)
     }
 
     @GetMapping("/{auctionId}/images/{imageId}")
@@ -41,7 +41,8 @@ class ImageController(private val imageFacade: ImageFacade) {
     }
 
     @GetMapping("/{auctionId}/images")
-    fun getImages(@PathVariable auctionId: String): ResponseEntity<AuctionImagesResponse> = ResponseEntity.ok(imageFacade.findImagesByAuctionId(auctionId))
+    fun getImages(@PathVariable auctionId: String): ResponseEntity<AuctionImagesResponse> =
+        ResponseEntity.ok(imageFacade.findImagesByAuctionId(auctionId))
 
     @DeleteMapping("/{auctionId}/images/{imageId}")
     @PreAuthorize("hasRole('ROLE_USER')")

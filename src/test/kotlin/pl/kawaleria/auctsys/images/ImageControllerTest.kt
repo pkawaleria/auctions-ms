@@ -317,7 +317,8 @@ class ImageControllerTest {
             cityName = city.name,
             province = city.province,
             location = GeoJsonPoint(city.latitude, city.longitude),
-            productCondition = Condition.NOT_APPLICABLE
+            productCondition = Condition.NOT_APPLICABLE,
+            phoneNumber = "123456780"
         )
 
         return auctionRepository.save(auction).id

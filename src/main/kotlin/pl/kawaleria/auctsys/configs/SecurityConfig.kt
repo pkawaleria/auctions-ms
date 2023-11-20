@@ -59,7 +59,7 @@ class SecurityConfig {
             Endpoint(HttpMethod.GET, "/auction-service/auctions"),
             Endpoint(HttpMethod.GET, "/auction-service/auctions/**"),
             Endpoint(HttpMethod.GET, "/auction-service/auctions/search"),
-            Endpoint(HttpMethod.GET, "/cities/search"),
+            Endpoint(HttpMethod.GET, "/auction-service/cities/search"),
             Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images/{imageId}"),
             Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images"),
             Endpoint(HttpMethod.GET, "/auction-service/categories/**"),

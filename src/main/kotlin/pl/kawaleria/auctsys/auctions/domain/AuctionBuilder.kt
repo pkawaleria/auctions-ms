@@ -1,6 +1,5 @@
 package pl.kawaleria.auctsys.auctions.domain
 
-import org.bson.types.ObjectId
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
@@ -25,7 +24,7 @@ class AuctionBuilder(
 ) {
 
     private var currentCreateAuctionRequest: CreateAuctionRequestForDev? = null
-    private val userId: String = ObjectId().toString()
+    private val userId: String = "1"
 
     fun name(name: String): AuctionBuilder {
         currentCreateAuctionRequest = CreateAuctionRequestForDev(
@@ -66,6 +65,7 @@ class AuctionBuilder(
         currentCreateAuctionRequest?.cityId = cityRepository.findAll(pageRequest).first().id
         return this
     }
+
     fun phoneNumber(phoneNumber: String): AuctionBuilder {
         currentCreateAuctionRequest?.phoneNumber = phoneNumber
         return this

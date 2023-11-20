@@ -8,7 +8,7 @@ import pl.kawaleria.auctsys.auctions.dto.requests.CitiesSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
 
 @RestController
-@RequestMapping("/cities")
+@RequestMapping("/auction-service/cities")
 class CityOperationsController(private val cityFacade: CityFacade) {
 
     @PostMapping("/import")

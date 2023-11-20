@@ -55,6 +55,16 @@ class AuctionBuilder(
         return this
     }
 
+    fun categoryWithMoreThenTwoSubcategoriesId(): AuctionBuilder {
+        val psy: pl.kawaleria.auctsys.categories.domain.Category =
+            categoryRepository.getFinalCategories().find {
+                category -> category.name == "Psy do adopcji za darmo"
+        }!!
+
+        currentCreateAuctionRequest?.categoryId = psy.id
+        return this
+    }
+
     fun productCondition(productCondition: Condition): AuctionBuilder {
         currentCreateAuctionRequest?.productCondition = productCondition
         return this
@@ -148,10 +158,10 @@ class AuctionBuilder(
     private fun resizeImageToThumbnailFormat(image: ClassPathResource): ByteArray {
         val originalImage: BufferedImage = ImageIO.read(image.inputStream)
 
-        val scaledImage = BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB)
+        val scaledImage = BufferedImage(200, ((200 * 3) / 4), BufferedImage.TYPE_INT_RGB)
 
         val g: Graphics2D = scaledImage.createGraphics()
-        g.drawImage(originalImage, 0, 0, 100, 100, null)
+        g.drawImage(originalImage, 0, 0, 200, ((200 * 3) / 4), null)
         g.dispose()
 
         val outputStream = ByteArrayOutputStream()

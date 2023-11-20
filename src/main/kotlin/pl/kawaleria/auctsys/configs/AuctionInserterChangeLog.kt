@@ -34,12 +34,25 @@ class AuctionInserterChangeLog {
                 .cityId()
                 .save()
         }
+
+        AuctionBuilder(
+            auctionRepository = auctionRepository,
+            categoryRepository = categoryRepository,
+            cityRepository = cityRepository
+        )
+            .name("Aukcja inna niż pozostałe")
+            .description("Opis aukcji innej niż pozostałe")
+            .price(1257.87)
+            .categoryWithMoreThenTwoSubcategoriesId()
+            .productCondition(Condition.NEW)
+            .cityId()
+            .save()
     }
 
     @ChangeSet(order = "002", id = "updatePhoneNumberInAuctions", author = "lukasz-karasek")
     fun updatePhoneNumberInAuctions(mongockTemplate: MongockTemplate) {
         val query = Query()
-        val update = Update().set("phoneNumber", "901234874")
+        val update: Update = Update().set("phoneNumber", "901234874")
         mongockTemplate.updateMulti(query, update, Auction::class.java)
     }
 }

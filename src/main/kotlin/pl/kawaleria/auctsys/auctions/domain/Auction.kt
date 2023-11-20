@@ -31,7 +31,8 @@ data class Auction(
     var location: GeoJsonPoint,
     var province: String,
     var status: AuctionStatus = AuctionStatus.NEW,
-    var expiresAt: Instant
+    var expiresAt: Instant,
+    var phoneNumber: String
 ) {
 
     fun assignPath(categoryPath: CategoryPath) {

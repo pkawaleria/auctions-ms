@@ -288,7 +288,8 @@ class LoggedInAuctioneerControllerTest {
                 location = GeoJsonPoint(12.23, 23.33),
                 expiresAt = Instant.now().minusSeconds(Duration.ofDays(1).toSeconds()),
                 thumbnail = byteArrayOf(),
-                status = AuctionStatus.ACCEPTED
+                status = AuctionStatus.ACCEPTED,
+                phoneNumber = "123456780"
             )
         )
     }
@@ -309,7 +310,8 @@ class LoggedInAuctioneerControllerTest {
                 location = GeoJsonPoint(12.23, 23.33),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 thumbnail = byteArrayOf(),
-                status = AuctionStatus.ACCEPTED
+                status = AuctionStatus.ACCEPTED,
+                phoneNumber = "123456780"
             )
         )
     }
@@ -330,7 +332,8 @@ class LoggedInAuctioneerControllerTest {
                 location = GeoJsonPoint(12.23, 23.33),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 thumbnail = byteArrayOf(),
-                status = auctionStatus
+                status = auctionStatus,
+                phoneNumber = "123456780"
             ),
             Auction(
                 name = "Wireless JBL headphones",
@@ -346,7 +349,9 @@ class LoggedInAuctioneerControllerTest {
                 location = GeoJsonPoint(12.23, 23.33),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 thumbnail = byteArrayOf(),
-                status = auctionStatus
+                status = auctionStatus,
+                phoneNumber = "123456780"
+
             ),
             Auction(
                 name = "Wireless Sony headphones",
@@ -362,7 +367,8 @@ class LoggedInAuctioneerControllerTest {
                 location = GeoJsonPoint(12.23, 23.33),
                 expiresAt = Instant.now().plusSeconds(Duration.ofDays(1).toSeconds()),
                 thumbnail = byteArrayOf(),
-                status = auctionStatus
+                status = auctionStatus,
+                phoneNumber = "123456780"
             )
         )
 

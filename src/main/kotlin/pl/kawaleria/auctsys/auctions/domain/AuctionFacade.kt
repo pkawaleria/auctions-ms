@@ -72,18 +72,21 @@ class AuctionFacade(
             productCondition = createRequest.productCondition,
             cityName = city.name,
             province = city.province,
-            location = GeoJsonPoint(city.longitude, city.latitude)
+            location = GeoJsonPoint(city.longitude, city.latitude),
+            phoneNumber = createRequest.phoneNumber
         )
 
         return auctionRepository.save(auction).toDetailedResponse()
     }
 
     private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
-        val validatedName: Boolean = validateName(payload.name)
-        val validatedDescription: Boolean = validateDescription(payload.description)
-        val validatedPrice: Boolean = validatePrice(payload.price)
-
-        return (validatedName && validatedDescription && validatedPrice)
+        // TODO: Replace with spring-boot-starter-validation
+//        val validatedName: Boolean = validateName(payload.name)
+//        val validatedDescription: Boolean = validateDescription(payload.description)
+//        val validatedPrice: Boolean = validatePrice(payload.price)
+//
+//        return (validatedName && validatedDescription && validatedPrice)
+        return true;
     }
 
     private fun validateName(name: String): Boolean {

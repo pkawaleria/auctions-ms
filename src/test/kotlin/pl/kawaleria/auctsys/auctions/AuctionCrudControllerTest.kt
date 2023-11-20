@@ -510,6 +510,7 @@ class AuctionControllerTest {
                 price = 1.23,
                 productCondition = Condition.NEW,
                 cityId = city.id,
+                phoneNumber = "123456780"
             )
 
             // when
@@ -548,6 +549,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NEW,
                 cityId = city.id,
+                phoneNumber = "123456780"
             )
 
             // when then
@@ -573,7 +575,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NEW,
                 cityId = city.id,
-
+                phoneNumber = "123456780"
                 )
 
             // when
@@ -598,7 +600,8 @@ class AuctionControllerTest {
                 description = "Headphones",
                 price = 1.23,
                 cityId = city.id,
-                productCondition = Condition.USED
+                productCondition = Condition.USED,
+                phoneNumber = "123456780"
             )
 
             // when then
@@ -624,6 +627,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
+                phoneNumber = "123456780"
             )
 
             // when then
@@ -649,7 +653,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.USED,
                 cityId = city.id,
-
+                phoneNumber = "123456780"
                 )
 
             // when then
@@ -675,7 +679,7 @@ class AuctionControllerTest {
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
-
+                phoneNumber = "123456780"
                 )
 
             // when then
@@ -1126,7 +1130,9 @@ class AuctionControllerTest {
             location = GeoJsonPoint(city.longitude, city.latitude),
             expiresAt = defaultExpiration(),
             status = status,
-            thumbnail = byteArrayOf()
+            thumbnail = byteArrayOf(),
+            phoneNumber = "123456780"
+
         )
 
         return auctionRepository.save(auction)
@@ -1184,7 +1190,8 @@ class AuctionControllerTest {
                 location = GeoJsonPoint(cities[0].longitude, cities[0].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
-                thumbnail = byteArrayOf()
+                thumbnail = byteArrayOf(),
+                phoneNumber = "123456780"
             ),
             Auction(
                 name = "Wireless JBL headphones",
@@ -1200,7 +1207,8 @@ class AuctionControllerTest {
                 location = GeoJsonPoint(cities[1].longitude, cities[1].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
-                thumbnail = byteArrayOf()
+                thumbnail = byteArrayOf(),
+                phoneNumber = "123456780"
             ),
             Auction(
                 name = "Wireless Sony headphones",
@@ -1216,7 +1224,8 @@ class AuctionControllerTest {
                 location = GeoJsonPoint(cities[2].longitude, cities[2].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
-                thumbnail = byteArrayOf()
+                thumbnail = byteArrayOf(),
+                phoneNumber = "123456780"
             ),
             Auction(
                 name = "Wireless Jbl headphones",
@@ -1232,7 +1241,8 @@ class AuctionControllerTest {
                 location = GeoJsonPoint(cities[3].longitude, cities[3].latitude),
                 expiresAt = defaultExpiration(),
                 status = status,
-                thumbnail = byteArrayOf()
+                thumbnail = byteArrayOf(),
+                phoneNumber = "123456780"
             )
         )
 

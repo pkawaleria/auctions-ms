@@ -5,9 +5,9 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.multipart.MultipartFile
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
 import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
-import pl.kawaleria.auctsys.images.dto.exceptions.InappropriateImageException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
-import pl.kawaleria.auctsys.verifications.ContentVerificationClient
+import pl.kawaleria.auctsys.images.dto.responses.ImageSimplifiedResponse
+import pl.kawaleria.auctsys.images.dto.responses.toSimplifiedResponse
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -21,7 +21,6 @@ open class ImageFacade(
     private val auctionFacade: AuctionFacade,
     private val imageValidator: ImageValidator,
     private val eventPublisher: ApplicationEventPublisher,
-    private val contentVerificationClient: ContentVerificationClient
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -37,11 +36,11 @@ open class ImageFacade(
         )
     }
 
-    fun createImages(auctionId: String, files: List<MultipartFile>): List<Image> {
+    fun createImages(auctionId: String, files: List<MultipartFile>): List<ImageSimplifiedResponse> {
         imageValidator.validateMultipartFiles(files)
         val images: List<Image> = saveImages(auctionId, files)
         publishImageVerification(files, auctionId)
-        return images
+        return images.map { image -> image.toSimplifiedResponse() }
     }
 
     private fun publishImageVerification(

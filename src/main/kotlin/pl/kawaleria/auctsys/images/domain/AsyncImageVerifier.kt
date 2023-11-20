@@ -28,7 +28,7 @@ class AsyncImageVerifier(private val contentVerificationClient: ContentVerificat
             foundInappropriateImage = files.any { contentVerificationClient.verifyImage(it.resource).isInappropriate }
         } catch (e: Exception) {
             logger.error("Error during image verification", e)
-            // Here should be some re-check logic, or setting auction status to -manual-check-required-
+            //TODO: Here should be some re-check logic, or setting auction status to -manual-check-required-
         }
 
         if (foundInappropriateImage) {

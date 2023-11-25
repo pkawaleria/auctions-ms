@@ -49,6 +49,8 @@ class SecurityConfig {
             "/api/public/**",
             "/api/public/authenticate",
             "/actuator/*",
+            "/actuator/**",
+            "/actuator",
             "/swagger-ui/**",
             "/swagger-ui",
             "/swagger-ui/*",

@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
@@ -27,9 +28,10 @@ import pl.kawaleria.auctsys.auctions.dto.responses.PagedCities
 import pl.kawaleria.auctsys.withAuthenticatedAdmin
 import pl.kawaleria.auctsys.withAuthenticatedAuctioneer
 
-private const val baseUrl = "/cities"
+private const val baseUrl = "/auction-service/cities"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(value = ["test"])
 @Testcontainers
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

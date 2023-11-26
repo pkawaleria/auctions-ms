@@ -9,9 +9,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.annotation.CurrentSecurityContext
 import org.springframework.web.bind.annotation.*
 import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
-import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
-import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
-import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
+import pl.kawaleria.auctsys.auctions.dto.requests.*
 import pl.kawaleria.auctsys.auctions.dto.responses.*
 import pl.kawaleria.auctsys.commons.IpAddressResolver
 import pl.kawaleria.auctsys.commons.toAuctioneerId
@@ -31,10 +29,25 @@ class AuctionCrudController(private val auctionFacade: AuctionFacade, private va
         @RequestParam(required = false) categoryId: String?,
         @RequestParam(required = false) cityId: String?,
         @RequestParam(required = false) radius: Double?,
-        @RequestParam(required = false) province: String?
+        @RequestParam(required = false) province: String?,
+        @RequestParam(required = false) priceFrom: Int?,
+        @RequestParam(required = false) priceTo: Int?,
+        @RequestParam(required = false) sortBy: AuctionsSortBy?,
+        @RequestParam(required = false) sortOrder: SortOrder?
     ): PagedAuctions {
         val pageRequest: PageRequest = PageRequest.of(page, pageSize)
-        val searchRequest = AuctionsSearchRequest(searchPhrase, categoryNamePhrase, categoryId, cityId, radius, province)
+        val searchRequest = AuctionsSearchRequest(
+            searchPhrase = searchPhrase,
+            categoryName = categoryNamePhrase,
+            categoryId = categoryId,
+            cityId = cityId,
+            radius = radius,
+            province = province,
+            sortOrder = sortOrder,
+            sortBy = sortBy,
+            priceFrom = priceFrom,
+            priceTo = priceTo
+        )
 
         return auctionFacade.searchAuctions(searchRequest, pageRequest)
     }

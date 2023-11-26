@@ -17,6 +17,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -40,6 +41,7 @@ private const val baseUrl: String = "/auction-service/auctions"
 
 /*To run this test you need running Docker environment*/
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(value = ["test"])
 @Testcontainers
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -155,6 +157,75 @@ class AuctionControllerTest {
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
         }
+        @Test
+        fun `should return sorted auctions`() {
+            // given
+            thereAreAuctions()
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val expectedPageCount = 1
+            val expectedFilteredAuctionsCount = 4
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionsSearchUrl)
+                    .withAuthenticatedAuctioneer()
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("sortBy", "NAME")
+                    .param("sortOrder", "ASC")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+            logger.info("Received responses from rest controller: {}", responseJson)
+
+            val auctionNames = pagedAuctions.auctions.map { it.name }
+            Assertions.assertThat(auctionNames).isSorted()
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
+        }
+
+        @Test
+        fun `should search auctions in price range`() {
+            // given
+            thereAreAuctions()
+
+            val selectedPage = 0
+            val selectedPageSize = 10
+            val expectedPageCount = 1
+            val expectedFilteredAuctionsCount = 2
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                get(auctionsSearchUrl)
+                    .withAuthenticatedAuctioneer()
+                    .param("page", selectedPage.toString())
+                    .param("pageSize", selectedPageSize.toString())
+                    .param("priceFrom", "1")
+                    .param("priceTo", "5")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val pagedAuctions: PagedAuctions = objectMapper.readValue(responseJson, PagedAuctions::class.java)
+            logger.info("Received responses from rest controller: {}", responseJson)
+
+            Assertions.assertThat(pagedAuctions.auctions.size).isEqualTo(expectedFilteredAuctionsCount)
+            Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
+            Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
+        }
+
+
 
         @Test
         fun `should search among auctions with provided search phrase and category`() {

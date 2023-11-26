@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -27,6 +28,7 @@ import pl.kawaleria.auctsys.images.domain.Image
 import pl.kawaleria.auctsys.images.domain.ImageRepository
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
 import pl.kawaleria.auctsys.images.dto.responses.ImageDetailedResponse
+import pl.kawaleria.auctsys.images.dto.responses.ImageSimplifiedResponse
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -34,6 +36,7 @@ import java.util.*
 private const val baseUrl = "/auction-service/auctions"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(value = ["test"])
 @Testcontainers
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -94,8 +97,8 @@ class ImageControllerTest {
 
             // then
             val response: String = result.response.contentAsString
-            val mappedImages: List<ImageDetailedResponse> =
-                    objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageDetailedResponse::class.java))
+            val mappedImages: List<ImageSimplifiedResponse> =
+                    objectMapper.readValue(response, objectMapper.typeFactory.constructCollectionType(List::class.java, ImageSimplifiedResponse::class.java))
 
             Assertions.assertThat(mappedImages).hasSize(3)
         }

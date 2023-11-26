@@ -36,7 +36,7 @@ class ImageController(private val imageFacade: ImageFacade) {
         val image: Image = imageFacade.findImageById(imageId)
 
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(image.type))
+            .contentType(MediaType.IMAGE_JPEG)
             .body(image.binaryData)
     }
 
@@ -51,7 +51,6 @@ class ImageController(private val imageFacade: ImageFacade) {
             @PathVariable imageId: String
     ): ResponseEntity<Unit> {
         imageFacade.delete(imageId)
-
         return ResponseEntity.noContent().build()
     }
 }

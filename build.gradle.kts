@@ -20,6 +20,7 @@ repositories {
 
 val testcontainersVersion = "1.18.3"
 val assertJVersion = "3.24.2"
+val thumbnailatorVersion = "0.4.20"
 
 dependencies {
  	implementation("org.springframework.boot:spring-boot-starter-security")
@@ -34,6 +35,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("net.coobird:thumbnailator:$thumbnailatorVersion")
+
 //	implementation("io.minio:minio:8.5.4")
 //	implementation("org.springframework.kafka:spring-kafka")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")

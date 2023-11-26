@@ -1,5 +1,6 @@
 package pl.kawaleria.auctsys.images.domain
 
+import net.coobird.thumbnailator.Thumbnails
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.multipart.MultipartFile
@@ -8,8 +9,6 @@ import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
 import pl.kawaleria.auctsys.images.dto.responses.ImageSimplifiedResponse
 import pl.kawaleria.auctsys.images.dto.responses.toSimplifiedResponse
-import java.awt.Graphics2D
-import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
@@ -51,6 +50,7 @@ open class ImageFacade(
             eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
         } else {
             addThumbnailToAuction(auctionId, files.first())
+            auctionFacade.accept(auctionId)
             logger.debug("Image verification switched off and omitted for auction of id $auctionId")
         }
     }
@@ -59,16 +59,17 @@ open class ImageFacade(
         auctionFacade.saveThumbnail(auctionId, resizeImageToThumbnailFormat(image))
 
     private fun resizeImageToThumbnailFormat(image: MultipartFile): ByteArray {
-        val originalImage: BufferedImage = ImageIO.read(image.inputStream)
+        val originalImage = ImageIO.read(image.inputStream)
 
-        val scaledImage = BufferedImage(thumbnailRules.width, thumbnailRules.height, BufferedImage.TYPE_INT_RGB)
-
-        val g: Graphics2D = scaledImage.createGraphics()
-        g.drawImage(originalImage, 0, 0, thumbnailRules.width, thumbnailRules.height, null)
-        g.dispose()
+        val thumbnailWidth = thumbnailRules.width
+        val thumbnailHeight = thumbnailRules.height
 
         val outputStream = ByteArrayOutputStream()
-        ImageIO.write(scaledImage, "jpg", outputStream)
+
+        Thumbnails.of(originalImage)
+            .size(thumbnailWidth, thumbnailHeight)
+            .outputFormat("png")
+            .toOutputStream(outputStream)
 
         return outputStream.toByteArray()
     }

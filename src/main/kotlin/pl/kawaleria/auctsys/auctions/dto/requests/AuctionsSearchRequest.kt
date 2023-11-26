@@ -6,5 +6,9 @@ data class AuctionsSearchRequest(
         val categoryId: String?,
         val cityId: String?,
         val radius: Double?,
-        val province: String?
+        val province: String?,
+        val priceFrom: Int?,
+        val priceTo: Int?,
+        val sortOrder: SortOrder?,
+        val sortBy: AuctionsSortBy?
 )

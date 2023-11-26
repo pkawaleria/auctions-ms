@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.geo.Circle
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Metrics
@@ -182,8 +183,30 @@ class AuctionFacade(
                 query.addCriteria(Criteria.where("cityId").isEqualTo(cityId))
             }
         }
+        addPriceCriteria(searchRequest, query)
+        val sortDirection: Sort.Direction = resolveSortDirection(searchRequest)
+        searchRequest.sortBy?.auctionProperty.takeIf { !it.isNullOrBlank() }?.let { sortProperty ->
+            query.with(Sort.by(sortDirection, sortProperty))
+        }
         return query
     }
+
+    private fun addPriceCriteria(
+        searchRequest: AuctionsSearchRequest,
+        query: Query
+    ) {
+        if (searchRequest.priceFrom != null && searchRequest.priceTo != null) {
+            query.addCriteria(Criteria.where("price").gte(searchRequest.priceFrom).lte(searchRequest.priceTo))
+        } else if (searchRequest.priceFrom != null) {
+            query.addCriteria(Criteria.where("price").gte(searchRequest.priceFrom))
+        } else if (searchRequest.priceTo != null) {
+            query.addCriteria(Criteria.where("price").lte(searchRequest.priceTo))
+        }
+    }
+
+    private fun resolveSortDirection(searchRequest: AuctionsSearchRequest) =
+        (searchRequest.sortOrder?.let { Sort.Direction.fromString(it.toString()) }
+            ?: Sort.Direction.ASC)
 
     private fun addPredicatesForActiveAuctions(query: Query) {
         query.addCriteria(Criteria.where("expiresAt").gte(Instant.now(clock)))

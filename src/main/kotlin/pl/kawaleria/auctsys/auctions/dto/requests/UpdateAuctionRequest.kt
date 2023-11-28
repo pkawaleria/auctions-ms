@@ -6,6 +6,8 @@ data class UpdateAuctionRequest(
     val name: String,
     val description: String,
     val price: Double,
+    val categoryId: String,
     val productCondition: Condition,
     val cityId: String,
+    val phoneNumber: String
 )

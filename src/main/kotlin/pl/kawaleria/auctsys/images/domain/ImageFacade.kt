@@ -9,6 +9,7 @@ import pl.kawaleria.auctsys.images.dto.exceptions.ImageDoesNotExistsException
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
 import pl.kawaleria.auctsys.images.dto.responses.ImageSimplifiedResponse
 import pl.kawaleria.auctsys.images.dto.responses.toSimplifiedResponse
+import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
@@ -59,10 +60,10 @@ open class ImageFacade(
         auctionFacade.saveThumbnail(auctionId, resizeImageToThumbnailFormat(image))
 
     private fun resizeImageToThumbnailFormat(image: MultipartFile): ByteArray {
-        val originalImage = ImageIO.read(image.inputStream)
+        val originalImage: BufferedImage = ImageIO.read(image.inputStream)
 
-        val thumbnailWidth = thumbnailRules.width
-        val thumbnailHeight = thumbnailRules.height
+        val thumbnailWidth: Int = thumbnailRules.width
+        val thumbnailHeight: Int = thumbnailRules.height
 
         val outputStream = ByteArrayOutputStream()
 

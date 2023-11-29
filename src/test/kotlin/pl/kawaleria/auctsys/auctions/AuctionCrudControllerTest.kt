@@ -14,10 +14,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -157,6 +157,7 @@ class AuctionControllerTest {
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
         }
+
         @Test
         fun `should return sorted auctions`() {
             // given
@@ -224,7 +225,6 @@ class AuctionControllerTest {
             Assertions.assertThat(pagedAuctions.pageCount).isEqualTo(expectedPageCount)
             Assertions.assertThat(pagedAuctions.pageNumber).isEqualTo(selectedPage)
         }
-
 
 
         @Test
@@ -647,7 +647,7 @@ class AuctionControllerTest {
                 productCondition = Condition.NEW,
                 cityId = city.id,
                 phoneNumber = "123456780"
-                )
+            )
 
             // when
             mockMvc.perform(
@@ -725,7 +725,7 @@ class AuctionControllerTest {
                 productCondition = Condition.USED,
                 cityId = city.id,
                 phoneNumber = "123456780"
-                )
+            )
 
             // when then
             mockMvc.perform(
@@ -751,7 +751,7 @@ class AuctionControllerTest {
                 productCondition = Condition.NOT_APPLICABLE,
                 cityId = city.id,
                 phoneNumber = "123456780"
-                )
+            )
 
             // when then
             mockMvc.perform(
@@ -780,8 +780,10 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
+            )
 
-                )
             // when
             val result: MvcResult = mockMvc.perform(
                 put("$baseUrl/${oldAuction.id}")
@@ -807,6 +809,8 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
             Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
             Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
+            Assertions.assertThat(updatedAuction.category.id).isEqualTo(oldAuction.category.id)
+            Assertions.assertThat(updatedAuction.phoneNumber).isEqualTo(oldAuction.phoneNumber)
         }
 
         @Test
@@ -823,8 +827,9 @@ class AuctionControllerTest {
                 price = expectedAuctionPrice,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-
-                )
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
+            )
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -852,6 +857,56 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
             Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
             Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
+            Assertions.assertThat(updatedAuction.category.id).isEqualTo(oldAuction.category.id)
+            Assertions.assertThat(updatedAuction.phoneNumber).isEqualTo(oldAuction.phoneNumber)
+        }
+
+        @Test
+        fun `should update product condition in auction`() {
+            // given
+            // old auction has Condition.new condition
+            val oldAuction: Auction = thereIsAuction()
+
+            val expectedProductCondition: Condition = Condition.USED
+
+            val updateAuctionRequest = UpdateAuctionRequest(
+                name = oldAuction.name,
+                description = oldAuction.description,
+                price = oldAuction.price,
+                productCondition = expectedProductCondition,
+                cityId = oldAuction.cityId,
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
+            )
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
+                    .withAuthenticatedAuctioneer()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(updateAuctionRequest))
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val updatedAuction: AuctionDetailedResponse =
+                objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
+
+            Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
+            Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
+            Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
+            Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
+            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(expectedProductCondition)
+            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
+            Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
+            Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
+            Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
+            Assertions.assertThat(updatedAuction.category.id).isEqualTo(oldAuction.category.id)
+            Assertions.assertThat(updatedAuction.phoneNumber).isEqualTo(oldAuction.phoneNumber)
         }
 
         @Test
@@ -862,15 +917,17 @@ class AuctionControllerTest {
 
             val expectedCityId: String = cities.first().id
             val expectedCityName: String = cities.first().name
-            val expectedLongitude = cities.first().longitude
-            val expectedLatitude = cities.first().latitude
+            val expectedLongitude: Double = cities.first().longitude
+            val expectedLatitude: Double = cities.first().latitude
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = oldAuction.name,
                 description = oldAuction.description,
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
-                cityId = expectedCityId
+                cityId = expectedCityId,
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
             )
 
             // when
@@ -899,24 +956,27 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(expectedCityName)
             Assertions.assertThat(updatedAuction.latitude).isEqualTo(expectedLatitude)
             Assertions.assertThat(updatedAuction.longitude).isEqualTo(expectedLongitude)
+//            Assertions.assertThat(updatedAuction.category.id).isEqualTo(oldAuction.category.id)
+            Assertions.assertThat(updatedAuction.phoneNumber).isEqualTo(oldAuction.phoneNumber)
         }
 
         @Test
-        fun `should update product condition in auction`() {
+        fun `should update category in auction`() {
             // given
-            // old auction has Condition.new condition
             val oldAuction: Auction = thereIsAuction()
 
-            val expectedProductCondition: Condition = Condition.USED
+            val categoryResponse: CategoryResponse = thereIsSampleCategoryTree()
+            val expectedCategoryId: String = categoryResponse.id
 
             val updateAuctionRequest = UpdateAuctionRequest(
                 name = oldAuction.name,
                 description = oldAuction.description,
                 price = oldAuction.price,
-                productCondition = expectedProductCondition,
+                productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-
-                )
+                categoryId = expectedCategoryId,
+                phoneNumber = oldAuction.phoneNumber
+            )
 
             // when
             val result: MvcResult = mockMvc.perform(
@@ -939,11 +999,60 @@ class AuctionControllerTest {
             Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
             Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
             Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
-            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(expectedProductCondition)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
             Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
             Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
             Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
             Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
+            Assertions.assertThat(updatedAuction.category.id).isEqualTo(expectedCategoryId)
+            Assertions.assertThat(updatedAuction.phoneNumber).isEqualTo(oldAuction.phoneNumber)
+        }
+
+        @Test
+        fun `should update phone number in auction`() {
+            // given
+            val oldAuction: Auction = thereIsAuction()
+
+            val expectedPhoneNumber = "123456789"
+
+            val updateAuctionRequest = UpdateAuctionRequest(
+                name = oldAuction.name,
+                description = oldAuction.description,
+                price = oldAuction.price,
+                productCondition = oldAuction.productCondition,
+                cityId = oldAuction.cityId,
+                categoryId = oldAuction.category.id,
+                phoneNumber = expectedPhoneNumber
+            )
+
+            // when
+            val result: MvcResult = mockMvc.perform(
+                put("$baseUrl/${oldAuction.id}")
+                    .withAuthenticatedAuctioneer()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(updateAuctionRequest))
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+
+            // then
+            val responseJson: String = result.response.contentAsString
+            val updatedAuction: AuctionDetailedResponse =
+                objectMapper.readValue(responseJson, AuctionDetailedResponse::class.java)
+
+
+            Assertions.assertThat(updatedAuction.id).isEqualTo(oldAuction.id)
+            Assertions.assertThat(updatedAuction.name).isEqualTo(oldAuction.name)
+            Assertions.assertThat(updatedAuction.description).isEqualTo(oldAuction.description)
+            Assertions.assertThat(updatedAuction.price).isEqualTo(oldAuction.price)
+            Assertions.assertThat(updatedAuction.auctioneerId).isEqualTo(oldAuction.auctioneerId)
+            Assertions.assertThat(updatedAuction.productCondition).isEqualTo(oldAuction.productCondition)
+            Assertions.assertThat(updatedAuction.cityId).isEqualTo(oldAuction.cityId)
+            Assertions.assertThat(updatedAuction.cityName).isEqualTo(oldAuction.cityName)
+            Assertions.assertThat(updatedAuction.latitude).isEqualTo(oldAuction.location.y)
+            Assertions.assertThat(updatedAuction.longitude).isEqualTo(oldAuction.location.x)
+            Assertions.assertThat(updatedAuction.category.id).isEqualTo(oldAuction.category.id)
+            Assertions.assertThat(updatedAuction.phoneNumber).isEqualTo(expectedPhoneNumber)
         }
 
         @Test
@@ -959,7 +1068,8 @@ class AuctionControllerTest {
                 price = newPrice,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
                 )
 
             // when then
@@ -985,7 +1095,8 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
                 )
 
             // when then
@@ -1011,7 +1122,8 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
                 )
 
             // when then
@@ -1037,7 +1149,8 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = oldAuction.cityId,
-
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
                 )
 
             // when then
@@ -1064,6 +1177,8 @@ class AuctionControllerTest {
                 price = oldAuction.price,
                 productCondition = oldAuction.productCondition,
                 cityId = nonExistingCityId,
+                categoryId = oldAuction.category.id,
+                phoneNumber = oldAuction.phoneNumber
             )
 
             // when then
@@ -1088,6 +1203,8 @@ class AuctionControllerTest {
                 price = 1.23,
                 productCondition = Condition.USED,
                 cityId = city.id,
+                categoryId = "nonExistingCategoryId",
+                phoneNumber = "123456789"
             )
 
             // when then

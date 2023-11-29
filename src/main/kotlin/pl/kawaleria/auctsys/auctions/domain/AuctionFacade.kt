@@ -87,7 +87,7 @@ class AuctionFacade(
 //        val validatedPrice: Boolean = validatePrice(payload.price)
 //
 //        return (validatedName && validatedDescription && validatedPrice)
-        return true;
+        return true
     }
 
     private fun validateName(name: String): Boolean {
@@ -213,22 +213,28 @@ class AuctionFacade(
         query.addCriteria(Criteria.where("status").isEqualTo(AuctionStatus.ACCEPTED))
     }
 
-    fun update(id: String, payload: UpdateAuctionRequest, authContext: Authentication): AuctionDetailedResponse {
-        if (!validateUpdateAuctionRequest(payload)) throw InvalidAuctionUpdateRequestException()
+    fun update(id: String, updateRequest: UpdateAuctionRequest, authContext: Authentication): AuctionDetailedResponse {
+        if (!validateUpdateAuctionRequest(updateRequest)) throw InvalidAuctionUpdateRequestException()
 
         val auction: Auction = findAuctionById(id)
         securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
 
-        val newAuctionCity: City = cityRepository.findById(payload.cityId).orElseThrow { CityNotFoundException() }
+        val categoryPath: CategoryPath =
+            categoryFacade.getFullCategoryPath(updateRequest.categoryId).toAuctionCategoryPathModel()
 
-        auction.name = payload.name
-        auction.price = payload.price
-        auction.description = payload.description
-        auction.productCondition = payload.productCondition
+        val newAuctionCity: City = cityRepository.findById(updateRequest.cityId).orElseThrow { CityNotFoundException() }
+
+        auction.name = updateRequest.name
+        auction.price = updateRequest.price
+        auction.description = updateRequest.description
+        auction.productCondition = updateRequest.productCondition
         auction.cityId = newAuctionCity.id
         auction.cityName = newAuctionCity.name
         auction.location = GeoJsonPoint(newAuctionCity.longitude, newAuctionCity.latitude)
         auction.province = newAuctionCity.province
+        auction.category = categoryPath.lastCategory()
+        auction.categoryPath = categoryPath
+        auction.phoneNumber = updateRequest.phoneNumber
 
         val auctionViews: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
         return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)

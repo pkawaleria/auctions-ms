@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
 import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
 class CanNotImportCitiesException :
-    ApiException(HttpStatus.BAD_REQUEST.value(), "Can not import cities")
+    ApiException(ServiceErrorResponseCode.CIT02, HttpStatus.CONFLICT)

@@ -1,8 +1,8 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
-import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
 private const val MESSAGE_FORMAT = "Cannot perform %s on %s auction"
 
 class UnsupportedOperationOnAuctionException(operation: String, currentState: String) :
-        ApiException(HttpStatus.BAD_REQUEST.value(), String.format(MESSAGE_FORMAT, operation, currentState))
+        ApiException(ServiceErrorResponseCode.AUCT11)

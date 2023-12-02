@@ -1,6 +1,7 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
 import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
 class CityNotFoundException :
-    ApiException(HttpStatus.NOT_FOUND.value(), "Accessed city does not exist")
+    ApiException(ServiceErrorResponseCode.CIT01, HttpStatus.NOT_FOUND)

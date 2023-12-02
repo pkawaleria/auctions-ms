@@ -54,7 +54,8 @@ class AuctionConfiguration {
             securityHelper = securityHelper,
             auctionSearchRepository = MongoAuctionSearchRepository(mongoTemplate),
             auctionViewsQueryFacade = auctionViewsQueryFacade,
-            auctionEventPublisher = SpringAuctionEventPublisher(applicationEventPublisher)
+            auctionEventPublisher = SpringAuctionEventPublisher(applicationEventPublisher),
+            auctionValidator = AuctionValidator()
         )
 
     fun auctionFacadeWithInMemoryRepo(
@@ -76,7 +77,8 @@ class AuctionConfiguration {
             securityHelper = SecurityHelper(),
             auctionSearchRepository = auctionRepository,
             auctionViewsQueryFacade = auctionViewsQueryFacade,
-            auctionEventPublisher = TestAuctionEventPublisher()
+            auctionEventPublisher = TestAuctionEventPublisher(),
+            auctionValidator = AuctionValidator()
         )
     }
 

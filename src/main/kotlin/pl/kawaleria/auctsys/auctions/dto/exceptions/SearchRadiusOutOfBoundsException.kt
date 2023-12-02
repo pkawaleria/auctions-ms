@@ -1,6 +1,6 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
-import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
 class SearchRadiusOutOfBoundsException :
-        ApiException(HttpStatus.BAD_REQUEST.value(), "Search radius is out of bounds")
+    ApiException(ServiceErrorResponseCode.AUCT09)

@@ -7,6 +7,7 @@ import pl.kawaleria.auctsys.categories.dto.exceptions.CategoryNotFound
 import pl.kawaleria.auctsys.categories.dto.exceptions.InvalidCategoryActionException
 import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.responses.*
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 import java.time.Instant
 
 @Component
@@ -20,7 +21,7 @@ class CategoryFacade(
         val category: Category = categoryRepository.findById(categoryId).orElseThrow { CategoryNotFound() }
 
         if (category.isTopLevel) {
-            throw InvalidCategoryActionException("Cannot delete top level category")
+            throw InvalidCategoryActionException(ServiceErrorResponseCode.CAT03)
         }
         if (category.isFinalNode) {
             transferFinalNodeResponsibility(category)
@@ -65,7 +66,7 @@ class CategoryFacade(
 
     fun create(request: CategoryCreateRequest): CategoryResponse {
         if (!request.isTopLevel && request.parentCategoryId?.let { categoryRepository.existsById(it) } == false) {
-            throw InvalidCategoryActionException("Cannot find parent category of id ${request.parentCategoryId}")
+            throw InvalidCategoryActionException(ServiceErrorResponseCode.CAT02)
         }
         val category: Category = request.toCategory()
         return categoryRepository.insert(category).toResponse(emptyList())

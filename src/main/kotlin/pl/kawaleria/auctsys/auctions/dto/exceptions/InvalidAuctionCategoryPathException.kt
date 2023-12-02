@@ -1,6 +1,6 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
-import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
 class InvalidAuctionCategoryPathException :
-        ApiException(HttpStatus.BAD_REQUEST.value(), "Cannot set empty category path to auction")
+    ApiException(ServiceErrorResponseCode.AUCT08)

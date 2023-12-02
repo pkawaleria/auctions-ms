@@ -73,7 +73,7 @@ class AuctionFacadeTest {
         // when then
         Assertions.assertThatThrownBy { auctionFacade.accept(auctionId) }
             .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-            .hasMessageContaining("Cannot perform acceptance on rejected auction")
+            .hasMessageContaining("Invalid operation performed on an auction")
     }
 
     @Test
@@ -108,7 +108,7 @@ class AuctionFacadeTest {
         // when then
         Assertions.assertThatThrownBy { auctionFacade.reject(auctionId) }
             .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-            .hasMessageContaining("Cannot perform rejection on archived auction")
+            .hasMessageContaining("Invalid operation performed on an auction")
     }
 
     @Test
@@ -168,7 +168,7 @@ class AuctionFacadeTest {
         // when then
         Assertions.assertThatThrownBy { auctionFacade.archive(auctionId, getDefaultAuthContext()) }
             .isInstanceOf(UnsupportedOperationOnAuctionException::class.java)
-            .hasMessageContaining("Cannot perform archiving on archived auction")
+            .hasMessageContaining("Invalid operation performed on an auction")
     }
 
     @Test

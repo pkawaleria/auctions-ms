@@ -24,6 +24,7 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import pl.kawaleria.auctsys.*
 import pl.kawaleria.auctsys.auctions.domain.*
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 import pl.kawaleria.auctsys.images.domain.Image
 import pl.kawaleria.auctsys.images.domain.ImageRepository
 import pl.kawaleria.auctsys.images.dto.responses.AuctionImagesResponse
@@ -126,7 +127,8 @@ class ImageControllerTest {
                 .andExpect(status().isBadRequest)
                 .andReturn()
 
-            Assertions.assertThat(result.response.errorMessage).contains("Invalid file type")
+            Assertions.assertThat(result.response.contentAsString)
+                .contains(ServiceErrorResponseCode.IMG00_GENERAL.toString(), ServiceErrorResponseCode.IMG02.toString())
         }
 
         @Test

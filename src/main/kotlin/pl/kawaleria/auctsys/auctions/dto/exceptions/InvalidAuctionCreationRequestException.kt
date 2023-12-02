@@ -1,6 +1,6 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
-import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
-class InvalidAuctionCreationRequestException :
-        ApiException(HttpStatus.BAD_REQUEST.value(), "Invalid CreateAuctionRequest")
+class InvalidAuctionCreationRequestException(errorCodes: List<ServiceErrorResponseCode>) :
+    ApiException(errorCodes)

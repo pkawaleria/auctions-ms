@@ -1,6 +1,6 @@
 package pl.kawaleria.auctsys.auctions.dto.exceptions
 
-import org.springframework.http.HttpStatus
+import pl.kawaleria.auctsys.commons.ServiceErrorResponseCode
 
 class SearchRadiusWithoutCityException :
-        ApiException(HttpStatus.BAD_REQUEST.value(), "City for search requests is not specified or cannot be found")
+    ApiException(ServiceErrorResponseCode.AUCT10)

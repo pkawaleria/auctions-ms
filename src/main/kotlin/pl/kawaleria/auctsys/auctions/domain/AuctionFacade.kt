@@ -45,15 +45,14 @@ class AuctionFacade(
     private val auctionEventPublisher: AuctionDomainEventPublisher,
     private val auctionViewsQueryFacade: AuctionViewsQueryFacade,
     private val securityHelper: SecurityHelper,
+    private val auctionValidator: AuctionValidator,
     private val clock: Clock
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     fun create(createRequest: CreateAuctionRequest, auctioneerId: String): AuctionDetailedResponse {
-        if (!validateCreateAuctionRequest(createRequest)) {
-            throw InvalidAuctionCreationRequestException()
-        }
+        auctionValidator.validate(payload = createRequest)
         verifyAuctionContent(createRequest.name, createRequest.description)
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
@@ -80,29 +79,7 @@ class AuctionFacade(
         return auctionRepository.save(auction).toDetailedResponse()
     }
 
-    private fun validateCreateAuctionRequest(payload: CreateAuctionRequest): Boolean {
-        // TODO: Replace with spring-boot-starter-validation
-//        val validatedName: Boolean = validateName(payload.name)
-//        val validatedDescription: Boolean = validateDescription(payload.description)
-//        val validatedPrice: Boolean = validatePrice(payload.price)
-//
-//        return (validatedName && validatedDescription && validatedPrice)
-        return true
-    }
 
-    private fun validateName(name: String): Boolean {
-        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
-
-        return name.isNotEmpty() && name.length in 5..100 && regex.matches(name)
-    }
-
-    private fun validateDescription(description: String): Boolean {
-        val regex: Regex = "^[a-zA-Z0-9 .]*$".toRegex()
-
-        return description.isNotEmpty() && description.length in 20..500 && regex.matches(description)
-    }
-
-    private fun validatePrice(price: Double): Boolean = price > 0
 
     private fun verifyAuctionContent(name: String, description: String) {
         if (!auctionVerificationRules.enabled) {
@@ -191,9 +168,7 @@ class AuctionFacade(
         return query
     }
 
-    private fun addPriceCriteria(
-        searchRequest: AuctionsSearchRequest,
-        query: Query
+    private fun addPriceCriteria(searchRequest: AuctionsSearchRequest, query: Query
     ) {
         if (searchRequest.priceFrom != null && searchRequest.priceTo != null) {
             query.addCriteria(Criteria.where("price").gte(searchRequest.priceFrom).lte(searchRequest.priceTo))
@@ -214,8 +189,7 @@ class AuctionFacade(
     }
 
     fun update(id: String, updateRequest: UpdateAuctionRequest, authContext: Authentication): AuctionDetailedResponse {
-        if (!validateUpdateAuctionRequest(updateRequest)) throw InvalidAuctionUpdateRequestException()
-
+        auctionValidator.validate(payload = updateRequest)
         val auction: Auction = findAuctionById(id)
         securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
 
@@ -240,13 +214,6 @@ class AuctionFacade(
         return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
 
-    private fun validateUpdateAuctionRequest(payload: UpdateAuctionRequest): Boolean {
-        val validatedName: Boolean = validateName(payload.name)
-        val validatedDescription: Boolean = validateDescription(payload.description)
-        val validatedPrice: Boolean = validatePrice(payload.price)
-
-        return (validatedName && validatedDescription && validatedPrice)
-    }
 
     fun delete(auctionId: String, authContext: Authentication) {
         val auctionToDelete: Auction = findAuctionById(auctionId)

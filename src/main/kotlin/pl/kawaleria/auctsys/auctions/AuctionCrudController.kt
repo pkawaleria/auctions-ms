@@ -16,7 +16,10 @@ import pl.kawaleria.auctsys.commons.toAuctioneerId
 
 @RestController
 @RequestMapping("/auction-service")
-class AuctionCrudController(private val auctionFacade: AuctionFacade, private val ipAddressResolver: IpAddressResolver) {
+class AuctionCrudController(
+    private val auctionFacade: AuctionFacade,
+    private val ipAddressResolver: IpAddressResolver
+) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 

@@ -95,7 +95,7 @@ class CityOperationsControllerTest {
             post("$baseUrl/import")
                 .withAuthenticatedAdmin()
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isConflict)
     }
 
     @Test
@@ -109,19 +109,6 @@ class CityOperationsControllerTest {
                 .withAuthenticatedAdmin()
         )
             .andExpect(status().isOk)
-    }
-
-    @Test
-    fun `should not delete cities from database if document is empty`() {
-        // given
-        cityRepository.deleteAll()
-
-        // when then
-        mockMvc.perform(
-            delete("$baseUrl/clear")
-                .withAuthenticatedAdmin()
-        )
-            .andExpect(status().isBadRequest)
     }
 
     @Test

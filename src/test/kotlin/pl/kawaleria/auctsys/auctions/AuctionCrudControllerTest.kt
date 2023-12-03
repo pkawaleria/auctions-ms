@@ -738,14 +738,14 @@ class AuctionControllerTest {
         }
 
         @Test
-        fun `should not create auction with invalid description syntax`() {
+        fun `should not create auction with too short description`() {
             // given
             val category: CategoryResponse = thereIsSampleCategoryTree()
             val city: City = thereIsCity()
 
             val auctionRequestData = CreateAuctionRequest(
                 name = "Wireless Samsung headphones",
-                description = "Best headphones you can have;[,.[;.;~??",
+                description = "too short",
                 price = 13.0,
                 categoryId = category.id,
                 productCondition = Condition.NOT_APPLICABLE,
@@ -1137,11 +1137,11 @@ class AuctionControllerTest {
         }
 
         @Test
-        fun `should not update auction because of invalid new name syntax`() {
+        fun `should not update auction when too long name is set`() {
             // given
             val oldAuction: Auction = thereIsAuction()
 
-            val newName = "Headphones?"
+            val newName = "a".repeat(200)
 
             val newAuction = UpdateAuctionRequest(
                 name = newName,

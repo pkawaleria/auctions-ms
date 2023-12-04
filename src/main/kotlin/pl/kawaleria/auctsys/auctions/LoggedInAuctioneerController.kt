@@ -1,6 +1,8 @@
 package pl.kawaleria.auctsys.auctions
 
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.data.domain.PageRequest
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.annotation.CurrentSecurityContext
 import org.springframework.web.bind.annotation.*
@@ -19,6 +21,15 @@ class LoggedInAuctioneerController(private val auctionFacade: AuctionFacade) {
         @CurrentSecurityContext(expression = "authentication") authContext: Authentication
     ): PagedAuctions {
         return auctionFacade.findAuctionsByAuctioneer(authContext.toAuctioneerId(), PageRequest.of(page, pageSize))
+    }
+
+    @GetMapping("/private/auctions/{auctionId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    fun getPrivateAuction(
+        @PathVariable auctionId: String, request: HttpServletRequest,
+        @CurrentSecurityContext(expression = "authentication") authContext: Authentication
+    ): AuctionDetailedResponse {
+        return auctionFacade.getPrivateAuctionDetails(auctionId, authContext)
     }
 
     @GetMapping("/rejected-auctions")

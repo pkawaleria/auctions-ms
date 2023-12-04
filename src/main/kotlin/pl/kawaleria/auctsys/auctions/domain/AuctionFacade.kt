@@ -28,6 +28,7 @@ import pl.kawaleria.auctsys.commons.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
 import pl.kawaleria.auctsys.verifications.TextRequest
 import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
+import pl.kawaleria.auctsys.views.dto.AuctionsViewsRespone
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -109,6 +110,12 @@ class AuctionFacade(
         return auction.toDetailedResponse(viewCount = views)
     }
 
+    fun getPrivateAuctionDetails(id: String, authContext: Authentication): AuctionDetailedResponse {
+        val auction: Auction = findAuctionById(id)
+        securityHelper.assertUserIsAuthorizedForResource(authContext, auction.auctioneerId)
+        return auction.toDetailedResponse()
+    }
+
     private fun findActiveAuctionById(id: String): Auction = auctionRepository.findActiveAuction(id, Instant.now(clock))
         .orElseThrow{ AuctionNotFoundException() }
 
@@ -119,9 +126,9 @@ class AuctionFacade(
         val query: Query = buildSearchQuery(searchRequest)
 
         val searchedAuctions: Page<Auction> = auctionSearchRepository.search(query, pageRequest)
-        val searchedAuctionsIds = searchedAuctions.toList().map { it.id }
+        val searchedAuctionsIds: List<String> = searchedAuctions.toList().map { it.id }
 
-        val auctionsViews = auctionViewsQueryFacade.getAuctionsViews(searchedAuctionsIds)
+        val auctionsViews: AuctionsViewsRespone = auctionViewsQueryFacade.getAuctionsViews(searchedAuctionsIds)
         return searchedAuctions.toPagedAuctions(auctionsViews = auctionsViews)
     }
 

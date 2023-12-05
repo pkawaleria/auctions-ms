@@ -6,6 +6,7 @@ import com.github.cloudyrock.mongock.driver.mongodb.springdata.v3.decorator.impl
 import io.changock.migration.api.annotations.NonLockGuarded
 import net.coobird.thumbnailator.Thumbnails
 import org.bson.types.ObjectId
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.core.aggregation.Aggregation
@@ -30,6 +31,8 @@ private const val IMAGES_DIRECTORY = "/test-pics/"
 @ChangeLog(order = "004")
 class AuctionInserterChangeLog {
 
+    private val logger = LoggerFactory.getLogger(this.javaClass)
+
     @ChangeSet(order = "001", id = "insertCompleteAuctionsWithImages", author = "lukasz-karasek")
     fun insertAuctions(
         @NonLockGuarded categoryFacade: CategoryFacade,
@@ -40,6 +43,7 @@ class AuctionInserterChangeLog {
 
         for (index: Int in 1..200) {
 
+            logger.info("Adding auction number $index")
             val randomCategory = getRandomFinalCategory(mongockTemplate)
             val categoryPath: CategoryPath = categoryFacade.getFullCategoryPath(randomCategory.id)
                 .toAuctionCategoryPathModel()

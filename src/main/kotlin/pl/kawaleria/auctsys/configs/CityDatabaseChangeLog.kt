@@ -1,8 +1,13 @@
 package pl.kawaleria.auctsys.configs
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.cloudyrock.mongock.ChangeLog
 import com.github.cloudyrock.mongock.ChangeSet
+import io.changock.migration.api.annotations.NonLockGuarded
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
+import org.springframework.core.io.ClassPathResource
 import pl.kawaleria.auctsys.auctions.domain.City
 import pl.kawaleria.auctsys.auctions.domain.CityRepository
 
@@ -10,42 +15,18 @@ import pl.kawaleria.auctsys.auctions.domain.CityRepository
 @ChangeLog(order = "003")
 class CityDatabaseChangeLog {
 
-    @ChangeSet(order = "001", id = "insertCities", author = "filip-kaminski")
-    fun insertCities(cityRepository: CityRepository) {
-        val cities: MutableList<City> = thereAreCities()
-        cityRepository.saveAll(cities)
-    }
+    private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    private fun thereAreCities(): MutableList<City> {
-        return mutableListOf(
-            City(
-                name = "Abramowice Kościelne",
-                type = "village",
-                province = "lubelskie",
-                district = "lubelski",
-                commune = "Głusk-gmina wiejska",
-                latitude = 51.1914,
-                longitude = 22.6294
-            ),
-            City(
-                name = "Abramowice Prywatne",
-                type = "village",
-                province = "lubelskie",
-                district = "lubelski",
-                commune = "Głusk-gmina wiejska",
-                latitude = 51.2047,
-                longitude = 22.6206
-            ),
-            City(
-                name = "Abramów",
-                type = "village",
-                province = "lubelskie",
-                district = "lubartowski",
-                commune = "Abramów-gmina wiejska",
-                latitude = 51.4561,
-                longitude = 22.3158
-            )
-        )
+    @ChangeSet(order = "001", id = "insertCities", author = "filip-kaminski")
+    fun insertCities(cityRepository: CityRepository, @NonLockGuarded objectMapper: ObjectMapper) {
+        if (cityRepository.count() > 1) {
+            logger.info("Found cities in db. Omitting import operation")
+            return
+        }
+        val cityImportFilepath = "city_data.json"
+        val resource = ClassPathResource(cityImportFilepath)
+        val cities: List<City> = objectMapper.readValue(resource.inputStream)
+        cityRepository.saveAll(cities.toMutableList())
     }
 
 }

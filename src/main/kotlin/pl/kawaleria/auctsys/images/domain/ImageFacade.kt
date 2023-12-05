@@ -57,9 +57,9 @@ open class ImageFacade(
     }
 
     private fun addThumbnailToAuction(auctionId: String, image: MultipartFile): Unit =
-        auctionFacade.saveThumbnail(auctionId, resizeImageToThumbnailFormat(image))
+        auctionFacade.saveThumbnail(auctionId, prepareThumbnail(image))
 
-    private fun resizeImageToThumbnailFormat(image: MultipartFile): ByteArray {
+    private fun prepareThumbnail(image: MultipartFile): ByteArray {
         val originalImage: BufferedImage = ImageIO.read(image.inputStream)
 
         val thumbnailWidth: Int = thumbnailRules.width

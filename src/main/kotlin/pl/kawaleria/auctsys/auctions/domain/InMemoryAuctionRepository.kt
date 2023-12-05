@@ -63,6 +63,10 @@ class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
         return Optional.ofNullable(map[id]).filter { it.isActive(now) }
     }
 
+    override fun findByIdIn(ids: List<String>): List<Auction> {
+        return ids.mapNotNull { findById(it).orElse(null) }
+    }
+
     override fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction> {
         val filteredAuctions: MutableList<Auction> = map.values
             .filter { it.status == AuctionStatus.ARCHIVED }

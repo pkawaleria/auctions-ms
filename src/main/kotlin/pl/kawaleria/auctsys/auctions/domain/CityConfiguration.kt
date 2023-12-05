@@ -1,6 +1,5 @@
 package pl.kawaleria.auctsys.auctions.domain
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -8,8 +7,7 @@ import org.springframework.context.annotation.Configuration
 class CityConfiguration {
 
     @Bean
-    fun cityFacade(repository: CityRepository,
-                   objectMapper: ObjectMapper): CityFacade =
+    fun cityFacade(repository: CityRepository): CityFacade =
 
-        CityFacade(cityRepository = repository, objectMapper = objectMapper)
+        CityFacade(cityRepository = repository)
 }

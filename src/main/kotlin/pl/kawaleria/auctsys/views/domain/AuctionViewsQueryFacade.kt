@@ -17,8 +17,12 @@ class AuctionViewsQueryFacade(
             .associate { it.auctionId to it.viewCounter }
         return AuctionsViewsRespone(auctionsViewsPerId = auctionsViews)
     }
-    fun getRecentViewsFromIpAddress(ipAddress: String): List<String> =
-        auctionViewsPerIpRepository.findByIpAddressOrderByLastViewedDesc(ipAddress).map { it.auctionId }
+
+    fun getRecentViewsFromIpAddress(ipAddress: String, numberOfAuctions: Int? = null): List<AuctionViewsFromIpResponse> {
+        val results = auctionViewsPerIpRepository.findByIpAddressOrderByLastViewedDesc(ipAddress).map { it.toResponse() }
+        return if (numberOfAuctions != null) results.take(numberOfAuctions) else results
+
+    }
 
     fun getRecentViewsFromIpAddressForAuction(ipAddress: String, auctionId: String): AuctionViewsFromIpResponse =
         auctionViewsPerIpRepository
@@ -31,7 +35,7 @@ class AuctionViewsQueryFacade(
         return if (numberOfAuctions != null) results.take(numberOfAuctions) else results
     }
 
-    private fun noViewsFromIpResponse(ipAddress: String, auctionId: String): AuctionViewsFromIpResponse  =
+    private fun noViewsFromIpResponse(ipAddress: String, auctionId: String): AuctionViewsFromIpResponse =
         AuctionViewsFromIpResponse(auctionId = auctionId, ipAddress = ipAddress)
 
 }

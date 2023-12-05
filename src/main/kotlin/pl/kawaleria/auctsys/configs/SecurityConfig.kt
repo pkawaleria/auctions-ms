@@ -66,6 +66,7 @@ class SecurityConfig {
             Endpoint(HttpMethod.GET, "/auction-service/auctions/{auctionId}/images"),
             Endpoint(HttpMethod.GET, "/auction-service/categories/**"),
             Endpoint(HttpMethod.GET, "/auction-service/users/{userId}/auctions"),
+            Endpoint(HttpMethod.GET, "/auction-service/viewed-auctions/**"),
     )
 
     @Bean

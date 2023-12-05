@@ -20,4 +20,5 @@ interface AuctionRepository {
     fun findArchivedAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
     fun findAwaitingAcceptanceAuctions(auctioneerId: String, pageable: Pageable): Page<Auction>
     fun findActiveAuction(id: String, now: Instant): Optional<Auction>
+    fun findByIdIn(ids: List<String>): List<Auction>
 }

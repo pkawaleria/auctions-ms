@@ -266,6 +266,10 @@ class AuctionFacade(
         auctionRepository.save(auction)
     }
 
+    fun getAuctionsByIds(ids: List<String>): List<AuctionSimplifiedResponse> {
+        return auctionRepository.findByIdIn(ids).map { it.toSimplifiedResponse() }
+    }
+
     fun findRejectedAuctions(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findRejectedAuctions(auctioneerId, pageable).toPagedAuctions()
 
@@ -292,7 +296,7 @@ class AuctionFacade(
     }
 }
 
-private fun CategoryPathResponse.toAuctionCategoryPathModel(): CategoryPath {
+fun CategoryPathResponse.toAuctionCategoryPathModel(): CategoryPath {
     return CategoryPath(this.path.map { it.toAuctionCategoryModel() }.toMutableList())
 }
 

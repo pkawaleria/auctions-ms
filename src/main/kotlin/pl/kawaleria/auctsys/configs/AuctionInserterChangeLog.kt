@@ -47,10 +47,13 @@ class AuctionInserterChangeLog {
             val city: City = getRandomCity(mongockTemplate)
 
             val auctionId = ObjectId().toString()
-            val imgIndex = index % (TOTAL_IMAGES_COUNT + 1)
-            val imagePath1 = "$IMAGES_DIRECTORY$imgIndex.jpg"
-            val imagePath2 = "$IMAGES_DIRECTORY${imgIndex + 1}.jpg"
-            val imagePath3 = "$IMAGES_DIRECTORY${imgIndex + 2}.jpg"
+            val imgIndex1 = index % (TOTAL_IMAGES_COUNT + 1)
+            val imgIndex2 = (index + 1) % (TOTAL_IMAGES_COUNT + 1)
+            val imgIndex3 = (index + 2 ) % (TOTAL_IMAGES_COUNT + 1)
+
+            val imagePath1 = "$IMAGES_DIRECTORY$imgIndex1.jpg"
+            val imagePath2 = "$IMAGES_DIRECTORY$imgIndex2.jpg"
+            val imagePath3 = "$IMAGES_DIRECTORY$imgIndex3.jpg"
 
             val firstImg = saveImage(imagePath1, auctionId, imageRepository)
             saveImage(imagePath2, auctionId, imageRepository)

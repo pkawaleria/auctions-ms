@@ -60,27 +60,10 @@ class AuctionFacade(
 
         val city: City = cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
 
-        val auction = Auction(
-            name = createRequest.name,
-            description = createRequest.description,
-            price = createRequest.price,
-            auctioneerId = auctioneerId,
-            thumbnail = byteArrayOf(),
-            expiresAt = newExpirationInstant(),
-            cityId = createRequest.cityId,
-            category = categoryPath.lastCategory(),
-            categoryPath = categoryPath,
-            productCondition = createRequest.productCondition,
-            cityName = city.name,
-            province = city.province,
-            location = GeoJsonPoint(city.longitude, city.latitude),
-            phoneNumber = createRequest.phoneNumber
-        )
+        val auction = toAuction(createRequest, auctioneerId, categoryPath, city)
 
         return auctionRepository.save(auction).toDetailedResponse()
     }
-
-
 
     private fun verifyAuctionContent(name: String, description: String) {
         if (!auctionVerificationRules.enabled) {
@@ -97,6 +80,29 @@ class AuctionFacade(
             logger.info("Auction name and description verified positively")
         }
     }
+
+
+    private fun toAuction(
+        createRequest: CreateAuctionRequest,
+        auctioneerId: String,
+        categoryPath: CategoryPath,
+        city: City
+    ) = Auction(
+        name = createRequest.name,
+        description = createRequest.description,
+        price = createRequest.price,
+        auctioneerId = auctioneerId,
+        thumbnail = byteArrayOf(),
+        expiresAt = newExpirationInstant(),
+        cityId = createRequest.cityId,
+        category = categoryPath.lastCategory(),
+        categoryPath = categoryPath,
+        productCondition = createRequest.productCondition,
+        cityName = city.name,
+        province = city.province,
+        location = GeoJsonPoint(city.longitude, city.latitude),
+        phoneNumber = createRequest.phoneNumber
+    )
 
     fun findAuctionsByAuctioneer(auctioneerId: String): List<AuctionSimplifiedResponse> =
         auctionRepository.findActiveAuctionsByAuctioneerId(auctioneerId, Instant.now(clock)).map{ it.toSimplifiedResponse() }
@@ -132,22 +138,12 @@ class AuctionFacade(
         return searchedAuctions.toPagedAuctions(auctionsViews = auctionsViews)
     }
 
-    private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
-        if (radius == null) return
-
-        if (radius !in auctionSearchingRules.min..auctionSearchingRules.max) throw SearchRadiusOutOfBoundsException()
-        if (cityId == null) throw SearchRadiusWithoutCityException()
-    }
-
     private fun buildSearchQuery(searchRequest: AuctionsSearchRequest): Query {
         val query = Query()
         addPredicatesForActiveAuctions(query)
 
         searchRequest.searchPhrase?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("name").regex(it, "i"))
-        }
-        searchRequest.categoryName?.takeIf { it.isNotBlank() }?.let {
-            query.addCriteria(Criteria.where("categoryPath.pathElements.name").regex(searchRequest.categoryName, "i"))
         }
         searchRequest.categoryId?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("categoryPath.pathElements.id").isEqualTo(ObjectId(searchRequest.categoryId)))
@@ -173,6 +169,13 @@ class AuctionFacade(
             query.with(Sort.by(sortDirection, sortProperty))
         }
         return query
+    }
+
+    private fun validateGeolocationFiltersIfExist(radius: Double?, cityId: String?) {
+        if (radius == null) return
+
+        if (radius !in auctionSearchingRules.min..auctionSearchingRules.max) throw SearchRadiusOutOfBoundsException()
+        if (cityId == null) throw SearchRadiusWithoutCityException()
     }
 
     private fun addPriceCriteria(searchRequest: AuctionsSearchRequest, query: Query
@@ -225,7 +228,7 @@ class AuctionFacade(
     fun delete(auctionId: String, authContext: Authentication) {
         val auctionToDelete: Auction = findAuctionById(auctionId)
         securityHelper.assertUserIsAuthorizedForResource(authContext, auctionToDelete.auctioneerId)
-        auctionRepository.delete(auctionToDelete)
+        archive(auctionId, authContext)
     }
 
     fun changeCategory(auctionId: String, categoryId: String, authContext: Authentication): AuctionDetailedResponse {

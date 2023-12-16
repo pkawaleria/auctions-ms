@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.configs
+package pl.kawaleria.auctsys.configs.changelogs
 
 import com.github.cloudyrock.mongock.ChangeLog
 import com.github.cloudyrock.mongock.ChangeSet
@@ -26,6 +26,7 @@ import kotlin.random.Random
 
 private const val TOTAL_IMAGES_COUNT = 72
 private const val IMAGES_DIRECTORY = "/test-pics/"
+
 
 @Profile("dev")
 @ChangeLog(order = "004")

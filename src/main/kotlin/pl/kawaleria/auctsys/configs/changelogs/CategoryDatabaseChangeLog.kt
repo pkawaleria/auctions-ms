@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.configs
+package pl.kawaleria.auctsys.configs.changelogs
 
 import com.github.cloudyrock.mongock.ChangeLog
 import com.github.cloudyrock.mongock.ChangeSet

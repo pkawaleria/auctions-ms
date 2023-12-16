@@ -1,4 +1,4 @@
-package pl.kawaleria.auctsys.configs
+package pl.kawaleria.auctsys.configs.changelogs
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

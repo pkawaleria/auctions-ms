@@ -64,13 +64,7 @@ class AuctionFacade(
 
         if (auctionVerificationRules.enabled) {
             logger.info("Sending auction text properties to verification for newly created auction of id $auction.id")
-            auctionMessageSender.sendToVerification(
-                VerifyAuctionTextRequestEvent(
-                    auctionId = auction.id,
-                    title = auction.name,
-                    description = auction.description
-                )
-            )
+            auctionMessageSender.sendToVerification(auction.toVerificationRequestEvent())
         } else {
             logger.debug("Auction text properties verification is switched off and will be omitted")
         }
@@ -312,3 +306,8 @@ fun CategoryPathResponse.toAuctionCategoryPathModel(): CategoryPath {
 private fun CategoryNameResponse.toAuctionCategoryModel(): Category {
     return Category(this.id, this.name)
 }
+
+private fun Auction.toVerificationRequestEvent(): VerifyAuctionTextRequestEvent {
+    return VerifyAuctionTextRequestEvent(this.id, this.name, this.description)
+}
+

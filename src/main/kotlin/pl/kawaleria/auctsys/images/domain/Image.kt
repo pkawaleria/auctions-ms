@@ -12,5 +12,6 @@ data class Image(
         var size: Long,
         var binaryData: ByteArray = byteArrayOf(),
         @Indexed
-        var auctionId: String
+        var auctionId: String,
+        var verificationStatus: ImageVerificationStatus = ImageVerificationStatus.PENDING
 )

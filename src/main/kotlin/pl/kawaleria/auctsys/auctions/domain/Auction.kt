@@ -56,6 +56,10 @@ data class Auction(
 
     fun archive(): Unit = updateStatus(status.archive(auction = this))
 
+    fun requireManualTextVerification() {
+        TODO("Not yet implemented")
+    }
+
     private fun isExpired(now: Instant): Boolean = expiresAt.isBefore(now)
     private fun isExpired(): Boolean = expiresAt.isBefore(Instant.now())
 

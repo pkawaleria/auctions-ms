@@ -20,7 +20,7 @@ open class ImageFacade(
     private val imageVerificationRules: ImageVerificationRules,
     private val auctionFacade: AuctionFacade,
     private val imageValidator: ImageValidator,
-    private val eventPublisher: ApplicationEventPublisher,
+    private val imageVerificationRequestSender: ImageVerificationRequestSender
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -38,22 +38,31 @@ open class ImageFacade(
 
     fun createImages(auctionId: String, files: List<MultipartFile>): List<ImageSimplifiedResponse> {
         imageValidator.validateMultipartFiles(files)
-        val images: List<Image> = saveImages(auctionId, files)
-        publishImageVerification(files, auctionId)
-        return images.map { image -> image.toSimplifiedResponse() }
+
+        return if (imageVerificationRules.enabled) {
+            processImagesWithVerification(auctionId, files)
+        } else {
+            processImagesWithoutVerification(auctionId, files)
+        }
     }
 
-    private fun publishImageVerification(
-        files: List<MultipartFile>,
-        auctionId: String
-    ) {
-        if (imageVerificationRules.enabled) {
-            eventPublisher.publishEvent(ImagesVerificationEvent(files, auctionId, this::addThumbnailToAuction))
-        } else {
-            addThumbnailToAuction(auctionId, files.first())
-            auctionFacade.accept(auctionId)
-            logger.debug("Image verification switched off and omitted for auction of id $auctionId")
-        }
+    private fun processImagesWithVerification(auctionId: String, files: List<MultipartFile>): List<ImageSimplifiedResponse> {
+        logger.debug("Sending images to verification for auction of id $auctionId")
+
+        val images = saveImagesWithVerificationStatus(auctionId, files, ImageVerificationStatus.PENDING)
+        imageVerificationRequestSender.sendToVerification(auctionId, VerifyImagesRequestEvent(files, auctionId))
+
+        return images.map { it.toSimplifiedResponse() }
+    }
+
+    private fun processImagesWithoutVerification(auctionId: String, files: List<MultipartFile>): List<ImageSimplifiedResponse> {
+        logger.debug("Image verification switched off and omitted for auction of id $auctionId")
+
+        val images = saveImagesWithVerificationStatus(auctionId, files, ImageVerificationStatus.VERIFICATION_OMITTED)
+        addThumbnailToAuction(auctionId, files.first())
+        auctionFacade.accept(auctionId)
+
+        return images.map { it.toSimplifiedResponse() }
     }
 
     private fun addThumbnailToAuction(auctionId: String, image: MultipartFile): Unit =
@@ -75,21 +84,23 @@ open class ImageFacade(
         return outputStream.toByteArray()
     }
 
-    private fun saveImages(auctionId: String, images: List<MultipartFile>): List<Image> {
+    private fun saveImagesWithVerificationStatus(auctionId: String, images: List<MultipartFile>,
+                                                 verificationStatus: ImageVerificationStatus): List<Image> {
         return images.map { file ->
-            file.toImage(auctionId)
+            file.toImage(auctionId, verificationStatus)
                 .also { imageRepository.save(it) }
         }
     }
 
     fun delete(imageId: String): Unit = imageRepository.delete(findImageById(imageId))
 
-    private fun MultipartFile.toImage(auctionId: String): Image {
+    private fun MultipartFile.toImage(auctionId: String, verificationStatus: ImageVerificationStatus): Image {
         return Image(
             type = this.contentType.toString(),
             size = this.size,
             binaryData = this.bytes,
-            auctionId = auctionId
+            auctionId = auctionId,
+            verificationStatus = verificationStatus
         )
     }
 

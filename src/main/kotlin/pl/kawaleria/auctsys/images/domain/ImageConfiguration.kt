@@ -18,8 +18,8 @@ class ImageConfiguration {
         auctionFacade: AuctionFacade,
         imageVerifier: AsyncImageVerifier,
         imageValidator: ImageValidator,
-        applicationEventPublisher: ApplicationEventPublisher
+        imageVerificationRequestSender: KafkaImageVerificationRequestSender,
     ): ImageFacade {
-        return ImageFacade(repository, thumbnailRules, imageVerificationRules, auctionFacade, imageValidator, applicationEventPublisher)
+        return ImageFacade(repository, thumbnailRules, imageVerificationRules, auctionFacade, imageValidator, imageVerificationRequestSender)
     }
 }

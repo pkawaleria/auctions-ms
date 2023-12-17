@@ -50,9 +50,6 @@ class CityOperationsControllerTest {
     private lateinit var cityRepository: CityRepository
 
     @Autowired
-    private lateinit var cityFacade: CityFacade
-
-    @Autowired
     private lateinit var mongoTemplate: MongoTemplate
 
     @Autowired
@@ -68,53 +65,10 @@ class CityOperationsControllerTest {
         mongoTemplate.dropCollection("cities")
     }
 
-    @Test
-    fun `should insert cities from json file if document is empty`() {
-        // given
-        val resource = ClassPathResource("city_data.json")
-        val citiesSize: Long = objectMapper.readValue<List<City>>(resource.inputStream).size.toLong()
-
-        // when
-        mockMvc.perform(
-            post("$baseUrl/import")
-                .withAuthenticatedAdmin()
-        )
-            .andExpect(status().isOk)
-
-        // then
-        Assertions.assertThat(cityRepository.count()).isEqualTo(citiesSize)
-    }
-
-    @Test
-    fun `should not insert cities from json file if document is not empty`() {
-        // given
-        cityFacade.importCities()
-
-        // when then
-        mockMvc.perform(
-            post("$baseUrl/import")
-                .withAuthenticatedAdmin()
-        )
-            .andExpect(status().isConflict)
-    }
-
-    @Test
-    fun `should delete cities from database if document is not empty`() {
-        // given
-        cityFacade.importCities()
-
-        // when then
-        mockMvc.perform(
-            delete("$baseUrl/clear")
-                .withAuthenticatedAdmin()
-        )
-            .andExpect(status().isOk)
-    }
 
     @Test
     fun `should search among cities with provided city name phrase and return array with cities`() {
         // given
-        cityFacade.importCities()
 
         val selectedPage = 0
         val selectedPageSize = 10

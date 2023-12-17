@@ -15,8 +15,13 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.security.core.Authentication
+import pl.kawaleria.auctsys.auctions.dto.events.AuctionTextVerificationReceivedEvent
 import pl.kawaleria.auctsys.auctions.dto.events.AuctionViewedEvent
-import pl.kawaleria.auctsys.auctions.dto.exceptions.*
+import pl.kawaleria.auctsys.auctions.dto.events.VerifyAuctionTextRequestEvent
+import pl.kawaleria.auctsys.auctions.dto.exceptions.AuctionNotFoundException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.CityNotFoundException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.SearchRadiusOutOfBoundsException
+import pl.kawaleria.auctsys.auctions.dto.exceptions.SearchRadiusWithoutCityException
 import pl.kawaleria.auctsys.auctions.dto.requests.AuctionsSearchRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.CreateAuctionRequest
 import pl.kawaleria.auctsys.auctions.dto.requests.UpdateAuctionRequest
@@ -25,8 +30,6 @@ import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryNameResponse
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryPathResponse
 import pl.kawaleria.auctsys.commons.SecurityHelper
-import pl.kawaleria.auctsys.verifications.ContentVerificationClient
-import pl.kawaleria.auctsys.verifications.TextRequest
 import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 import pl.kawaleria.auctsys.views.dto.AuctionsViewsRespone
 import java.time.Clock
@@ -37,7 +40,6 @@ class AuctionFacade(
     private val auctionRepository: AuctionRepository,
     private val cityRepository: CityRepository,
     private val auctionSearchRepository: AuctionSearchRepository,
-    private val contentVerificationClient: ContentVerificationClient,
     private val categoryFacade: CategoryFacade,
     private val auctionCreationRules: AuctionCreationRules,
     private val auctionSearchingRules: AuctionSearchingRules,
@@ -47,6 +49,7 @@ class AuctionFacade(
     private val auctionViewsQueryFacade: AuctionViewsQueryFacade,
     private val securityHelper: SecurityHelper,
     private val auctionValidator: AuctionValidator,
+    private val auctionMessageSender: AuctionMessageSender,
     private val clock: Clock
 ) {
 
@@ -54,33 +57,25 @@ class AuctionFacade(
 
     fun create(createRequest: CreateAuctionRequest, auctioneerId: String): AuctionDetailedResponse {
         auctionValidator.validate(payload = createRequest)
-        verifyAuctionContent(createRequest.name, createRequest.description)
         val categoryPath: CategoryPath =
             categoryFacade.getFullCategoryPath(createRequest.categoryId).toAuctionCategoryPathModel()
-
         val city: City = cityRepository.findById(createRequest.cityId).orElseThrow { CityNotFoundException() }
-
         val auction = toAuction(createRequest, auctioneerId, categoryPath, city)
 
+        if (auctionVerificationRules.enabled) {
+            logger.info("Sending auction text properties to verification for newly created auction of id $auction.id")
+            auctionMessageSender.sendToVerification(
+                VerifyAuctionTextRequestEvent(
+                    auctionId = auction.id,
+                    title = auction.name,
+                    description = auction.description
+                )
+            )
+        } else {
+            logger.debug("Auction text properties verification is switched off and will be omitted")
+        }
         return auctionRepository.save(auction).toDetailedResponse()
     }
-
-    private fun verifyAuctionContent(name: String, description: String) {
-        if (!auctionVerificationRules.enabled) {
-            logger.debug("Auction text properties verification is switched off and will be omitted")
-            return
-        }
-
-        val textToVerify = TextRequest("$name $description")
-        val foundInappropriateContent: Boolean = contentVerificationClient.verifyText(textToVerify).isInappropriate
-        if (foundInappropriateContent) {
-            logger.info("Found explicit content")
-            throw InappropriateContentException()
-        } else {
-            logger.info("Auction name and description verified positively")
-        }
-    }
-
 
     private fun toAuction(
         createRequest: CreateAuctionRequest,
@@ -88,6 +83,7 @@ class AuctionFacade(
         categoryPath: CategoryPath,
         city: City
     ) = Auction(
+        id = ObjectId().toString(),
         name = createRequest.name,
         description = createRequest.description,
         price = createRequest.price,
@@ -105,11 +101,13 @@ class AuctionFacade(
     )
 
     fun findAuctionsByAuctioneer(auctioneerId: String): List<AuctionSimplifiedResponse> =
-        auctionRepository.findActiveAuctionsByAuctioneerId(auctioneerId, Instant.now(clock)).map{ it.toSimplifiedResponse() }
+        auctionRepository.findActiveAuctionsByAuctioneerId(auctioneerId, Instant.now(clock))
+            .map { it.toSimplifiedResponse() }
+
     fun findAuctionsByAuctioneer(auctioneerId: String, pageable: Pageable): PagedAuctions =
         auctionRepository.findAuctionsByAuctioneerId(auctioneerId, pageable).toPagedAuctions()
 
-    fun getAuctionDetails(id: String, ipAddress : String): AuctionDetailedResponse {
+    fun getAuctionDetails(id: String, ipAddress: String): AuctionDetailedResponse {
         val auction: Auction = findActiveAuctionById(id)
         auctionEventPublisher.publishAuctionView(auctionViewedEvent = AuctionViewedEvent(ipAddress, id))
         val views: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
@@ -123,7 +121,7 @@ class AuctionFacade(
     }
 
     private fun findActiveAuctionById(id: String): Auction = auctionRepository.findActiveAuction(id, Instant.now(clock))
-        .orElseThrow{ AuctionNotFoundException() }
+        .orElseThrow { AuctionNotFoundException() }
 
     fun findAuctionById(id: String): Auction = auctionRepository.findById(id).orElseThrow { AuctionNotFoundException() }
 
@@ -146,12 +144,14 @@ class AuctionFacade(
             query.addCriteria(Criteria.where("name").regex(it, "i"))
         }
         searchRequest.categoryId?.takeIf { it.isNotBlank() }?.let {
-            query.addCriteria(Criteria.where("categoryPath.pathElements.id").isEqualTo(ObjectId(searchRequest.categoryId)))
+            query.addCriteria(
+                Criteria.where("categoryPath.pathElements.id").isEqualTo(ObjectId(searchRequest.categoryId))
+            )
         }
         searchRequest.province?.takeIf { it.isNotBlank() }?.let {
             query.addCriteria(Criteria.where("province").regex(it, "i"))
         }
-        searchRequest.cityId?.takeIf{ it.isNotBlank() }?.let { cityId ->
+        searchRequest.cityId?.takeIf { it.isNotBlank() }?.let { cityId ->
             val city: City = cityRepository.findById(cityId).orElseThrow { SearchRadiusWithoutCityException() }
 
             if (searchRequest.radius != null && searchRequest.radius > 0) {
@@ -178,7 +178,8 @@ class AuctionFacade(
         if (cityId == null) throw SearchRadiusWithoutCityException()
     }
 
-    private fun addPriceCriteria(searchRequest: AuctionsSearchRequest, query: Query
+    private fun addPriceCriteria(
+        searchRequest: AuctionsSearchRequest, query: Query
     ) {
         if (searchRequest.priceFrom != null && searchRequest.priceTo != null) {
             query.addCriteria(Criteria.where("price").gte(searchRequest.priceFrom).lte(searchRequest.priceTo))
@@ -250,7 +251,7 @@ class AuctionFacade(
         auctionRepository.save(auction)
     }
 
-    fun accept(auctionId: String) {
+    fun accept(auctionId: String, verification: AuctionTextVerificationReceivedEvent? = null) {
         val auction: Auction = findAuctionById(auctionId)
         auction.accept()
         auctionRepository.save(auction)
@@ -263,9 +264,14 @@ class AuctionFacade(
         auctionRepository.save(auction)
     }
 
-    fun reject(auctionId: String) {
+    fun reject(auctionId: String, verification: AuctionTextVerificationReceivedEvent? = null) {
         val auction: Auction = findAuctionById(auctionId)
         auction.reject()
+        auctionRepository.save(auction)
+    }
+    fun requireManualTextVerification(auctionId: String, verification: AuctionTextVerificationReceivedEvent? = null) {
+        val auction: Auction = findAuctionById(auctionId)
+        auction.requireManualTextVerification()
         auctionRepository.save(auction)
     }
 

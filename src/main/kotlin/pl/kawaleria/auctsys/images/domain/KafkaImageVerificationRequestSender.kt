@@ -6,13 +6,13 @@ import org.springframework.stereotype.Component
 
 @Component
 class KafkaImageVerificationRequestSender(
-        private val kafkaTemplate: KafkaTemplate<String, ImagesVerificationEvent>,
-        @Value("\${kafka.topics.image-verification}") val imageVerificationTopic: String
+        private val kafkaTemplate: KafkaTemplate<String, Any>,
+        @Value("\${kafka.topics.inappropriate-image}") val imageVerificationTopic: String
 ) : ImageVerificationRequestSender
 
 {
-    override fun sendToVerification(auctionId: String, imagesToVer: ImagesVerificationEvent) {
-        kafkaTemplate.send(imageVerificationTopic, auctionId, imagesToVer)
+    override fun sendToVerification(auctionId: String, event: VerifyImagesRequestEvent) {
+        kafkaTemplate.send(imageVerificationTopic, auctionId, event)
     }
 
 }

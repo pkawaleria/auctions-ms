@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
 import pl.kawaleria.auctsys.auctions.dto.events.AuctionViewedEvent
+import pl.kawaleria.auctsys.auctions.dto.events.VerifyAuctionTextRequestEvent
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
 import pl.kawaleria.auctsys.commons.SecurityHelper
 import pl.kawaleria.auctsys.verifications.ContentVerificationClient
-import pl.kawaleria.auctsys.verifications.InMemoryContentVerificationClient
 import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 import java.time.Clock
 
@@ -38,7 +38,8 @@ class AuctionConfiguration {
         contentVerificationClient: ContentVerificationClient,
         securityHelper: SecurityHelper,
         mongoTemplate: MongoTemplate,
-        applicationEventPublisher: ApplicationEventPublisher
+        applicationEventPublisher: ApplicationEventPublisher,
+        auctionMessageSender: KafkaAuctionMessageSender
     ): AuctionFacade =
 
         AuctionFacade(
@@ -50,12 +51,12 @@ class AuctionConfiguration {
             clock = clock,
             auctionCategoryDeleter = AuctionCategoryDeleter(repository),
             categoryFacade = categoryFacade,
-            contentVerificationClient = contentVerificationClient,
             securityHelper = securityHelper,
             auctionSearchRepository = MongoAuctionSearchRepository(mongoTemplate),
             auctionViewsQueryFacade = auctionViewsQueryFacade,
             auctionEventPublisher = SpringAuctionEventPublisher(applicationEventPublisher),
-            auctionValidator = AuctionValidator()
+            auctionValidator = AuctionValidator(),
+            auctionMessageSender = auctionMessageSender
         )
 
     fun auctionFacadeWithInMemoryRepo(
@@ -73,12 +74,13 @@ class AuctionConfiguration {
             clock = Clock.systemUTC(),
             auctionCategoryDeleter = AuctionCategoryDeleter(auctionRepository),
             categoryFacade = categoryFacade,
-            contentVerificationClient = InMemoryContentVerificationClient(),
             securityHelper = SecurityHelper(),
             auctionSearchRepository = auctionRepository,
             auctionViewsQueryFacade = auctionViewsQueryFacade,
             auctionEventPublisher = TestAuctionEventPublisher(),
-            auctionValidator = AuctionValidator()
+            auctionValidator = AuctionValidator(),
+            auctionMessageSender = TestAuctionMessageSender()
+
         )
     }
 
@@ -87,9 +89,17 @@ class AuctionConfiguration {
 
 
         override fun publishAuctionView(auctionViewedEvent: AuctionViewedEvent) {
-            // we do not need the event to be actually sent since that test config is only for testing the auction facade in isolation
             logger.info("Test auction event publisher received auction viewed event $auctionViewedEvent")
         }
+
+    }
+
+    internal class TestAuctionMessageSender : AuctionMessageSender {
+        private val logger = LoggerFactory.getLogger(this.javaClass)
+        override fun sendToVerification(inappropriateAuctionContent: VerifyAuctionTextRequestEvent) {
+            logger.info("Test auction broker event sender, received verification event $inappropriateAuctionContent")
+        }
+
 
     }
 }

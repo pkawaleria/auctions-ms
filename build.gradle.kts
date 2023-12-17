@@ -38,7 +38,7 @@ dependencies {
 	implementation("net.coobird:thumbnailator:$thumbnailatorVersion")
 
 //	implementation("io.minio:minio:8.5.4")
-//	implementation("org.springframework.kafka:spring-kafka")
+	implementation("org.springframework.kafka:spring-kafka")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 @Component
 class KafkaImageVerificationRequestSender(
         private val kafkaTemplate: KafkaTemplate<String, Any>,
-        @Value("\${kafka.topics.inappropriate-image}") val imageVerificationTopic: String
+        @Value("\${kafka.topics.image.verification.request}") val imageVerificationTopic: String
 ) : ImageVerificationRequestSender
 
 {

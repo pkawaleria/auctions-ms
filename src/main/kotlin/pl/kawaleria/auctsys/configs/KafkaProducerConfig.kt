@@ -21,8 +21,8 @@ private const val TOPIC_REPLICATION_FACTOR = 1.toShort()
 
 @Configuration
 @EnableKafka
-class KafkaProducerConfig(@Value("\${kafka.topics.inappropriate-text-content}") val kafkaInappropriateContentTopic: String,
-                          @Value("\${kafka.topics.inappropriate-image}") val kafkaInappropriateImageTopic: String,
+class KafkaProducerConfig(@Value("\${kafka.topics.text-content.verification.request}") val kafkaInappropriateContentTopic: String,
+                          @Value("\${kafka.topics.image.verification.request}") val kafkaInappropriateImageTopic: String,
                           @Value("\${spring.kafka.bootstrap-servers}") val bootstrapServers: String) {
 
     @Bean

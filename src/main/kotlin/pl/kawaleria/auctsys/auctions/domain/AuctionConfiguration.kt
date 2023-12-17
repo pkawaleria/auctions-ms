@@ -96,8 +96,8 @@ class AuctionConfiguration {
 
     internal class TestAuctionMessageSender : AuctionMessageSender {
         private val logger = LoggerFactory.getLogger(this.javaClass)
-        override fun sendToVerification(inappropriateAuctionContent: VerifyAuctionTextRequestEvent) {
-            logger.info("Test auction broker event sender, received verification event $inappropriateAuctionContent")
+        override fun sendToVerification(event: VerifyAuctionTextRequestEvent) {
+            logger.info("Test auction broker event sender, received verification event $event")
         }
 
 

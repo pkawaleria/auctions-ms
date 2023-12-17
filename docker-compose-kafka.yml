@@ -1,11 +1,6 @@
 version: "3"
 
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: auctions-mongodb
-    ports:
-      - "27017:27017"
   zookeeper:
     image: confluentinc/cp-zookeeper:5.4.0
     hostname: zookeeper
@@ -39,26 +34,6 @@ services:
       CONFLUENT_METRICS_ENABLE: "true"
       CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
     restart: unless-stopped
-  kafka-tools:
-    image: confluentinc/cp-kafka:5.4.0
-    hostname: kafka-tools
-    container_name: kafka-tools
-    command: ["tail", "-f", "/dev/null"]
-    network_mode: "host"
-    restart: unless-stopped
-  schema-registry:
-    image: confluentinc/cp-schema-registry:5.4.0
-    hostname: schema-registry
-    container_name: schema-registry
-    depends_on:
-      - zookeeper
-      - broker
-    ports:
-      - "8081:8081"
-    environment:
-      SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
-    restart: unless-stopped
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.4.0
     hostname: control-center
@@ -66,7 +41,6 @@ services:
     depends_on:
       - zookeeper
       - broker
-      - schema-registry
     ports:
       - "9021:9021"
     environment:

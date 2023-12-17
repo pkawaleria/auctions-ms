@@ -1,9 +1,11 @@
-package pl.kawaleria.auctsys.auctions.domain
+package pl.kawaleria.auctsys.auctions
 
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Component
+import pl.kawaleria.auctsys.auctions.domain.AuctionFacade
+import pl.kawaleria.auctsys.auctions.domain.AuctionTextVerificationReceiver
 import pl.kawaleria.auctsys.auctions.dto.events.AuctionTextVerificationReceivedEvent
 
 
@@ -12,7 +14,7 @@ class KafkaAuctionTextVerificationReceiver(val facade: AuctionFacade) : AuctionT
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    @KafkaListener(topics = ["inappropriate-auction-text"])
+    @KafkaListener(topics = ["auction-text-verification-result"])
     override fun handleVerification(@Payload verification: AuctionTextVerificationReceivedEvent) {
         logger.info("Received auction text verification results $verification")
 

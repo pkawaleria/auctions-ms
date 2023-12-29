@@ -225,7 +225,7 @@ class AuctionFacade(
     fun delete(auctionId: String, authContext: Authentication) {
         val auctionToDelete: Auction = findAuctionById(auctionId)
         securityHelper.assertUserIsAuthorizedForResource(authContext, auctionToDelete.auctioneerId)
-        auctionRepository.delete(auctionToDelete)
+        archive(auctionId, authContext)
     }
 
     fun changeCategory(auctionId: String, categoryId: String, authContext: Authentication): AuctionDetailedResponse {

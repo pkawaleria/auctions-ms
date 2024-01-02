@@ -30,12 +30,14 @@ import pl.kawaleria.auctsys.auctions.dto.responses.AuctionSimplifiedResponse
 import pl.kawaleria.auctsys.auctions.dto.responses.PagedAuctions
 import pl.kawaleria.auctsys.auctions.dto.responses.toDetailedResponse
 import pl.kawaleria.auctsys.categories.domain.CategoryFacade
+import pl.kawaleria.auctsys.categories.domain.CategoryRepository
 import pl.kawaleria.auctsys.categories.dto.requests.CategoryCreateRequest
 import pl.kawaleria.auctsys.categories.dto.responses.CategoryResponse
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.math.log
 
 private const val baseUrl: String = "/auction-service/auctions"
 
@@ -73,6 +75,9 @@ class AuctionControllerTest {
 
     @Autowired
     private lateinit var cityRepository: CityRepository
+
+    @Autowired
+    private lateinit var categoryRepository: CategoryRepository
 
     @Autowired
     private lateinit var mongoTemplate: MongoTemplate
@@ -818,7 +823,7 @@ class AuctionControllerTest {
             // given
             val oldAuction: Auction = thereIsAuction()
 
-            val expectedAuctionDescription = "Wireless headphones with charger and original box"
+            val expectedAuctionDescription = "Wireless headphones with charger and original box Wireless headphones with charger and original box"
             val expectedAuctionPrice = 123.45
 
             val updateAuctionRequest = UpdateAuctionRequest(
@@ -1295,12 +1300,25 @@ class AuctionControllerTest {
     }
 
     private fun thereIsAuction(status: AuctionStatus = AuctionStatus.ACCEPTED): Auction {
-        val electronics = Category(UUID.randomUUID().toString(), "Electronics")
-        val headphones = Category(UUID.randomUUID().toString(), "Headphones")
-        val wirelessHeadphones = Category(UUID.randomUUID().toString(), "Wireless Headphones")
-        val categoryPath = CategoryPath(
-            pathElements = mutableListOf(electronics, headphones, wirelessHeadphones)
+        val category = pl.kawaleria.auctsys.categories.domain.Category(
+            name = "test",
+            description = "Przykladowy opis kategorii",
+            isTopLevel = true,
+            isFinalNode = false
         )
+
+        val createdCategory = categoryRepository.save(category)
+        val subCategory = pl.kawaleria.auctsys.categories.domain.Category(
+            name = "test2",
+            description = "Przykladowy opis podkategorii",
+            isTopLevel = false,
+            isFinalNode = true,
+            parentCategoryId = createdCategory.id
+        )
+        categoryRepository.save(subCategory)
+
+        val categoryPath: CategoryPath =
+            categoryFacade.getFullCategoryPath(category.id).toAuctionCategoryPathModel()
 
         val city: City = thereIsCity()
 
@@ -1309,7 +1327,7 @@ class AuctionControllerTest {
             description = "Best headphones you can have",
             price = 1.23,
             auctioneerId = AUCTIONEER_ID_UNDER_TEST,
-            category = wirelessHeadphones,
+            category = categoryPath.lastCategory(),
             categoryPath = categoryPath,
             productCondition = Condition.NEW,
             cityId = city.id,
@@ -1320,7 +1338,6 @@ class AuctionControllerTest {
             status = status,
             thumbnail = byteArrayOf(),
             phoneNumber = "123456780"
-
         )
 
         return auctionRepository.save(auction)

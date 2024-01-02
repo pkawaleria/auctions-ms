@@ -16,7 +16,7 @@ class InMemoryAuctionRepository : AuctionRepository, AuctionSearchRepository {
     }
 
     override fun findAuctionsByAuctioneerId(auctioneerId: String, pageable: Pageable): Page<Auction> {
-        val filteredAuctions = map.values.filter { it.auctioneerId == auctioneerId }
+        val filteredAuctions: List<Auction> = map.values.filter { it.auctioneerId == auctioneerId }
         return PageImpl(filteredAuctions, pageable, filteredAuctions.size.toLong())
     }
 

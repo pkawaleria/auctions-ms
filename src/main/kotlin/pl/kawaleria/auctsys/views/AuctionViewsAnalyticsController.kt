@@ -7,6 +7,7 @@ import pl.kawaleria.auctsys.auctions.dto.responses.*
 import pl.kawaleria.auctsys.commons.IpAddressResolver
 import pl.kawaleria.auctsys.views.domain.AuctionViewsQueryFacade
 import pl.kawaleria.auctsys.views.dto.AuctionViewsFromIpDetailedResponse
+import pl.kawaleria.auctsys.views.dto.AuctionViewsFromIpResponse
 
 @RestController
 @RequestMapping("/auction-service/viewed-auctions")
@@ -23,9 +24,9 @@ class AuctionViewsAnalyticsController(
     ): List<AuctionViewsFromIpDetailedResponse> {
         val ipAddress: String = ipAddressResolver.getIpAddress(request)
 
-        val mostViewedAuctions = viewsFacade.getMostViewedAuctionsFromIpAddress(ipAddress)
-        val ids = mostViewedAuctions.map { it.auctionId }
-        val auctions = auctionFacade.getAuctionsByIds(ids)
+        val mostViewedAuctions: List<AuctionViewsFromIpResponse> = viewsFacade.getMostViewedAuctionsFromIpAddress(ipAddress)
+        val ids: List<String> = mostViewedAuctions.map { it.auctionId }
+        val auctions: List<AuctionSimplifiedResponse> = auctionFacade.getAuctionsByIds(ids)
 
         return mostViewedAuctions.mapNotNull { viewDetails ->
             auctions.find { it.id == viewDetails.auctionId }?.let {
@@ -41,9 +42,9 @@ class AuctionViewsAnalyticsController(
     ): List<AuctionViewsFromIpDetailedResponse> {
         val ipAddress: String = ipAddressResolver.getIpAddress(request)
 
-        val recentViewsFromIpAddress = viewsFacade.getRecentViewsFromIpAddress(ipAddress, numberOfElements)
-        val ids = recentViewsFromIpAddress.map { it.auctionId }
-        val auctions = auctionFacade.getAuctionsByIds(ids)
+        val recentViewsFromIpAddress: List<AuctionViewsFromIpResponse> = viewsFacade.getRecentViewsFromIpAddress(ipAddress, numberOfElements)
+        val ids: List<String> = recentViewsFromIpAddress.map { it.auctionId }
+        val auctions: List<AuctionSimplifiedResponse> = auctionFacade.getAuctionsByIds(ids)
 
         return recentViewsFromIpAddress.mapNotNull { viewDetails ->
             auctions.find { it.id == viewDetails.auctionId }?.let {

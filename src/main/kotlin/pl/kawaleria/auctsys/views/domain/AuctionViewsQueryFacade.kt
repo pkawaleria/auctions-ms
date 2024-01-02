@@ -31,7 +31,7 @@ class AuctionViewsQueryFacade(
             .orElse(noViewsFromIpResponse(ipAddress, auctionId))
 
     fun getMostViewedAuctionsFromIpAddress(ipAddress: String, numberOfAuctions: Int? = null): List<AuctionViewsFromIpResponse> {
-        val results = auctionViewsPerIpRepository.findByIpAddressOrderByViewCounterDesc(ipAddress).map { it.toResponse() }
+        val results: List<AuctionViewsFromIpResponse> = auctionViewsPerIpRepository.findByIpAddressOrderByViewCounterDesc(ipAddress).map { it.toResponse() }
         return if (numberOfAuctions != null) results.take(numberOfAuctions) else results
     }
 

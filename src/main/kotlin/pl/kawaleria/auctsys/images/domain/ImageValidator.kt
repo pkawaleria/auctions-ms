@@ -16,10 +16,10 @@ class ImageValidator(
         private val MAX_FILE_SIZE: Long = 1024 * 1024 * 10) {
 
     fun validateMultipartFiles(files: List<MultipartFile>) {
-        val imageViolations = files.mapNotNull { file ->
-            val errorCode = validateMultipartFile(file)
+        val imageViolations: List<ImageViolation> = files.mapNotNull { file ->
+            val errorCode: ServiceErrorResponseCode? = validateMultipartFile(file)
             errorCode?.let {
-                val imageName = file.originalFilename ?: "Unknown"
+                val imageName: String = file.originalFilename ?: "Unknown"
                 ImageViolation(imageName, listOf(it))
             }
         }

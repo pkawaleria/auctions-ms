@@ -38,6 +38,12 @@ open class ImageFacade(
 
     fun createImages(auctionId: String, files: List<MultipartFile>): List<ImageSimplifiedResponse> {
         imageValidator.validateMultipartFiles(files)
+
+        val auctioneerImages: List<Image> = imageRepository.findImagesByAuctionId(auctionId)
+        if (auctioneerImages.isNotEmpty()) {
+            imageRepository.deleteAllByAuctionId(auctionId)
+        }
+
         val images: List<Image> = saveImages(auctionId, files)
         publishImageVerification(files, auctionId)
         return images.map { image -> image.toSimplifiedResponse() }

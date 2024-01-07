@@ -82,16 +82,31 @@ class AuctionFacade(
 
 
 
-    private fun verifyAuctionContent(name: String, description: String) {
+    private fun verifyAuctionContent(name: String?, description: String?) {
         if (!auctionVerificationRules.enabled) {
             logger.debug("Auction text properties verification is switched off and will be omitted")
             return
         }
-
-        val textToVerify = TextRequest("$name $description")
-        val foundInappropriateContent: Boolean = contentVerificationClient.verifyText(textToVerify).isInappropriate
-        if (foundInappropriateContent) {
-            logger.info("Found explicit content")
+        var isNameInappropriate = false
+        var isDescriptionInappropriate = false
+        when {
+            description != null && name != null -> {
+                val textToVerify = TextRequest("$name $description")
+                val isInappropriate = contentVerificationClient.verifyText(textToVerify).isInappropriate
+                isNameInappropriate = isInappropriate
+                isDescriptionInappropriate = isInappropriate
+            }
+            name != null -> {
+                val textToVerify = TextRequest("$name")
+                isNameInappropriate = contentVerificationClient.verifyText(textToVerify).isInappropriate
+            }
+            description != null -> {
+                val textToVerify = TextRequest("$description")
+                isDescriptionInappropriate = contentVerificationClient.verifyText(textToVerify).isInappropriate
+            }
+        }
+        if (isNameInappropriate || isDescriptionInappropriate) {
+            logger.debug("Found explicit name or description")
             throw InappropriateContentException()
         } else {
             logger.info("Auction name and description verified positively")
@@ -205,6 +220,10 @@ class AuctionFacade(
 
         val newAuctionCity: City = cityRepository.findById(updateRequest.cityId).orElseThrow { CityNotFoundException() }
 
+        if (isVerificationApplicable(auction, updateRequest)) {
+            verifyAuctionContent(updateRequest.name, updateRequest.description)
+        }
+
         auction.name = updateRequest.name
         auction.price = updateRequest.price
         auction.description = updateRequest.description
@@ -220,6 +239,12 @@ class AuctionFacade(
         val auctionViews: Long = auctionViewsQueryFacade.getAuctionViews(auctionId = id)
         return auctionRepository.save(auction).toDetailedResponse(viewCount = auctionViews)
     }
+
+
+    private fun isVerificationApplicable(
+        auction: Auction,
+        updateRequest: UpdateAuctionRequest
+    ) = auction.name != updateRequest.name || auction.description !== updateRequest.description
 
 
     fun delete(auctionId: String, authContext: Authentication) {
